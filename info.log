@@ -1,0 +1,14 @@
+[2019-08-21T20:52:39.360] [INFO] app - 访问huya网站成功
+[2019-08-21T20:53:49.617] [INFO] app - 访问huya网站成功
+[2019-08-21T20:54:38.060] [INFO] app - 访问huya网站成功
+[2019-08-21T20:54:46.635] [INFO] app - 访问huya网站成功
+[2019-08-21T20:55:20.693] [INFO] app - 访问huya网站成功
+[2019-08-21T20:55:20.697] [ERROR] app - 写html文件出错: 
+TypeError: Converting circular structure to JSON
+[2019-08-21T20:55:47.238] [INFO] app - 访问huya网站成功
+[2019-08-21T20:59:10.524] [INFO] app - 访问huya网站成功
+[2019-08-21T20:59:52.459] [INFO] app - 访问huya网站成功
+[2019-08-21T21:01:26.050] [INFO] app - 访问huya网站成功
+[2019-08-21T21:12:57.804] [INFO] app - 访问huya网站成功
+[2019-08-21T21:13:30.352] [INFO] app - 访问huya网站成功
+[2019-08-21T21:19:21.748] [INFO] app - 访问huya网站成功

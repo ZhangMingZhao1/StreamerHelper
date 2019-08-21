@@ -1,0 +1,26 @@
+{
+  "name": "zeratul_node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZhangMingZhao1/Zeratul_node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ZhangMingZhao1/Zeratul_node/issues"
+  },
+  "homepage": "https://github.com/ZhangMingZhao1/Zeratul_node#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "cheerio": "^1.0.0-rc.3",
+    "fs-extra": "^8.1.0",
+    "log4js": "^5.0.0",
+    "request": "^2.88.0"
+  }
+}
