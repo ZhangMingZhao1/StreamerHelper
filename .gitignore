@@ -1,1 +1,11 @@
 node_modules/
+dist/
+.vscode/
+*.mp4
+*.flv
+*.MP4
+.ftppass
+.idea
+.idea/
+*.idea/
+logs/

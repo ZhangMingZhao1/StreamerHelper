@@ -1,26 +1,35 @@
 {
-  "name": "zeratul_node",
+  "name": "artanis_video_electron",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "npm run build && electron ./dist/main.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZhangMingZhao1/Zeratul_node.git"
+    "url": "git+https://github.com/ZhangMingZhao1/Artanis_Video_Electron.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ZhangMingZhao1/Zeratul_node/issues"
+    "url": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron/issues"
   },
-  "homepage": "https://github.com/ZhangMingZhao1/Zeratul_node#readme",
+  "homepage": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron#readme",
   "dependencies": {
     "axios": "^0.19.0",
-    "cheerio": "^1.0.0-rc.3",
+    "dayjs": "^1.8.17",
     "fs-extra": "^8.1.0",
-    "log4js": "^5.0.0",
-    "request": "^2.88.0"
+    "log4js": "^5.3.0",
+    "rsuite": "^4.0.4"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^8.0.0",
+    "babel-preset-rsuite": "^4.0.0",
+    "electron": "^6.0.12",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.4"
   }
 }
