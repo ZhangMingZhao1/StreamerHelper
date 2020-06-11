@@ -80,16 +80,18 @@ export const getHuyaSteam = () => {
                     console.log(`文件大小 ${fileSize}`);
                     //大于10MB分P
                     if (fileSize > 10000000) {
-                        console.log("进入filesize进程");
-                        spawn('kill', [huyaApp.pid]);
+                        console.log(`关闭 P${1} 进程`);
+                        //spawn('kill', [huyaApp.pid]);
                         //huyaApp.kill();不知道有木有用
+                        huyaApp.stdin.end('q', () => {
+                            process.exit();
+                        });
                         break;
                     }
                 }
             }
 
         }
-
     })
     .catch((errorInfo) => {
       console.log("errorInfo", errorInfo);
