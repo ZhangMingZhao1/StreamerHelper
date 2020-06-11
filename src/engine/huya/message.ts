@@ -87,7 +87,7 @@ export const getHuyaSteam = () => {
                             if (fileSize > 1000000) {
                                 console.log(`关闭 P${1} 进程`);
                                 //huyaApp.kill();不知道有木有用
-                                spawn('q', [huyaApp.pid]);
+                                spawn(cmd, ["q"]);
                                 return;
                             }
                         }
