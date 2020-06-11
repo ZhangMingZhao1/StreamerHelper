@@ -1,5 +1,6 @@
 const log4js = require("log4js");
 const dayjs = require("dayjs");
+const fs = require("fs");
 const infoJson = require("../../../templates/info.json");
 import { getRoomArrInfo } from "../../util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
@@ -37,27 +38,58 @@ export const getHuyaSteam = () => {
       const timeV = dayjs().format("YYYY-MM-DD");
       const cmd = `ffmpeg`;
       // console.log("11", huyaRoomId + `${timeV}res.MP4`);
-      const huyaApp = spawn(cmd, [
-        "-i",
-        stream.streamUrl,
-        "-f",
-        "mp4",
-        `${huyaRoomTitle}-${timeV}-res.MP4`,
-      ]);
-      // console.log("huyaApp", huyaApp);
-      pool.push(huyaApp);
-      huyaApp.stdout.on("data", (data: any) => {
-        // console.log(`stdout: ${data}`);
-        logger.info(data.toString("utf8"));
-      });
-      huyaApp.stderr.on("data", (data: any) => {
-        // console.error(`stderr: ${data}`);
-        logger.info(data.toString("utf8"));
-      });
-      huyaApp.on("close", (code: any) => {
-        // console.log(`子进程退出，退出码 ${code}`);
-        logger.info(`子进程退出，退出码 ${code}`);
-      });
+
+        //循环执行获取命令 扩展名前加序号
+        //暂时还没写退出for循环判断
+        for (let i = 1;true;i++){
+            const fileName:string = `${huyaRoomTitle}-${timeV}-res-${i}.MP4`;
+            console.log(fileName);
+            const huyaApp = new spawn(cmd, [
+                "-i",
+                stream.streamUrl,
+                "-f",
+                "mp4",
+                fileName,
+            ]);
+            // console.log("huyaApp", huyaApp);
+            pool.push(huyaApp);
+            huyaApp.stdout.on("data", (data: any) => {
+                // console.log(`stdout: ${data}`);
+                logger.info(data.toString("utf8"));
+            });
+            huyaApp.stderr.on("data", (data: any) => {
+                // console.error(`stderr: ${data}`);
+                logger.info(data.toString("utf8"));
+            });
+            huyaApp.on("close", (code: any) => {
+                // console.log(`子进程退出，退出码 ${code}`);
+                logger.info(`子进程退出，退出码 ${code}`);
+            });
+
+            //当文件大小满足条件时，杀死进程，跳出while循环，进入下一次for循环
+            while (true) {
+                //手动耗时5秒
+                let startTime = Date.now();
+                while (Date.now() - startTime < 5000){
+                }
+                //文件是否存在
+                console.log(fs.existsSync(fileName));
+                if (fs.existsSync(fileName)) {
+                    const fileSize = fs.statSync(fileName).size;
+                    logger.info(`${fileName} 文件大小 ${fileSize}`);
+                    console.log(`文件大小 ${fileSize}`);
+                    //大于10MB分P
+                    if (fileSize > 10000000) {
+                        console.log("进入filesize进程");
+                        spawn('kill', [huyaApp.pid]);
+                        //huyaApp.kill();不知道有木有用
+                        break;
+                    }
+                }
+            }
+
+        }
+
     })
     .catch((errorInfo) => {
       console.log("errorInfo", errorInfo);
