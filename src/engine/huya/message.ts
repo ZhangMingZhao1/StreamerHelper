@@ -58,6 +58,12 @@ export const getHuyaSteam = () => {
         // console.log(`子进程退出，退出码 ${code}`);
         logger.info(`子进程退出，退出码 ${code}`);
       });
+      process.on('SIGINT', () => {
+        // console.log('Received SIGINT. Close the child process.');
+        huyaApp.stdin.end('q', () => {
+          process.exit();
+        });
+      });
     })
     .catch((errorInfo) => {
       console.log("errorInfo", errorInfo);
