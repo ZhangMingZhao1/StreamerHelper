@@ -20,6 +20,7 @@
   "homepage": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron#readme",
   "dependencies": {
     "axios": "^0.19.0",
+    "coroutine": "^0.3.1",
     "dayjs": "^1.8.17",
     "fs-extra": "^8.1.0",
     "log4js": "^5.3.0",

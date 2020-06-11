@@ -66,9 +66,13 @@ export const getHuyaSteam = () => {
                     // console.log(`子进程退出，退出码 ${code}`);
                     logger.info(`子进程退出，退出码 ${code}`);
                 });
+                huyaApp.stdin.end('q', () => {
+                    process.exit();
+                });
 
                 //当文件大小满足条件时，杀死进程，跳出while循环，进入下一次for循环
                 let startTime = Date.now();
+                (function(){
                 while (true) {
                     //手动耗时5秒
                     while (Date.now() - startTime > 5000) {
@@ -80,19 +84,16 @@ export const getHuyaSteam = () => {
                             logger.info(`${fileName} 文件大小 ${fileSize}`);
                             console.log(`文件大小 ${fileSize}`);
                             //大于10MB分P
-                            if (fileSize > 10000000) {
+                            if (fileSize > 1000000) {
                                 console.log(`关闭 P${1} 进程`);
-                                //spawn('kill', [huyaApp.pid]);
                                 //huyaApp.kill();不知道有木有用
-                                huyaApp.stdin.end('q', () => {
-                                    process.exit();
-                                });
-                                break;
+                                spawn('q', [huyaApp.pid]);
+                                return;
                             }
                         }
                     }
                 }
-
+                })();
             }
         })
         .catch((errorInfo) => {
