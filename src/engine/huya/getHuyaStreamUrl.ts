@@ -35,6 +35,7 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
               }
               const tsStream: any = streamArr.filter((v: string) => {
                 // console.log(v.substr(7,2));
+                //return v.substr(7, 2) === "tx";
                 return v.substr(7, 2) === "tx";
               });
               // console.log(tsStream[0]);

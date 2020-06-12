@@ -45,7 +45,14 @@ export const getHuyaSteam = () => {
             for (let i = 1; true; i++) {
                 const fileName: string = `${huyaRoomTitle}-${timeV}-res-${i}.MP4`;
                 console.log(fileName);
-                const huyaApp = new spawn(cmd, [
+                const fakeUA:string =  "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36\r\n";
+                const fakeX:string = "X-Forwarded-For: 1.2.4.8\r\n";
+                console.log(stream.streamUrl);
+                const huyaApp = spawn(cmd, [
+                    "-headers",
+                    fakeUA,
+                    "-headers",
+                    fakeX,
                     "-i",
                     stream.streamUrl,
                     "-f",
@@ -55,38 +62,53 @@ export const getHuyaSteam = () => {
                 // console.log("huyaApp", huyaApp);
                 pool.push(huyaApp);
                 huyaApp.stdout.on("data", (data: any) => {
-                    // console.log(`stdout: ${data}`);
+                     //console.log(`stdout: ${data}`);
                     logger.info(data.toString("utf8"));
                 });
                 huyaApp.stderr.on("data", (data: any) => {
-                    // console.error(`stderr: ${data}`);
+                     //console.error(`stderr: ${data}`);
                     logger.info(data.toString("utf8"));
                 });
                 huyaApp.on("close", (code: any) => {
                     // console.log(`子进程退出，退出码 ${code}`);
                     logger.info(`子进程退出，退出码 ${code}`);
                 });
-                huyaApp.stdin.end('q', () => {
-                    process.exit();
+                process.on('SIGINT', () => {
+                    console.log('Received SIGINT. Close the child process.');
+                    huyaApp.stdin.end('q', () => {
+                        process.exit();
+                    });
                 });
+
 
                 //当文件大小满足条件时，杀死进程，跳出while循环，进入下一次for循环
                 let startTime = Date.now();
+                let fileSizePool:any[] = [];
+                let filebool:Boolean[] = [];
                 (function(){
                 while (true) {
                     //手动耗时5秒
                     while (Date.now() - startTime > 5000) {
-                        //文件是否存在
                         startTime = Date.now();
+                        //文件是否存在
                         console.log(fs.existsSync(fileName));
+                        filebool.push(fs.existsSync(fileName));
+                        if (filebool.length >10 && filebool[filebool.length-1]==false){
+                            i--;
+                            return;
+                        }
                         if (fs.existsSync(fileName)) {
                             const fileSize = fs.statSync(fileName).size;
+                            fileSizePool.push(fileSize);
+                            if (fileSizePool.length >10 && fileSizePool[fileSizePool.length-1]==fileSizePool[fileSizePool.length-6]){
+                                return;
+                            }
                             logger.info(`${fileName} 文件大小 ${fileSize}`);
                             console.log(`文件大小 ${fileSize}`);
                             //大于10MB分P
                             if (fileSize > 1000000) {
-                                console.log(`关闭 P${1} 进程`);
-                                //huyaApp.kill();不知道有木有用
+                                console.log(`关闭 P${i} 进程`);
+                                huyaApp.kill('SIGINT');//不知道有木有用
                                 spawn(cmd, ["q"]);
                                 return;
                             }
