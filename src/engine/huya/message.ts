@@ -46,7 +46,7 @@ export const getHuyaSteam = () => {
                 const fileName: string = `${huyaRoomTitle}-${timeV}-res-${i}.MP4`;
                 console.log(fileName);
                 const fakeUA:string =  "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36\r\n";
-                const fakeX:string = "X-Forwarded-For: 1.2.4.8\r\n";
+                const fakeX:string = "X-Forwarded-For: 14.223.23.12\r\n";
                 console.log(stream.streamUrl);
                 const huyaApp = spawn(cmd, [
                     "-headers",
@@ -74,17 +74,19 @@ export const getHuyaSteam = () => {
                     logger.info(`子进程退出，退出码 ${code}`);
                 });
                 process.on('SIGINT', () => {
-                    console.log('Received SIGINT. Close the child process.');
+                    //console.log('Received SIGINT. Close the child process.');
                     huyaApp.stdin.end('q', () => {
                         process.exit();
                     });
                 });
-
+                process.on( 'exit', function() {
+                    console.log( "never see this log message" )
+                })
 
                 //当文件大小满足条件时，杀死进程，跳出while循环，进入下一次for循环
                 let startTime = Date.now();
                 let fileSizePool:any[] = [];
-                let filebool:Boolean[] = [];
+                let fileBool:Boolean[] = [];
                 (function(){
                 while (true) {
                     //手动耗时5秒
@@ -92,8 +94,8 @@ export const getHuyaSteam = () => {
                         startTime = Date.now();
                         //文件是否存在
                         console.log(fs.existsSync(fileName));
-                        filebool.push(fs.existsSync(fileName));
-                        if (filebool.length >10 && filebool[filebool.length-1]==false){
+                        fileBool.push(fs.existsSync(fileName));
+                        if (fileBool.length >10 && fileBool[fileBool.length-1]==false){
                             i--;
                             return;
                         }
@@ -106,10 +108,12 @@ export const getHuyaSteam = () => {
                             logger.info(`${fileName} 文件大小 ${fileSize}`);
                             console.log(`文件大小 ${fileSize}`);
                             //大于10MB分P
-                            if (fileSize > 1000000) {
-                                console.log(`关闭 P${i} 进程`);
-                                huyaApp.kill('SIGINT');//不知道有木有用
+                            if (fileSize > 10000000) {
+                                //TODO:关闭方式错误
+                                huyaApp.kill("SIGINT");
                                 spawn(cmd, ["q"]);
+                                //huyaApp.kill();
+                                console.log(`已关闭 P${i} 进程`);
                                 return;
                             }
                         }
