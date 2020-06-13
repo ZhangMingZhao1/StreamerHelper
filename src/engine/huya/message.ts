@@ -95,7 +95,7 @@ export const getHuyaSteam = () => {
                         //文件是否存在
                         console.log(fs.existsSync(fileName));
                         fileBool.push(fs.existsSync(fileName));
-                        if (fileBool.length >10 && fileBool[fileBool.length-1]==false){
+                        if (fileBool.length >10 && !fileBool[fileBool.length - 1]){
                             i--;
                             return;
                         }
@@ -109,13 +109,7 @@ export const getHuyaSteam = () => {
                             console.log(`文件大小 ${fileSize}`);
                             //大于10MB分P
                             if (fileSize > 10000000) {
-                                //TODO:关闭方式错误
-
-                                //huyaApp.kill("SIGINT");
-                                //spawn(cmd, ["-q"]);
-                                //spawn("kill", [huyaApp.pid]);
                                 huyaApp.stdin.end("q");
-                                //huyaApp.kill();
                                 console.log(`已关闭 P${i} 进程`);
                                 return;
                             }
