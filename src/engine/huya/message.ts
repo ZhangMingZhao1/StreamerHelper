@@ -73,7 +73,7 @@ export const getHuyaSteam = () => {
                     // console.log(`子进程退出，退出码 ${code}`);
                     logger.info(`子进程退出，退出码 ${code}`);
                 });
-                process.on('SIGINT', () => {
+               /* process.on('SIGINT', () => {
                     //console.log('Received SIGINT. Close the child process.');
                     huyaApp.stdin.end('q', () => {
                         process.exit();
@@ -81,7 +81,7 @@ export const getHuyaSteam = () => {
                 });
                 process.on( 'exit', function() {
                     console.log( "never see this log message" )
-                })
+                })*/
 
                 //当文件大小满足条件时，杀死进程，跳出while循环，进入下一次for循环
                 let startTime = Date.now();
@@ -110,13 +110,17 @@ export const getHuyaSteam = () => {
                             //大于10MB分P
                             if (fileSize > 10000000) {
                                 //TODO:关闭方式错误
-                                huyaApp.kill("SIGINT");
-                                spawn(cmd, ["q"]);
+
+                                //huyaApp.kill("SIGINT");
+                                //spawn(cmd, ["-q"]);
+                                //spawn("kill", [huyaApp.pid]);
+                                huyaApp.stdin.end("q");
                                 //huyaApp.kill();
                                 console.log(`已关闭 P${i} 进程`);
                                 return;
                             }
                         }
+
                     }
                 }
                 })();
