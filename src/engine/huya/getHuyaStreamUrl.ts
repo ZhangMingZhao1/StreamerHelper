@@ -17,6 +17,8 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
                 const streamerName = infoObj["data"][0]["gameLiveInfo"]["nick"];
                 const urlInfo1 = streamInfoList[0];
                 //const urlInfo2 = streamInfoList[1];
+
+                //可以得到六种链接，m3u8链接最稳定
                 //console.log("阿里的CDN");
                 //const aliFLV = urlInfo1["sFlvUrl"] + "/" + urlInfo1["sStreamName"] + ".flv?" + urlInfo1["sFlvAntiCode"];
                 const aliHLS = urlInfo1["sHlsUrl"] + "/" + urlInfo1["sStreamName"] + ".m3u8?" + urlInfo1["sHlsAntiCode"];
