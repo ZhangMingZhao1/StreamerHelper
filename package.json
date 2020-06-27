@@ -20,11 +20,16 @@
   "homepage": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron#readme",
   "dependencies": {
     "axios": "^0.19.0",
+    "cookie-parse": "^0.4.0",
     "coroutine": "^0.3.1",
+    "crypto": "^1.0.1",
     "dayjs": "^1.8.17",
     "fs-extra": "^8.1.0",
     "log4js": "^5.3.0",
-    "rsuite": "^4.0.4"
+    "md5-node": "^1.0.1",
+    "node-rsa": "^1.0.8",
+    "rsuite": "^4.0.4",
+    "superagent": "^5.2.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",

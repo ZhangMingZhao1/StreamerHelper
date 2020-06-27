@@ -26,7 +26,7 @@ export const getHuyaSteam = () => {
   // 虎牙消息监听
   const pool: any = [];
   // 每段视频持续时间，单位s
-  const partDuration = 60
+  const partDuration = 1800
   let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   console.log("huyaRoomId: ", huyaRoomId); // prints "ping"
@@ -77,7 +77,7 @@ export const getHuyaSteam = () => {
         logger.info(`子进程退出，退出码 ${code}`);
       });
       process.on("SIGINT", () => {
-        huyaApp.end('q')
+        huyaApp.stdin.end('q')
       })
     })
     .catch((errorInfo) => {
