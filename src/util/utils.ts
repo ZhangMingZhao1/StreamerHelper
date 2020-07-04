@@ -1,3 +1,4 @@
+
 export const RoomTypeArr = ["huya", "bilibili", "douyu"];
 export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;

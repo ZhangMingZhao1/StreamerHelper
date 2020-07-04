@@ -26,8 +26,8 @@ async function getKey() {
             .type('form')
             .set(headers)
             .send(post_data)
-        data = JSON.parse(result.text).data
-        sid = cookie.parse(result.header['set-cookie'][0]).sid
+        const data = JSON.parse(result.text).data
+        const sid = cookie.parse(result.header['set-cookie'][0]).sid
         return {
             sid: sid,
             hash: data.hash,
@@ -64,11 +64,11 @@ async function login(username, password) {
             .set('Cookie', `sid=${data.sid};`)
             .type('form')
             .send(post_data)
-        const res = JSON.parse(result.text)
+        const res = JSON.parse(result.text);
         return {
             access_token: res.data.access_token,
             mid: res.data.mid,
-            sid: sid
+            sid: data.sid
         }
     } catch (err) {
         console.log(err)
