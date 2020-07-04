@@ -1,6 +1,9 @@
 const log4js = require("log4js");
 const dayjs = require("dayjs");
 const infoJson = require("../../../templates/info.json");
+const fs = require("fs")
+const path = require('path')
+const { upload2bilibili } = require('../../caller')
 import { getRoomArrInfo } from "../../util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
 
@@ -39,7 +42,15 @@ export const getHuyaSteam = () => {
       const timeV = dayjs().format("YYYY-MM-DD");
       const cmd = `ffmpeg`;
       // console.log("11", huyaRoomId + `${timeV}res.MP4`);
-      const fileName: string = `${huyaRoomTitle}-${timeV}-part-%03d.mp4`;
+      let dirName = path.join(infoJson.savePath, huyaRoomTitle)
+      if (!fs.existsSync(dirName)) {
+        fs.mkdirSync(dirName)
+      }
+      if (!fs.existsSync(`${dirName}/${timeV}`)) {
+        fs.mkdirSync(`${dirName}/${timeV}`)
+      }
+      dirName = `${dirName}/${timeV}`
+      const fileName: string = `${dirName}/${huyaRoomTitle}-${timeV}-part-%03d.mp4`;
       //伪装了请求头，避免服务器返回403
       const fakeX: any = {
         'Accept': '*/*',
@@ -57,6 +68,10 @@ export const getHuyaSteam = () => {
         fakeHeaders,
         "-i",
         stream.streamUrl,
+        "-c:v",
+        "copy",
+        "-c:a",
+        "copy",
         "-f",
         "segment",
         "-segment_time",
@@ -75,6 +90,10 @@ export const getHuyaSteam = () => {
       huyaApp.on("close", (code: any) => {
         console.log(`子进程退出，退出码 ${code}`);
         logger.info(`子进程退出，退出码 ${code}`);
+        console.log("准备上传B站")
+        const tags: string[] = []
+        tags.push("LOL", "英雄联盟")
+        upload2bilibili(dirName, `${huyaRoomTitle} ${timeV}录播`, `直播间${huyaRoomId}`, tags)
       });
       process.on("SIGINT", () => {
         huyaApp.stdin.end('q')

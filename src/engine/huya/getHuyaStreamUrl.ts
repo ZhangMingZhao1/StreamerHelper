@@ -20,8 +20,8 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
 
                 //可以得到六种链接，m3u8链接最稳定
                 //console.log("阿里的CDN");
-                //const aliFLV = urlInfo1["sFlvUrl"] + "/" + urlInfo1["sStreamName"] + ".flv?" + urlInfo1["sFlvAntiCode"];
-                const aliHLS = urlInfo1["sHlsUrl"] + "/" + urlInfo1["sStreamName"] + ".m3u8?" + urlInfo1["sHlsAntiCode"];
+                const aliFLV = urlInfo1["sFlvUrl"] + "/" + urlInfo1["sStreamName"] + ".flv?" + urlInfo1["sFlvAntiCode"];
+                // const aliHLS = urlInfo1["sHlsUrl"] + "/" + urlInfo1["sStreamName"] + ".m3u8?" + urlInfo1["sHlsAntiCode"];
                 //const aliP2P = urlInfo1["sP2pUrl"] + "/" + urlInfo1["sStreamName"] + ".slice?" + urlInfo1["newCFlvAntiCode"];
 
                 //console.log("腾讯的CDN");
@@ -29,7 +29,7 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
                 //const txHLS = urlInfo2["sHlsUrl"] + "/" + urlInfo2["sStreamName"] + ".m3u8?" + urlInfo2["sHlsAntiCode"];
                 //const txP2P = urlInfo2["sP2pUrl"] + "/" + urlInfo2["sStreamName"] + ".slice?" + urlInfo2["newCFlvAntiCode"];
 
-                resolve({ streamUrl: aliHLS.replace("amp;",""), streamName: streamerName });
+                resolve({ streamUrl: aliFLV.replace("amp;",""), streamName: streamerName });
 
             }else{
                 reject("不在线");
