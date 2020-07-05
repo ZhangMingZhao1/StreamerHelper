@@ -1,9 +1,10 @@
 {
   "personInfo": {
-    "username": "xx",
-    "password": "xx"
+    "username": "",
+    "password": ""
   },
   "streamerInfo": {
-    "吃鸡": "https://www.huya.com/161262"
-  }
+    "星痕": "https://www.huya.com/xinghen"
+  },
+  "savePath": "C:/Users/1aoMn/Desktop/huya/StreamerHelper/download"
 }
