@@ -7,7 +7,7 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
       .get(`${url}`)
       .then((data: any) => {
         if (data.data) {
-          console.log("huyaHTML获取成功");
+          // console.log("huyaHTML获取成功");
           const huyaHTML = data.data;
           if (typeof huyaHTML === "string") {
              const regRes: any = huyaHTML.split("hyPlayerConfig =")[1].split("};")[0] + "}";

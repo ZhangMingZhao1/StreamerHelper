@@ -26,7 +26,6 @@ async function upload2bilibili(dirName, title, desc, tags) {
             desc: ""
         })
     }
-    console.log(parts)
     await upload(
         r.access_token,
         r.sid,
