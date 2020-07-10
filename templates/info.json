@@ -3,8 +3,10 @@
     "username": "",
     "password": ""
   },
-  "streamerInfo": {
-    "星痕": "https://www.huya.com/xinghen"
-  },
-  "savePath": "C:/Users/1aoMn/Desktop/huya/StreamerHelper/download"
+  "streamerInfo": [
+    {
+      "gushouyu": "https://www.huya.com/gushouyu",
+      "wanmei": "https://www.huya.com/wanmei"
+    }
+  ]
 }
