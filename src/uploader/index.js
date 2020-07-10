@@ -74,7 +74,29 @@ async function login(username, password) {
         console.log(err)
     }
 }
-
+async function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data, chunk_size, chunk_id, chunk_total_num, retryTimes) {
+    let chunkHash = crypto.createHash('md5')
+    for (let v of chunk_data) {
+        chunkHash.update(v)
+    }
+    let files = {
+        'version': (null, '2.0.0.1054'),
+        'filesize': (null, chunk_size),
+        'chunk': (null, chunk_id),
+        'chunks': (null, chunk_total_num),
+        'md5': (null, chunkHash.digest('hex')),
+    }
+    try {
+        await superagent
+            .post(upload_url)
+            .set('Cookie', `PHPSESSID=${server_file_name};`)
+            .field(files)
+            .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
+            .retry(retryTimes)
+    } catch (err) {
+        console.log(err)
+    }
+}
 async function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
     return new Promise(async (resolve, reject) => {
         const headers = {
@@ -83,16 +105,21 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
             'User-Agent': '',
             'Accept-Encoding': 'gzip,deflate',
         }
+
         const r = await superagent
             .get(`http://member.bilibili.com/preupload?access_key=${access_token}&mid=${mid}&profile=ugcfr%2Fpc3`)
             .set(headers)
             .set('Cookie', `sid=${sid};`)
             .type('form')
+
         const pre_upload_data = JSON.parse(r.text)
         const upload_url = pre_upload_data['url']
+        const complete_upload_url = pre_upload_data['complete']
+
         const server_file_name = pre_upload_data['filename']
         const local_file_name = video_part.path
         const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
+
         let fileSize = fs.statSync(video_part.path).size
         let chunkNum = Math.ceil(fileSize / chunkSize)
         let fileStream = fs.createReadStream(video_part.path)
@@ -100,42 +127,45 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
         let readLength = 0
         let totalReadLength = 0
         let nowChunk = 0
-        let fsHash = crypto.createHash('md5')
-        console.log(`开始上传，文件大小：${fileSize}，分块数量：${chunkNum}`);
+        let fileHash = crypto.createHash('md5')
+
+        console.log(`开始上传 ${local_file_name}，文件大小：${fileSize}，分块数量：${chunkNum}`);
         fileStream.on('data', async (chunk) => {
             readBuffers.push(chunk)
             readLength += chunk.length
             totalReadLength += chunk.length
-            fsHash.update(chunk)
+            fileHash.update(chunk)
             if (readLength >= chunkSize || totalReadLength === fileSize) {
                 try {
-                    console.log(`正在上传第 ${nowChunk+1}/${chunkNum} 分块`);
+                    nowChunk++
+                    console.log(`正在上传第 ${nowChunk}/${chunkNum} 分块`);
                     fileStream.pause()
-                    let files = {
-                        'version': (null, '2.0.0.1054'),
-                        'filesize': (null, chunkSize),
-                        'chunk': (null, nowChunk),
-                        'chunks': (null, chunkNum),
-                        'md5': (null, fsHash.digest('hex')),
-                    }
-                    const r = await superagent
-                        .post(upload_url)
-                        .set('Cookie', `PHPSESSID=${server_file_name};`)
-                        .field(files)
-                        .attach('file', Buffer.concat(readBuffers), 'application/octet-stream')
-                        .retry(retryTimes)
-                    fsHash = crypto.createHash('md5')
+                    await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
                     fileStream.resume()
                     readLength = 0
                     readBuffers = []
-                    nowChunk++
                 } catch (err) {
-                    console.log(err);
+                    console.log(err.response.text);
+                    reject(err.response.text)
                 }
             }
         })
-        fileStream.on('end', () => {
-            console.log("file ", local_file_name, " uploaded", )
+        fileStream.on('end', async () => {
+            let post_data = {
+                'chunks': chunkNum,
+                'filesize': fileSize,
+                'md5': fileHash.digest('hex'),
+                'name': local_file_name,
+                'version': '2.0.0.1054',
+            }
+            try {
+                await superagent
+                    .post(complete_upload_url)
+                    .set(headers)
+                    .send(post_data)
+            } catch (err) {
+                console.log(err)
+            }
             resolve(server_file_name)
         })
     })
@@ -162,6 +192,7 @@ async function upload(access_token, sid, mid, parts, copyright, title, tid, tag,
     }
     for (let video_part of parts) {
         video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 3)
+        console.log("server_file_name:  ", video_part.server_file_name)
         post_data['videos'].push({
             "desc": video_part.desc,
             "filename": video_part.server_file_name,

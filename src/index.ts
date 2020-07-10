@@ -1,3 +1,3 @@
-import { getHuyaSteam } from "./engine/huya/message";
+// import { getHuyaSteam } from "./engine/huya/message";
 
-getHuyaSteam();
+// getHuyaSteam();
