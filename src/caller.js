@@ -7,12 +7,13 @@ const {
     password
 } = require('../templates/info.json').personInfo
 const fs = require('fs')
+const Path = require('path')
 
 function readDirSync(path) {
     let paths = []
     let pa = fs.readdirSync(path);
     pa.forEach(function (ele, index) {
-        paths.push(path + "\\" + ele)
+        paths.push(Path.join(path, ele))
     })
     return paths
 }
