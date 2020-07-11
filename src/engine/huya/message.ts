@@ -89,7 +89,10 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
     tags.push("LOL", "英雄联盟")
     upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
   });
-  process.on("SIGINT", () => {
-    huyaApp.stdin.end('q')
+  process.on("SIGINT", async () => {
+    if (huyaApp.stdin._writableState.ended == false) {
+      // 流是否已经结束
+      huyaApp.stdin.end('q')
+    }
   })
 };
