@@ -42,11 +42,11 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
   }
-  dirName = `${dirName}/${timeV}`
+  dirName = path.join(dirName, timeV)
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
   }
-  const fileName: string = `${dirName}/${stream.streamName}-${timeV}-part-%03d.mp4`;
+  const fileName: string = path.join(dirName, `${stream.streamName}-${timeV}-part-%03d.mp4`);
   //伪装了请求头，避免服务器返回403
   const fakeX: any = {
     'Accept': '*/*',
