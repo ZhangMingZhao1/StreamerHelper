@@ -4,9 +4,12 @@ const fs = require('fs')
 const cookie = require('cookie-parse')
 const superagent = require('superagent')
 const crypt = require("./util/crypt.js")
+const log4js = require("log4js");
 
+const rootPath = process.cwd();
 const APPKEY = 'aae92bc66f3edfab'
 const APPSECRET = 'af125a0d5279fd576c1b4418a3e8276d'
+const logger = log4js.getLogger("message");
 
 async function getKey() {
     let post_data = {
@@ -34,7 +37,8 @@ async function getKey() {
             key: data.key
         }
     } catch (err) {
-        console.log(err)
+        // console.log(err)
+        logger.info(err)
     }
 }
 
@@ -71,7 +75,8 @@ async function login(username, password) {
             sid: data.sid
         }
     } catch (err) {
-        console.log(err)
+        // console.log(err)
+        logger.info(err)
     }
 }
 async function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data, chunk_size, chunk_id, chunk_total_num, retryTimes) {
@@ -87,14 +92,17 @@ async function upload_chunk(upload_url, server_file_name, local_file_name, chunk
         'md5': (null, chunkHash.digest('hex')),
     }
     try {
-        await superagent
+        const r = await superagent
             .post(upload_url)
             .set('Cookie', `PHPSESSID=${server_file_name};`)
             .field(files)
             .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
             .retry(retryTimes)
+        // console.log(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
+        logger.info(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
     } catch (err) {
-        console.log(err)
+        // console.log(err)
+        logger.info(err)
     }
 }
 async function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
@@ -129,7 +137,8 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
         let nowChunk = 0
         let fileHash = crypto.createHash('md5')
 
-        console.log(`开始上传 ${local_file_name}，文件大小：${fileSize}，分块数量：${chunkNum}`);
+        // console.log(`开始上传 ${local_file_name}，文件大小：${fileSize}，分块数量：${chunkNum}`);
+        logger.info(`开始上传 ${local_file_name}，文件大小：${fileSize}，分块数量：${chunkNum}`)
         fileStream.on('data', async (chunk) => {
             readBuffers.push(chunk)
             readLength += chunk.length
@@ -138,14 +147,16 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
             if (readLength >= chunkSize || totalReadLength === fileSize) {
                 try {
                     nowChunk++
-                    console.log(`正在上传第 ${nowChunk}/${chunkNum} 分块`);
+                    console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
+                    logger.info(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`)
                     fileStream.pause()
                     await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
                     fileStream.resume()
                     readLength = 0
                     readBuffers = []
                 } catch (err) {
-                    console.log(err.response.text);
+                    // console.log(err.response.text);
+                    logger.info(err.response.text)
                     reject(err.response.text)
                 }
             }
@@ -164,7 +175,8 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
                     .set(headers)
                     .send(post_data)
             } catch (err) {
-                console.log(err)
+                // console.log(err)
+                logger.info(err)
             }
             resolve(server_file_name)
         })
@@ -192,7 +204,7 @@ async function upload(access_token, sid, mid, parts, copyright, title, tid, tag,
     }
     for (let video_part of parts) {
         video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 3)
-        console.log("server_file_name:  ", video_part.server_file_name)
+        // console.log("server_file_name:  ", video_part.server_file_name)
         post_data['videos'].push({
             "desc": video_part.desc,
             "filename": video_part.server_file_name,
@@ -209,7 +221,8 @@ async function upload(access_token, sid, mid, parts, copyright, title, tid, tag,
         .set(headers)
         .set('Cookie', `sid=${sid};`)
         .send(post_data)
-    console.log("Upload result:", result.text)
+    // console.log("Upload ended, returns:", result.text)
+    logger.info("Upload ended, returns:", result.text)
 }
 
 module.exports = {
