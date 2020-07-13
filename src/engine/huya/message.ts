@@ -74,6 +74,7 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
     partDuration,
     fileName,
   ]);
+  let ffmpegStreamEnded: boolean = false;
   huyaApp.stdout.on("data", (data: any) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
@@ -82,17 +83,21 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
     // console.error(`stderr: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.on("close", async (code: any) => {
+  huyaApp.on("close", (code: any) => {
+    ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     const tags: string[] = []
     tags.push("LOL", "英雄联盟")
     upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
   });
-  process.on("SIGINT", async () => {
-    if (huyaApp.stdin._writableState.ended == false) {
-      // 流是否已经结束
+  process.on("SIGINT", () => {
+    if (ffmpegStreamEnded == false) {
+      ffmpegStreamEnded = true
       huyaApp.stdin.end('q')
     }
+    // if (huyaApp.stdin._writableState.ended == false) {
+    //   huyaApp.stdin.end('q')
+    // }
   })
 };
