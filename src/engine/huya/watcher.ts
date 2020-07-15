@@ -11,7 +11,7 @@ let infoFileName = path.join(process.cwd(), "/templates/info.json")
 const timer = setInterval(async () => {
     // console.log(liveStatus)
     let huyaRoomIds = getRoomArrInfo(JSON.parse(fs.readFileSync(infoFileName)).streamerInfo);
-    console.log(huyaRoomIds)
+    // console.log(huyaRoomIds)
     for (let huyaRoomId of huyaRoomIds) {
         await getHuya(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {
