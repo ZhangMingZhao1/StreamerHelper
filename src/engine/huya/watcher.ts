@@ -2,12 +2,16 @@ import { getHuyaStream } from "./message";
 import { getRoomArrInfo } from "../../util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
 import getHuya from "./getHuyaStreamUrl";
+const fs = require('fs');
+const path = require('path')
 let { liveStatus } = require("../../type/liveStatus")
 //0 不在线 1 在线
 let pool: any = []
-let huyaRoomIds = getRoomArrInfo(require("../../../templates/info.json").streamerInfo)
-const timer = setInterval(async() => {
+let infoFileName = path.join(process.cwd(), "/templates/info.json")
+const timer = setInterval(async () => {
     // console.log(liveStatus)
+    let huyaRoomIds = getRoomArrInfo(JSON.parse(fs.readFileSync(infoFileName)).streamerInfo);
+    console.log(huyaRoomIds)
     for (let huyaRoomId of huyaRoomIds) {
         await getHuya(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {

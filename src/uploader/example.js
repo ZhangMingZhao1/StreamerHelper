@@ -2,24 +2,42 @@ const {
     login,
     upload
 } = require('./index.js')
-login('18753828709', 'li12345')
+const fs = require('fs')
+const Path = require('path');
+const {
+    rejects
+} = require('assert');
+
+function readDirSync(path) {
+    let paths = []
+    let pa = fs.readdirSync(path);
+    pa.forEach(function (ele, index) {
+        paths.push(Path.join(path, ele))
+    })
+    return paths
+}
+login('', '')
     .then(r => {
+        let dirName = "D:/web/StreamerHelper/download/Zz1tai姿态/2020-07-15"
+        const paths = readDirSync(dirName)
         let parts = []
-        parts.push({
-            path: "C:/Users/1aoMn/Desktop/huya/BilibiliUploader/zzt-2020-06-26-part-000.mp4",
-            title: "part1_title",
-            desc: "part1_desc"
-        })
+        for (let key in paths) {
+            parts.push({
+                path: paths[key],
+                title: `part${key}`,
+                desc: ""
+            })
+        }
         upload(
             r.access_token,
             r.sid,
             r.mid,
             parts,
-            copyright = 2,
-            title = '姿 姿 态1',
-            tid = 171,
-            tag = ["英雄联盟", "LOL"].join(','),
-            desc = "",
-            source = 'https://www.huya.com/333003', )
+            2,
+            "炫神 2020-07-13录播",
+            171,
+            ["英雄联盟", "LOL"].join(','),
+            "",
+            "https://www.huya.com/840747", )
     })
-    //access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1
+//access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1
