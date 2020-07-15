@@ -7,11 +7,11 @@ let { liveStatus } = require("../../type/liveStatus")
 let pool: any = []
 let huyaRoomIds = getRoomArrInfo(require("../../../templates/info.json").streamerInfo)
 const timer = setInterval(async() => {
-    console.log(liveStatus)
+    // console.log(liveStatus)
     for (let huyaRoomId of huyaRoomIds) {
         await getHuya(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {
-                console.log(stream)
+                // console.log(stream)
                 if (liveStatus.get(huyaRoomId.roomLink) != 1) {
                     liveStatus.set(huyaRoomId.roomLink, 1)
                     pool.push(stream)
