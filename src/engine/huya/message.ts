@@ -22,7 +22,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const getHuyaSteam = (stream: HuyaStreamInfo) => {
+export const getHuyaStream = (stream: HuyaStreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = 1800
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
