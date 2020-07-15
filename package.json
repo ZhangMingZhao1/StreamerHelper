@@ -24,6 +24,7 @@
     "coroutine": "^0.3.1",
     "crypto": "^1.0.1",
     "dayjs": "^1.8.17",
+    "delete-files": "^0.1.0",
     "fs-extra": "^8.1.0",
     "log4js": "^5.3.0",
     "md5-node": "^1.0.1",

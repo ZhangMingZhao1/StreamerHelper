@@ -147,7 +147,7 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
             if (readLength >= chunkSize || totalReadLength === fileSize) {
                 try {
                     nowChunk++
-                    console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
+                    // console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
                     logger.info(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`)
                     fileStream.pause()
                     await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)

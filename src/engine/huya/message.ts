@@ -3,7 +3,7 @@ const dayjs = require("dayjs");
 const fs = require("fs")
 const path = require('path')
 const { upload2bilibili } = require('../../caller')
-// import { getRoomArrInfo } from "../../util/utils";
+const deleteFiles = require('delete-files');
 import { HuyaStreamInfo } from "type/getHuya";
 
 const rootPath = process.cwd();
@@ -27,7 +27,8 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
   const partDuration = 1800
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
-  console.log("开始下载 ", stream.streamName); // prints "ping"
+  // console.log("开始下载 ", stream.streamName);
+  logger.info("开始下载 ", stream.streamName)
   // const cmd = `ffmpeg -i "${streamUrl}" -f mp4 res.MP4`;
   // 命名加上时间戳
   // console.log("streamUrl", stream.streamUrl);
@@ -83,13 +84,14 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
     // console.error(`stderr: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.on("close", (code: any) => {
+  huyaApp.on("close", async(code: any) => {
     ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     const tags: string[] = []
     tags.push("LOL", "英雄联盟")
-    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
+    await upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
+    await deleteFiles(dirName)
   });
   process.on("SIGINT", () => {
     if (ffmpegStreamEnded == false) {
