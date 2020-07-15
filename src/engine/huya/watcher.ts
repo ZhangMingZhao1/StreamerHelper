@@ -16,8 +16,8 @@ const timer = setInterval(async() => {
                     liveStatus.set(huyaRoomId.roomLink, 1)
                     pool.push(stream)
                 }
-            }).catch((err) => {
-                console.log(err)
+            }).catch(() => {
+                // console.log(err)
                 liveStatus.set(huyaRoomId.roomLink, 0)
             });
     }
