@@ -180,6 +180,9 @@ async function upload_video_part(access_token, sid, mid, video_part, retryTimes)
             }
             resolve(server_file_name)
         })
+        fileStream.on('error', (error) => {
+            logger.info(error)
+        })
     })
 }
 
@@ -203,7 +206,7 @@ async function upload(access_token, sid, mid, parts, copyright, title, tid, tag,
         'videos': []
     }
     for (let video_part of parts) {
-        video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 3)
+        video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
         // console.log("server_file_name:  ", video_part.server_file_name)
         post_data['videos'].push({
             "desc": video_part.desc,

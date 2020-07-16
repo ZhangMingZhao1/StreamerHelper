@@ -4,10 +4,10 @@ const fs = require("fs")
 const path = require('path')
 const { upload2bilibili } = require('../../caller')
 const deleteFiles = require('delete-files');
-import { HuyaStreamInfo } from "type/getHuya";
-
 const rootPath = process.cwd();
 const { spawn } = require("child_process");
+let { liveStatus } = require("../../type/liveStatus")
+import { HuyaStreamInfo } from "type/getHuya";
 log4js.configure({
   appenders: {
     cheese: {
@@ -22,7 +22,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const getHuyaSteam = (stream: HuyaStreamInfo) => {
+export const getHuyaStream = (stream: HuyaStreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = 1800
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
@@ -84,12 +84,13 @@ export const getHuyaSteam = (stream: HuyaStreamInfo) => {
     // console.error(`stderr: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.on("close", async(code: any) => {
+  huyaApp.on("close", async (code: any) => {
     ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     const tags: string[] = []
     tags.push("LOL", "英雄联盟")
+    liveStatus.set(stream.liveUrl, 0)
     await upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
     await deleteFiles(dirName)
   });
