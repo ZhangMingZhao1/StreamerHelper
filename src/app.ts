@@ -26,7 +26,7 @@ const timer = setInterval(() => {
     if (pool.length >= 1) {
         getHuyaStream(pool.pop())
     }
-}, 3000);
+}, 30000);
 process.on("SIGINT", () => {
     console.log("接收到退出指令，清除定时器\n等待上传完成后，进程自动退出")
     clearInterval(timer)
