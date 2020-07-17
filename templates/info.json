@@ -1,9 +1,12 @@
 {
   "personInfo": {
-    "username": "xx",
-    "password": "xx"
+    "username": "",
+    "password": ""
   },
-  "streamerInfo": {
-    "吃鸡": "https://www.huya.com/161262"
-  }
+  "streamerInfo": [
+    {
+      "gushouyu": "https://www.huya.com/gushouyu",
+      "wanmei": "https://www.huya.com/wanmei"
+    }
+  ]
 }
