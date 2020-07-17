@@ -1,4 +1,4 @@
 let liveStatus = new Map()
-module.exports = {
+export {
     liveStatus
 }

@@ -1,13 +1,14 @@
-const log4js = require("log4js");
-const dayjs = require("dayjs");
-const fs = require("fs")
-const path = require('path')
-const { upload2bilibili } = require('../../caller')
-const deleteFiles = require('delete-files');
-const rootPath = process.cwd();
-const { spawn } = require("child_process");
-let { liveStatus } = require("../../type/liveStatus")
+import * as log4js from "log4js";
+import * as dayjs from "dayjs";
+import * as fs from "fs"
+import { spawn } from "child_process";
+import { join } from 'path'
+import { upload2bilibili } from '../uploader/caller'
+import { liveStatus } from "./liveStatus"
 import { HuyaStreamInfo } from "type/getHuya";
+const deleteFiles = require('delete-files');
+
+const rootPath = process.cwd();
 log4js.configure({
   appenders: {
     cheese: {
@@ -24,7 +25,7 @@ log4js.configure({
 const logger = log4js.getLogger("message");
 export const getHuyaStream = (stream: HuyaStreamInfo) => {
   // 每段视频持续时间，单位s
-  const partDuration = 1800
+  const partDuration = "1800"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   // console.log("开始下载 ", stream.streamName);
@@ -35,19 +36,19 @@ export const getHuyaStream = (stream: HuyaStreamInfo) => {
   const timeV = dayjs().format("YYYY-MM-DD");
   const cmd = `ffmpeg`;
   // console.log("11", huyaRoomId + `${timeV}res.MP4`);
-  let savePath = path.join(rootPath, "/download")
+  let savePath = join(rootPath, "/download")
   if (!fs.existsSync(savePath)) {
     fs.mkdirSync(savePath)
   }
-  let dirName = path.join(savePath, stream.streamName)
+  let dirName = join(savePath, stream.streamName)
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
   }
-  dirName = path.join(dirName, timeV)
+  dirName = join(dirName, timeV)
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
   }
-  const fileName: string = path.join(dirName, `${stream.streamName}-${timeV}-part-%03d.mp4`);
+  const fileName: string = join(dirName, `${stream.streamName}-${timeV}-part-%03d.mp4`);
   //伪装了请求头，避免服务器返回403
   const fakeX: any = {
     'Accept': '*/*',
@@ -85,22 +86,28 @@ export const getHuyaStream = (stream: HuyaStreamInfo) => {
     logger.info(data.toString("utf8"));
   });
   huyaApp.on("close", async (code: any) => {
-    ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     const tags: string[] = []
     tags.push("LOL", "英雄联盟")
     liveStatus.set(stream.liveUrl, 0)
-    await upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
-    await deleteFiles(dirName)
+    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tags, stream.liveUrl)
+      .then((message) => {
+        logger.info(message)
+        deleteFiles(dirName)
+          .catch((err: any) => {
+            logger.info(`稿件${dirName}删除本地文件失败：${err}`)
+          })
+      })
+      .catch((err: any) => {
+        logger.info(`稿件${dirName}上传失败：${err}`)
+      })
   });
+  ffmpegStreamEnded = true
   process.on("SIGINT", () => {
     if (ffmpegStreamEnded == false) {
       ffmpegStreamEnded = true
       huyaApp.stdin.end('q')
     }
-    // if (huyaApp.stdin._writableState.ended == false) {
-    //   huyaApp.stdin.end('q')
-    // }
   })
 };
