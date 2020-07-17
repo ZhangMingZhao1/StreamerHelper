@@ -5,7 +5,6 @@ export const testRoomTypeArr = (roomType: string) => {
   else return "error";
 };
 export const getRoomArrInfo = (roomObj: { [key: string]: string }[]) => {
-  // 暂时只支持一个把。。
   let roomInfoArr = [];
   for (let roomInfo of roomObj) {
     for (let key in roomInfo) {
