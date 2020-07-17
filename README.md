@@ -9,7 +9,7 @@
 
 ## Introduction
 
-主播直播助手，部署后，后台批量监测主播是否在线，并录制视频，停播后上传到b站。
+主播直播助手，部署后，后台批量监测主播是否在线，并录制视频，停播后投稿到b站。
 
 ## Installation
 
@@ -69,7 +69,7 @@ pm2 start npm --run start
 
 ## tips
 
-建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 start npm --run start。vps比较低配的话配置的主播数量不要太多。
+建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 start npm --run start。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。
 
 
 有问题加qq群1142141023，备注streamerHelper
