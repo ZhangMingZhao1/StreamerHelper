@@ -13,7 +13,7 @@ function readDirSync(path) {
     })
     return paths
 }
-login('18753828709', 'li12345')
+login('', '')
     .then(r => {
         let dirName = "D:/web/StreamerHelper/download/火星包/2020-07-17"
         const paths = readDirSync(dirName)
