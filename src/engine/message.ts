@@ -81,8 +81,9 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     logger.info(data.toString("utf8"));
   });
   huyaApp.stderr.on("data", (data: any) => {
-    // console.error(`stderr: ${data}`);
-    logger.error(data.toString("utf8"));
+
+    // ffmpeg by default the program logs to stderr ,正常流日志不记录
+    // logger.error(data.toString("utf8"));
   });
   huyaApp.on("close", async (code: any) => {
     // console.log(`子进程退出，退出码 ${code}`);
