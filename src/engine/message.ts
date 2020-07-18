@@ -90,7 +90,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     const tags: string[] = []
     tags.push("网络游戏", "电子竞技")
     liveStatus.set(stream.liveUrl, 0)
-    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, `${stream.liveUrl}\n 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
+    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
       .then((message) => {
         logger.info(message)
         try {
