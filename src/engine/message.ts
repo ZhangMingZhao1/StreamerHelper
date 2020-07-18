@@ -6,8 +6,7 @@ import { join } from 'path'
 import { upload2bilibili } from '../uploader/caller'
 import { liveStatus } from "./liveStatus"
 import { HuyaStreamInfo } from "type/getHuya";
-const deleteFiles = require('delete-files');
-
+import { deleteFolder } from '../util/utils'
 const rootPath = process.cwd();
 log4js.configure({
   appenders: {
@@ -23,7 +22,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const getHuyaStream = (stream: HuyaStreamInfo) => {
+export const downloadStream = (stream: HuyaStreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = "1800"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
@@ -83,7 +82,7 @@ export const getHuyaStream = (stream: HuyaStreamInfo) => {
   });
   huyaApp.stderr.on("data", (data: any) => {
     // console.error(`stderr: ${data}`);
-    logger.info(data.toString("utf8"));
+    logger.error(data.toString("utf8"));
   });
   huyaApp.on("close", async (code: any) => {
     // console.log(`子进程退出，退出码 ${code}`);
@@ -94,13 +93,15 @@ export const getHuyaStream = (stream: HuyaStreamInfo) => {
     upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, `${stream.liveUrl}\n 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
       .then((message) => {
         logger.info(message)
-        deleteFiles(dirName)
-          .catch((err: any) => {
-            logger.info(`稿件${dirName}删除本地文件失败：${err}`)
-          })
+        try {
+          deleteFolder(dirName)
+          logger.info(`删除本地文件 ${dirName}`)
+        } catch (err) {
+          logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+        }
       })
-      .catch((err: any) => {
-        logger.info(`稿件${dirName}上传失败：${err}`)
+      .catch(err => {
+        logger.error(`稿件 ${dirName} 投稿失败：${err}`)
       })
   });
   ffmpegStreamEnded = true

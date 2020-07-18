@@ -15,9 +15,8 @@ function readDirSync(path: string) {
 }
 
 function upload2bilibili(dirName: string, title: string, desc: string, tags: string[], source: string) {
-    return new Promise(async (reject) => {
-        try {
-            const r: any = await login(username, password)
+    return new Promise((resolve, reject) => {
+        login(username, password).then(r => {
             const paths = readDirSync(dirName)
             let parts: videoPart[] = []
             for (let key in paths) {
@@ -27,11 +26,14 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
                     desc: ""
                 })
             }
-            await upload(r.access_token, r.sid, r.mid, parts, 2, title, 171, tags.join(','), desc, source)
-        } catch (err) {
+            upload(r.access_token, r.sid, r.mid, parts, 2, title, 171, tags.join(','), desc, source).then(message => {
+                resolve(message)
+            }).catch(err => {
+                reject(err)
+            })
+        }).catch(err => {
             reject(err)
-            // console.log(err)
-        }
+        })
     })
 }
 export { upload2bilibili }

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { HuyaStreamInfo } from "type/getHuya";
 
-function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
+function getHuyaStream(url: string): Promise<HuyaStreamInfo> {
   return new Promise((resolve, reject) => {
     axios
       .get(`${url}`)
@@ -45,4 +45,4 @@ function getHuyaSteam(url: string): Promise<HuyaStreamInfo> {
   });
 }
 
-export default getHuyaSteam;
+export { getHuyaStream };

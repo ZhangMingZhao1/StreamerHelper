@@ -5,9 +5,6 @@ const cookie = require('cookie-parse')
 const superagent = require('superagent')
 const crypt = require("../util/crypt")
 const log4js = require("log4js");
-const {
-    resolve
-} = require('path')
 
 const rootPath = process.cwd();
 const APPKEY = 'aae92bc66f3edfab'
@@ -75,6 +72,9 @@ function login(username, password) {
                 .type('form')
                 .send(post_data)
             const res = JSON.parse(result.text);
+            if (res.code !== 0) {
+                reject(res.message)
+            }
             resolve({
                 access_token: res.data.access_token,
                 mid: res.data.mid,
@@ -164,11 +164,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
                     // console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
                     logger.info(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`)
                     fileStream.pause()
-                    try {
-                        await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
-                    } catch (err) {
-                        reject(err)
-                    }
+                    await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
                     fileStream.resume()
                     readLength = 0
                     readBuffers = []
@@ -200,7 +196,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             resolve(server_file_name)
         })
         fileStream.on('error', (error) => {
-            logger.info(error)
+            logger.error(error)
         })
     })
 }
@@ -226,7 +222,11 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
             'videos': []
         }
         for (let video_part of parts) {
-            video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
+            try {
+                video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
+            } catch (err) {
+                reject(err)
+            }
             // console.log("server_file_name:  ", video_part.server_file_name)
             post_data['videos'].push({
                 "desc": video_part.desc,
@@ -246,7 +246,7 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
                 .set('Cookie', `sid=${sid};`)
                 .send(post_data)
             // console.log("Upload ended, returns:", result.text)
-            logger.info("Upload ended, returns:", result.text)
+            resolve(`Upload ended, returns:, ${result.text}`)
         } catch (err) {
             reject(err)
         }
