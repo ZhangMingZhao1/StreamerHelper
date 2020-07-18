@@ -38,7 +38,7 @@ brew install ffmpeg
 npm i -g pm2
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
 npm i
-pm2 start npm --run start
+npm run serve
 ```
 
 ## environment
