@@ -1,7 +1,7 @@
-import { getHuyaStream } from "./engine/message";
+import { downloadStream } from "./engine/message";
 import { getRoomArrInfo } from "./util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
-import getHuya from "./engine/huya/getHuyaStreamUrl";
+import { getHuyaStream } from "./engine/huya/getHuyaStreamUrl";
 import { liveStatus } from "./engine/liveStatus"
 //0 不在线 1 在线
 let pool: any = []
@@ -10,7 +10,7 @@ const timer = setInterval(() => {
     // console.log(liveStatus)
     // console.log(huyaRoomIds)
     for (let huyaRoomId of huyaRoomIds) {
-        getHuya(huyaRoomId.roomLink)
+        getHuyaStream(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {
                 // console.log(stream)
                 if (liveStatus.get(huyaRoomId.roomLink) !== 1) {
@@ -24,7 +24,7 @@ const timer = setInterval(() => {
             });
     }
     if (pool.length >= 1) {
-        getHuyaStream(pool.pop())
+        downloadStream(pool.pop())
     }
 }, 30000);
 process.on("SIGINT", () => {
