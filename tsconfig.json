@@ -10,7 +10,7 @@
       "utils/*": ["utils/*"]
     },
     // "lib": [],                             /* 编译过程中需要引入的库文件列表*/
-    "declaration": true /* 编译时创建声明文件 */,
+    // "declaration": true /* 编译时创建声明文件 */,
     "outDir": "dist" /* ts编译输出目录 */,
     "rootDir": "src" /* ts编译根目录. */,
     "allowJs": true,
