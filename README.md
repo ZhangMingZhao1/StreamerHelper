@@ -56,11 +56,13 @@ npm run serve
 ## todoList
 
 - [x] 虎牙
-- [ ] 除虎牙外的多个平台：斗鱼，twitch, b站直播..（正在开发中）
 - [x] 自动监测主播在线
 - [x] 自动上传b站
 - [x] 多p下载多p上传
 - [x] 支持多个主播
+- [ ] 除虎牙外的多个平台：斗鱼，twitch, b站直播..（正在开发中）
+- [ ] 爬虫定时区间，节省服务器流量...
+- [ ] 重启后同事检测本地是否有上传失败的视频文件，并上传。
 
 ## example
 <img src="https://images.cnblogs.com/cnblogs_com/zhangmingzhao/1808511/o_2007170908082.png" alt="例子" width="700">
