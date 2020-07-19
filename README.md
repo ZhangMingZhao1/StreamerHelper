@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">StreamerHelper</h1>
 
-> 🍰 Never miss your Streamer any again
+> 🍰 Never miss your Streamer again
 
 [![MIT](https://img.shields.io/apm/l/vim-mode?style=flat-square)](https://github.com/ZhangMingZhao1/StreamerHelper/blob/master/LICENSE)
 
@@ -41,7 +41,7 @@ npm i
 npm run serve
 ```
 
-## environment
+## Environment
 
 我们的机器在下面环境下完美运行:
 
@@ -53,25 +53,25 @@ npm run serve
 
 
 
-## todoList
+## TodoList
 
 - [x] 虎牙
 - [x] 自动监测主播在线
 - [x] 自动上传b站
 - [x] 多p下载多p上传
 - [x] 支持多个主播
-- [ ] 除虎牙外的多个平台：斗鱼，twitch, b站直播..（正在开发中）
+- [ ] 除虎牙外的多个平台：斗鱼，twitch, b站直播..（开发的差不多了，即将合并）
 - [ ] 爬虫定时区间，节省服务器流量...
-- [ ] 重启后同事检测本地是否有上传失败的视频文件，并上传。
+- [ ] 重启后同时检测本地是否有上传失败的视频文件，并上传。
 
-## example
+## Example
 <img src="https://images.cnblogs.com/cnblogs_com/zhangmingzhao/1808511/o_2007170908082.png" alt="例子" width="700">
 
 见：https://space.bilibili.com/3356199 或者 https://space.bilibili.com/11314291
 
-## tips
+## Tips
 
-建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 start npm --run start。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。
+建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 restart app。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。
 
 
 有问题加qq群1142141023，备注streamerHelper
