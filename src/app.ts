@@ -1,32 +1,30 @@
-import { getHuyaStream } from "./message";
-import { getRoomArrInfo } from "../../util/utils";
+import { downloadStream } from "./engine/message";
+import { getRoomArrInfo } from "./util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
-import getHuya from "./getHuyaStreamUrl";
-const fs = require('fs');
-const path = require('path')
-let { liveStatus } = require("../../type/liveStatus")
+import { getHuyaStream } from "./engine/huya/getHuyaStreamUrl";
+import { liveStatus } from "./engine/liveStatus"
 //0 不在线 1 在线
 let pool: any = []
-let infoFileName = path.join(process.cwd(), "/templates/info.json")
-const timer = setInterval(async () => {
+let huyaRoomIds = getRoomArrInfo(require('../templates/info.json').streamerInfo);
+const timer = setInterval(() => {
     // console.log(liveStatus)
-    let huyaRoomIds = getRoomArrInfo(JSON.parse(fs.readFileSync(infoFileName)).streamerInfo);
     // console.log(huyaRoomIds)
     for (let huyaRoomId of huyaRoomIds) {
-        await getHuya(huyaRoomId.roomLink)
+        getHuyaStream(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {
                 // console.log(stream)
-                if (liveStatus.get(huyaRoomId.roomLink) != 1) {
+                if (liveStatus.get(huyaRoomId.roomLink) !== 1) {
                     liveStatus.set(huyaRoomId.roomLink, 1)
                     pool.push(stream)
                 }
-            }).catch(() => {
+            })
+            .catch(() => {
                 // console.log(err)
                 liveStatus.set(huyaRoomId.roomLink, 0)
             });
     }
     if (pool.length >= 1) {
-        getHuyaStream(pool.pop())
+        downloadStream(pool.pop())
     }
 }, 30000);
 process.on("SIGINT", () => {

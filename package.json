@@ -6,7 +6,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "start": "npm run build && node ./dist/engine/huya/watcher.js"
+    "serve": "npm run build && pm2 start ./dist/app.js"
   },
   "repository": {
     "type": "git",
@@ -35,8 +35,6 @@
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
     "babel-preset-rsuite": "^4.0.0",
-    "electron": "^6.0.12",
-    "ts-node": "^8.4.1",
     "typescript": "^3.6.4"
   }
 }

@@ -4,9 +4,6 @@ const {
 } = require('./index.js')
 const fs = require('fs')
 const Path = require('path');
-const {
-    rejects
-} = require('assert');
 
 function readDirSync(path) {
     let paths = []
@@ -18,7 +15,7 @@ function readDirSync(path) {
 }
 login('', '')
     .then(r => {
-        let dirName = "D:/web/StreamerHelper/download/Zz1tai姿态/2020-07-15"
+        let dirName = "D:/web/StreamerHelper/download/火星包/2020-07-17"
         const paths = readDirSync(dirName)
         let parts = []
         for (let key in paths) {
@@ -39,5 +36,8 @@ login('', '')
             ["英雄联盟", "LOL"].join(','),
             "",
             "https://www.huya.com/840747", )
+    })
+    .catch(err => {
+        console.log(err)
     })
 //access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1

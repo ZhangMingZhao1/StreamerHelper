@@ -1,5 +1,4 @@
 const rsa = require('node-rsa')
-
 function make_sign(post_data, APPSECRET) {
     const keys = []
     const post_list = []
