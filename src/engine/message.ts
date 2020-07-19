@@ -36,6 +36,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
   const cmd = `ffmpeg`;
   // console.log("11", huyaRoomId + `${timeV}res.MP4`);
   let savePath = join(rootPath, "/download")
+  let startNumber = 0
   if (!fs.existsSync(savePath)) {
     fs.mkdirSync(savePath)
   }
@@ -46,6 +47,9 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
   dirName = join(dirName, timeV)
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
+  } else { //文件夹存在，说明有视频未上传，接着前面的序号下载
+    let ps = fs.readdirSync(dirName);
+    startNumber = ps.length
   }
   const fileName: string = join(dirName, `${stream.streamName}-${timeV}-part-%03d.mp4`);
   //伪装了请求头，避免服务器返回403
@@ -73,6 +77,8 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     "segment",
     "-segment_time",
     partDuration,
+    "-segment_start_number",
+    `${startNumber}`,
     fileName,
   ]);
   let ffmpegStreamEnded: boolean = false;
@@ -80,12 +86,12 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.stderr.on("data", (data: any) => {
+  huyaApp.stderr.on("data", () => {
 
     // ffmpeg by default the program logs to stderr ,正常流日志不记录
     // logger.error(data.toString("utf8"));
   });
-  huyaApp.on("close", async (code: any) => {
+  huyaApp.on("close", (code: any) => {
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     const tags: string[] = []
