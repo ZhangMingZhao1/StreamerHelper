@@ -2,7 +2,7 @@ import { downloadStream } from "./engine/message";
 import { getRoomArrInfo } from "./util/utils";
 import { HuyaStreamInfo } from "type/getHuya";
 import { getHuyaStream } from "./engine/huya/getHuyaStreamUrl";
-import { liveStatus } from "./engine/liveStatus"
+import { liveStreamStatus } from "./engine/liveStreamStatus"
 //0 不在线 1 在线
 let pool: any = []
 let huyaRoomIds = getRoomArrInfo(require('../templates/info.json').streamerInfo);
@@ -13,14 +13,14 @@ const timer = setInterval(() => {
         getHuyaStream(huyaRoomId.roomLink)
             .then((stream: HuyaStreamInfo) => {
                 // console.log(stream)
-                if (liveStatus.get(huyaRoomId.roomLink) !== 1) {
-                    liveStatus.set(huyaRoomId.roomLink, 1)
+                if (liveStreamStatus.get(huyaRoomId.roomLink) !== 1) {
+                    liveStreamStatus.set(huyaRoomId.roomLink, 1)
                     pool.push(stream)
                 }
             })
             .catch(() => {
                 // console.log(err)
-                liveStatus.set(huyaRoomId.roomLink, 0)
+                liveStreamStatus.set(huyaRoomId.roomLink, 0)
             });
     }
     if (pool.length >= 1) {
@@ -28,6 +28,6 @@ const timer = setInterval(() => {
     }
 }, 30000);
 process.on("SIGINT", () => {
-    console.log("接收到退出指令，清除定时器\n等待上传完成后，进程自动退出")
+    console.log("接收到退出指令，清除定时器\n进程退出，稿件需要手动上传")
     clearInterval(timer)
 })

@@ -4,9 +4,10 @@ import * as fs from "fs"
 import { spawn } from "child_process";
 import { join } from 'path'
 import { upload2bilibili } from '../uploader/caller'
-import { liveStatus } from "./liveStatus"
+import { liveStreamStatus } from "./liveStreamStatus"
 import { HuyaStreamInfo } from "type/getHuya";
 import { deleteFolder } from '../util/utils'
+import { getHuyaStream } from "../engine/huya/getHuyaStreamUrl";
 const rootPath = process.cwd();
 log4js.configure({
   appenders: {
@@ -77,11 +78,12 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     "segment",
     "-segment_time",
     partDuration,
-    "-segment_start_number",
-    `${startNumber}`,
     fileName,
   ]);
+  const tags: string[] = []
+  tags.push("网络游戏", "电子竞技")
   let ffmpegStreamEnded: boolean = false;
+  let ffmpegStreamEndedByUser: boolean = false
   huyaApp.stdout.on("data", (data: any) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
@@ -92,28 +94,42 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     // logger.error(data.toString("utf8"));
   });
   huyaApp.on("close", (code: any) => {
+    if (ffmpegStreamEndedByUser) {
+      return
+    }
+    ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
-    const tags: string[] = []
-    tags.push("网络游戏", "电子竞技")
-    liveStatus.set(stream.liveUrl, 0)
-    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
-      .then((message) => {
-        logger.info(message)
-        try {
-          deleteFolder(dirName)
-          logger.info(`删除本地文件 ${dirName}`)
-        } catch (err) {
-          logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
-        }
+    liveStreamStatus.set(stream.liveUrl, 0)
+    // 直播流断开，但直播可能没断，不需要上传，继续下载
+    setTimeout(() => {
+      getHuyaStream(stream.liveUrl).then((msg) => {
+        // console.log("直播间仍在线", msg)
+        logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
+        // Don't do anything
+      }).catch(() => {
+        // 直播和直播流都断开，表示直播结束
+        // console.log("catch:", er)
+        upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
+          .then((message) => {
+            logger.info(message)
+            try {
+              deleteFolder(dirName)
+              logger.info(`删除本地文件 ${dirName}`)
+            } catch (err) {
+              logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+            }
+          })
+          .catch(err => {
+            logger.error(`稿件 ${dirName} 投稿失败：${err}`)
+          })
       })
-      .catch(err => {
-        logger.error(`稿件 ${dirName} 投稿失败：${err}`)
-      })
+    }, 120000);
+
   });
-  ffmpegStreamEnded = true
   process.on("SIGINT", () => {
-    if (ffmpegStreamEnded == false) {
+    ffmpegStreamEndedByUser = true
+    if (ffmpegStreamEnded === false) {
       ffmpegStreamEnded = true
       huyaApp.stdin.end('q')
     }
