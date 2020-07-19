@@ -78,6 +78,8 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     "segment",
     "-segment_time",
     partDuration,
+    "-segment_start_number",
+    startNumber.toString(),
     fileName,
   ]);
   const tags: string[] = []
