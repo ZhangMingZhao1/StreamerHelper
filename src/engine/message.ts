@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 import { join } from 'path'
 import { upload2bilibili } from '../uploader/caller'
 import { liveStatus } from "./liveStatus"
-import { HuyaStreamInfo } from "type/getHuya";
+import { StreamInfo } from "type/getStreamInfo";
 import { deleteFolder } from '../util/utils'
 const rootPath = process.cwd();
 log4js.configure({
@@ -22,7 +22,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const downloadStream = (stream: HuyaStreamInfo) => {
+export const downloadStream = (stream: StreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = "1800"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
@@ -80,7 +80,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.stderr.on("data", (data: any) => {
+  huyaApp.stderr.on("data", () => {
 
     // ffmpeg by default the program logs to stderr ,正常流日志不记录
     // logger.error(data.toString("utf8"));
