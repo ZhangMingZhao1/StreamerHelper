@@ -11,6 +11,24 @@ const APPKEY = 'aae92bc66f3edfab'
 const APPSECRET = 'af125a0d5279fd576c1b4418a3e8276d'
 const logger = log4js.getLogger("message");
 
+log4js.configure({
+    appenders: {
+        cheese: {
+            type: "file",
+            filename: rootPath + "/logs/artanis.log",
+            maxLogSize: 20971520,
+            backups: 10,
+            encoding: "utf-8",
+        },
+    },
+    categories: {
+        default: {
+            appenders: ["cheese"],
+            level: "info"
+        }
+    },
+});
+
 function getKey() {
     return new Promise(async (resolve, reject) => {
         let post_data = {
@@ -40,7 +58,7 @@ function getKey() {
         } catch (err) {
             // console.log(err)
             // logger.info(err)
-            reject(err)
+            reject(`An error occurred when getKey: ${err}`)
         }
     })
 }
@@ -73,7 +91,8 @@ function login(username, password) {
                 .send(post_data)
             const res = JSON.parse(result.text);
             if (res.code !== 0) {
-                reject(res.message)
+                reject(`An error occurred when login: ${res.message}`)
+
             }
             resolve({
                 access_token: res.data.access_token,
@@ -83,7 +102,7 @@ function login(username, password) {
         } catch (err) {
             // console.log(err)
             // logger.info(err)
-            reject(err)
+            reject(`An error occurred when login: ${res}`)
         }
     })
 }
@@ -95,11 +114,11 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
             chunkHash.update(v)
         }
         let files = {
-            'version': (null, '2.0.0.1054'),
-            'filesize': (null, chunk_size),
-            'chunk': (null, chunk_id),
-            'chunks': (null, chunk_total_num),
-            'md5': (null, chunkHash.digest('hex')),
+            'version': ('2.0.0.1054'),
+            'filesize': (chunk_size),
+            'chunk': (chunk_id),
+            'chunks': (chunk_total_num),
+            'md5': (chunkHash.digest('hex')),
         }
         try {
             const r = await superagent
@@ -114,7 +133,7 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
         } catch (err) {
             // console.log(err)
             // logger.info(err)
-            reject(err)
+            reject(`An error occurred when upload chunk: ${err}`)
         }
     })
 }
@@ -127,12 +146,16 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             'User-Agent': '',
             'Accept-Encoding': 'gzip,deflate',
         }
-
-        const r = await superagent
-            .get(`http://member.bilibili.com/preupload?access_key=${access_token}&mid=${mid}&profile=ugcfr%2Fpc3`)
-            .set(headers)
-            .set('Cookie', `sid=${sid};`)
-            .type('form')
+        let r
+        try {
+            r = await superagent
+                .get(`http://member.bilibili.com/preupload?access_key=${access_token}&mid=${mid}&profile=ugcfr%2Fpc3`)
+                .set(headers)
+                .set('Cookie', `sid=${sid};`)
+                .type('form')
+        } catch (err) {
+            reject(`An error occurred when upload video part: ${err}`)
+        }
 
         const pre_upload_data = JSON.parse(r.text)
         const upload_url = pre_upload_data['url']
@@ -159,20 +182,20 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             totalReadLength += chunk.length
             fileHash.update(chunk)
             if (readLength >= chunkSize || totalReadLength === fileSize) {
+                nowChunk++
+                // console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
+                logger.info(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`)
+                fileStream.pause()
                 try {
-                    nowChunk++
-                    // console.log(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`);
-                    logger.info(`正在上传 ${local_file_name} 第 ${nowChunk}/${chunkNum} 分块`)
-                    fileStream.pause()
                     await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
-                    fileStream.resume()
-                    readLength = 0
-                    readBuffers = []
                 } catch (err) {
-                    // console.log(err.response.text);
-                    // logger.info(err.response.text)
-                    reject(err.response.text)
+                    reject(`An error occurred when upload video part: ${err}`)
                 }
+                fileStream.resume()
+                readLength = 0
+                readBuffers = []
+                // console.log(err.response.text);
+                // logger.info(err.response.text)
             }
         })
         fileStream.on('end', async () => {
@@ -191,7 +214,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             } catch (err) {
                 // console.log(err)
                 // logger.info(err)
-                reject(err)
+                reject(`An error occurred when merge file: ${err}`)
             }
             resolve(server_file_name)
         })
@@ -225,7 +248,7 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
             try {
                 video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
             } catch (err) {
-                reject(err)
+                reject(`An error occurred when upload: ${err}`)
             }
             // console.log("server_file_name:  ", video_part.server_file_name)
             post_data['videos'].push({
@@ -248,7 +271,7 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
             // console.log("Upload ended, returns:", result.text)
             resolve(`Upload ended, returns:, ${result.text}`)
         } catch (err) {
-            reject(err)
+            reject(`An error occurred when final upload: ${err}`)
         }
     })
 }
