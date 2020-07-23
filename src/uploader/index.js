@@ -11,6 +11,9 @@ const APPKEY = 'aae92bc66f3edfab'
 const APPSECRET = 'af125a0d5279fd576c1b4418a3e8276d'
 const logger = log4js.getLogger("message");
 
+const delay = function (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
 log4js.configure({
     appenders: {
         cheese: {
@@ -120,20 +123,27 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
             'chunks': (chunk_total_num),
             'md5': (chunkHash.digest('hex')),
         }
-        try {
-            const r = await superagent
-                .post(upload_url)
-                .set('Cookie', `PHPSESSID=${server_file_name};`)
-                .field(files)
-                .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
-                .retry(retryTimes)
-            // console.log(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
-            logger.info(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
-            resolve()
-        } catch (err) {
-            // console.log(err)
-            // logger.info(err)
-            reject(`An error occurred when upload chunk: ${err}`)
+        for (let i = 1; i <= retryTimes; i++) {
+            try {
+                const r = await superagent
+                    .post(upload_url)
+                    .set('Cookie', `PHPSESSID=${server_file_name};`)
+                    .field(files)
+                    .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
+                    .retry(retryTimes)
+                // console.log(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
+                logger.info(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
+                resolve()
+                break;
+            } catch (err) {
+                // console.log(err)
+                // logger.info(err)
+                //手动暂停 10s
+                logger.error(`Upload chunk error: ${err} , retry in 10 seconds...`)
+                if (i === retryTimes)
+                    reject(`An error occurred when upload chunk: ${err}`)
+                await delay(10000)
+            }
         }
     })
 }
@@ -207,10 +217,12 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
                 'version': '2.0.0.1054',
             }
             try {
-                await superagent
+                let r = await superagent
                     .post(complete_upload_url)
                     .set(headers)
                     .send(post_data)
+                // console.log(r.text)
+                logger.info(`video part ${video_part.path} ${video_part.title} uplaod ended, returns ${r.text}`)
             } catch (err) {
                 // console.log(err)
                 // logger.info(err)
@@ -219,7 +231,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             resolve(server_file_name)
         })
         fileStream.on('error', (error) => {
-            logger.error(error)
+            logger.error(`An error occurred while listening fileStream: ${error}`)
         })
     })
 }
@@ -261,17 +273,24 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
             'access_key': access_token
         }
         params['sign'] = crypt.make_sign(params, APPSECRET)
-        try {
-            const result = await superagent
-                .post("http://member.bilibili.com/x/vu/client/add")
-                .query(params)
-                .set(headers)
-                .set('Cookie', `sid=${sid};`)
-                .send(post_data)
-            // console.log("Upload ended, returns:", result.text)
-            resolve(`Upload ended, returns:, ${result.text}`)
-        } catch (err) {
-            reject(`An error occurred when final upload: ${err}`)
+        for (let i = 1; i <= 5; i++) {
+            try {
+                const result = await superagent
+                    .post("http://member.bilibili.com/x/vu/client/add")
+                    .query(params)
+                    .set(headers)
+                    .set('Cookie', `sid=${sid};`)
+                    .send(post_data)
+                // console.log("Upload ended, returns:", result.text)
+                logger.info(`Upload ended, returns:, ${result.text}`)
+                resolve(`Upload ended, returns:, ${result.text}`)
+                break;
+            } catch (err) {
+                logger.error(`Final upload error: ${err}, retry in 10 seconds...`)
+                if (i == 5)
+                    reject(`An error occurred when final upload: ${err}`)
+                await delay(10000)
+            }
         }
     })
 }

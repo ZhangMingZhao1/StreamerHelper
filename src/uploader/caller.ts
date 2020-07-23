@@ -22,7 +22,7 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
             for (let key in paths) {
                 parts.push({
                     path: paths[key],
-                    title: `P ${parseInt(key) + 1}`,
+                    title: `P${parseInt(key) + 1}`,
                     desc: ""
                 })
             }
