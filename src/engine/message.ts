@@ -65,7 +65,7 @@ export const downloadStream = (stream: StreamInfo) => {
   for (let key of Object.keys(fakeX)) {
     fakeHeaders = `${fakeHeaders}${key}: ${fakeX[key]}\r\n`
   }
-  const huyaApp = spawn(cmd, [
+  const App = spawn(cmd, [
     "-headers",
     fakeHeaders,
     "-i",
@@ -86,16 +86,16 @@ export const downloadStream = (stream: StreamInfo) => {
   tags.push("网络游戏", "电子竞技")
   let ffmpegStreamEnded: boolean = false;
   let ffmpegStreamEndedByUser: boolean = false
-  huyaApp.stdout.on("data", (data: any) => {
+  App.stdout.on("data", (data: any) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.stderr.on("data", () => {
+  App.stderr.on("data", () => {
 
     // ffmpeg by default the program logs to stderr ,正常流日志不记录
     // logger.error(data.toString("utf8"));
   });
-  huyaApp.on("close", (code: any) => {
+  App.on("close", (code: any) => {
     if (ffmpegStreamEndedByUser) {
       return
     }
@@ -133,7 +133,7 @@ export const downloadStream = (stream: StreamInfo) => {
     ffmpegStreamEndedByUser = true
     if (ffmpegStreamEnded === false) {
       ffmpegStreamEnded = true
-      huyaApp.stdin.end('q')
+      App.stdin.end('q')
     }
   })
 };

@@ -26,13 +26,12 @@ export function getStreamUrl(title:string,url: string): Promise<StreamInfo> {
        if (website) {
            const result: any = website.main(url);
            result.then(
-               function (value: any) {
+               (value: any)=> {
                    resolve({ streamUrl: value, streamName: title, liveUrl: url });
-               },
-               function (error: any) {
-                   reject(error);
                }
-           );
+           ).catch((e:any)=>{
+               console.log(e);
+           });
        } else {
            reject(`This link is not supported`);
        }
