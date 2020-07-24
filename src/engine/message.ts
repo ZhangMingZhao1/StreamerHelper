@@ -25,7 +25,7 @@ log4js.configure({
 const logger = log4js.getLogger("message");
 export const downloadStream = (stream: HuyaStreamInfo) => {
   // 每段视频持续时间，单位s
-  const partDuration = "1800"
+  const partDuration = "3000"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   // console.log("开始下载 ", stream.streamName);
