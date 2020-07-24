@@ -1,5 +1,5 @@
 {
-  "name": "artanis_video_electron",
+  "name": "streamer_helper",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZhangMingZhao1/Artanis_Video_Electron.git"
+    "url": "https://github.com/ZhangMingZhao1/StreamerHelper.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "ZhangMingZhao1",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron/issues"
+    "url": "https://github.com/ZhangMingZhao1/StreamerHelper/issues"
   },
-  "homepage": "https://github.com/ZhangMingZhao1/Artanis_Video_Electron#readme",
+  "homepage": "https://github.com/ZhangMingZhao1/StreamerHelper#readme",
   "dependencies": {
     "axios": "^0.19.0",
     "cookie-parse": "^0.4.0",
