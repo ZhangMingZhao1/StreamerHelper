@@ -2,7 +2,6 @@ import {StreamInfo} from "type/getStreamInfo";
 
 const regs: any = [
     [/www\.huya\.com/g, require("./website/huya")],
-    [/www\.douyu\.com/g, require("./website/douyu")],
     [/fanxing\.kugou\.com/g, require("./website/kugou")],
     [/v\.douyin\.com/g, require("./website/douyin")],
     [/live\.bilibili\.com/g, require("./website/bilibili")],
