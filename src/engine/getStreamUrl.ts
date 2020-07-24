@@ -30,7 +30,7 @@ export function getStreamUrl(title:string,url: string): Promise<StreamInfo> {
                    resolve({ streamUrl: value, streamName: title, liveUrl: url });
                }
            ).catch((e:any)=>{
-               console.log(e);
+               reject(e);
            });
        } else {
            reject(`This link is not supported`);
