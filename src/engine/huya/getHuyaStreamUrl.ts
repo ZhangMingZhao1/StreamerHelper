@@ -1,5 +1,5 @@
 import axios from "axios";
-import { HuyaStreamInfo } from "type/getHuya";
+import { HuyaStreamInfo } from "type/getStreamInfo";
 
 function getHuyaStream(url: string): Promise<HuyaStreamInfo> {
   return new Promise((resolve, reject) => {

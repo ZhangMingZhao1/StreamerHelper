@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 import { join } from 'path'
 import { upload2bilibili } from '../uploader/caller'
 import { liveStreamStatus } from "./liveStreamStatus"
-import { HuyaStreamInfo } from "type/getHuya";
+import { StreamInfo } from "type/getStreamInfo";
 import { deleteFolder } from '../util/utils'
 import { getHuyaStream } from "../engine/huya/getHuyaStreamUrl";
 const rootPath = process.cwd();
@@ -23,7 +23,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const downloadStream = (stream: HuyaStreamInfo) => {
+export const downloadStream = (stream: StreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = "1800"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
