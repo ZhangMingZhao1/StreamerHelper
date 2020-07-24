@@ -7,7 +7,7 @@ import { upload2bilibili } from '../uploader/caller'
 import { liveStreamStatus } from "./liveStreamStatus"
 import { StreamInfo } from "type/getStreamInfo";
 import { deleteFolder } from '../util/utils'
-import { getHuyaStream } from "../engine/huya/getHuyaStreamUrl";
+import { getStreamUrl } from "../engine/getStreamUrl";
 const rootPath = process.cwd();
 log4js.configure({
   appenders: {
@@ -105,7 +105,7 @@ export const downloadStream = (stream: StreamInfo) => {
     liveStreamStatus.set(stream.liveUrl, 0)
     // 直播流断开，但直播可能没断，不需要上传，继续下载
     setTimeout(() => {
-      getHuyaStream(stream.liveUrl).then((msg) => {
+      getStreamUrl(stream.streamName,stream.liveUrl).then((msg) => {
         // console.log("直播间仍在线", msg)
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
         // Don't do anything
