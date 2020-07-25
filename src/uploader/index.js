@@ -95,7 +95,7 @@ function login(username, password) {
             const res = JSON.parse(result.text);
             if (res.code !== 0) {
                 reject(`An error occurred when login: ${res.message}`)
-
+                return
             }
             resolve({
                 access_token: res.data.access_token,
@@ -130,18 +130,17 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
                     .set('Cookie', `PHPSESSID=${server_file_name};`)
                     .field(files)
                     .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
-                    .retry(retryTimes)
                 // console.log(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
                 logger.info(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
                 resolve()
                 break;
             } catch (err) {
                 // console.log(err)
-                // logger.info(err)
                 //手动暂停 10s
                 logger.error(`Upload chunk error: ${err} , retry in 10 seconds...`)
-                if (i === retryTimes)
+                if (i === retryTimes) {
                     reject(`An error occurred when upload chunk: ${err}`)
+                }
                 await delay(10000)
             }
         }
@@ -164,7 +163,8 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
                 .set('Cookie', `sid=${sid};`)
                 .type('form')
         } catch (err) {
-            reject(`An error occurred when upload video part: ${err}`)
+            reject(`An error occurred when fetch previous upload data: ${err}`)
+            return
         }
 
         const pre_upload_data = JSON.parse(r.text)
@@ -200,6 +200,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
                     await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
                 } catch (err) {
                     reject(`An error occurred when upload video part: ${err}`)
+                    return
                 }
                 fileStream.resume()
                 readLength = 0
@@ -227,6 +228,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
                 // console.log(err)
                 // logger.info(err)
                 reject(`An error occurred when merge file: ${err}`)
+                return
             }
             resolve(server_file_name)
         })
@@ -261,6 +263,7 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
                 video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
             } catch (err) {
                 reject(`An error occurred when upload: ${err}`)
+                return
             }
             // console.log("server_file_name:  ", video_part.server_file_name)
             post_data['videos'].push({
@@ -282,13 +285,18 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
                     .set('Cookie', `sid=${sid};`)
                     .send(post_data)
                 // console.log("Upload ended, returns:", result.text)
+                if (JSON.parse(result.text).code !== 0) {
+                    reject(`Upload failed: ${result.text}`)
+                    return
+                }
                 logger.info(`Upload ended, returns:, ${result.text}`)
                 resolve(`Upload ended, returns:, ${result.text}`)
                 break;
             } catch (err) {
                 logger.error(`Final upload error: ${err}, retry in 10 seconds...`)
-                if (i == 5)
+                if (i == 5) {
                     reject(`An error occurred when final upload: ${err}`)
+                }
                 await delay(10000)
             }
         }
