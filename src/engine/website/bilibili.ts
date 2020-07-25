@@ -9,8 +9,8 @@ export function main(url: string) {
             )
             .then(function (response: any) {
                 const data: any = response.data;
-                if (data["code"] != 0) {
-                    resolve(
+		if (data["code"] != 0 || data["data"]["live_time"] < 0) {
+                    reject(
                         "BILIBILI=>No match results:Maybe the roomid is error,or this room is not open!"
                     );
                 }
