@@ -1,26 +1,26 @@
 import { downloadStream } from "./engine/message";
 import { getRoomArrInfo } from "./util/utils";
-import { HuyaStreamInfo } from "type/getHuya";
-import { getHuyaStream } from "./engine/huya/getHuyaStreamUrl";
+import { StreamInfo } from "type/getStreamInfo";
+import { getStreamUrl } from "./engine/getStreamUrl";
 import { liveStreamStatus } from "./engine/liveStreamStatus"
 //0 不在线 1 在线
 let pool: any = []
-let huyaRoomIds = getRoomArrInfo(require('../templates/info.json').streamerInfo);
+let RoomIds = getRoomArrInfo(require('../templates/info.json').streamerInfo);
 const timer = setInterval(() => {
     // console.log(liveStatus)
-    // console.log(huyaRoomIds)
-    for (let huyaRoomId of huyaRoomIds) {
-        getHuyaStream(huyaRoomId.roomLink)
-            .then((stream: HuyaStreamInfo) => {
+    // console.log(RoomIds)
+    for (let RoomId of RoomIds) {
+        getStreamUrl(RoomId.roomTitle,RoomId.roomLink)
+            .then((stream: StreamInfo) => {
                 // console.log(stream)
-                if (liveStreamStatus.get(huyaRoomId.roomLink) !== 1) {
-                    liveStreamStatus.set(huyaRoomId.roomLink, 1)
+                if (liveStreamStatus.get(RoomId.roomLink) !== 1) {
+                    liveStreamStatus.set(RoomId.roomLink, 1)
                     pool.push(stream)
                 }
             })
             .catch(() => {
                 // console.log(err)
-                liveStreamStatus.set(huyaRoomId.roomLink, 0)
+                liveStreamStatus.set(RoomId.roomLink, 0)
             });
     }
     if (pool.length >= 1) {

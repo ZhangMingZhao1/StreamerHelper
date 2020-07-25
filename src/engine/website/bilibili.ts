@@ -1,0 +1,37 @@
+const axios = require("axios");
+
+export function main(url: string) {
+    return new Promise(function (resolve, reject) {
+        const rid: any = url.match(/(?<=\/)\d{2,}/g);
+        axios
+            .get(
+                `https://api.live.bilibili.com/room/v1/Room/room_init?id=${rid}`
+            )
+            .then(function (response: any) {
+                const data: any = response.data;
+                if (data["code"] != 0) {
+                    resolve(
+                        "BILIBILI=>No match results:Maybe the roomid is error,or this room is not open!"
+                    );
+                }
+                const real_id: string = data["data"]["room_id"];
+                const config: any = {
+                    method: "get",
+                    url: `https://api.live.bilibili.com/xlive/web-room/v1/playUrl/playUrl?cid=${real_id}&platform=h5&otype=json&quality=1&qn=400`,
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                    },
+                };
+
+                axios(config).then(function (response: any) {
+                    const html: any = response.data;
+                    const links: any = html["data"]["durl"];
+                    let m3u8_url = links[0]["url"];
+                    resolve(m3u8_url);
+                });
+            })
+            .catch(function (error: any) {
+                reject(error);
+            });
+    });
+}

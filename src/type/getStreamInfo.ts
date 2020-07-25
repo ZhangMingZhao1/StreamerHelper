@@ -1,4 +1,4 @@
-export interface HuyaStreamInfo {
+export interface StreamInfo {
   liveUrl: string;
   streamUrl: string;
   streamName: string;

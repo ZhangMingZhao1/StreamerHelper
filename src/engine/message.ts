@@ -5,9 +5,9 @@ import { spawn } from "child_process";
 import { join } from 'path'
 import { upload2bilibili } from '../uploader/caller'
 import { liveStreamStatus } from "./liveStreamStatus"
-import { HuyaStreamInfo } from "type/getHuya";
+import { StreamInfo } from "type/getStreamInfo";
 import { deleteFolder } from '../util/utils'
-import { getHuyaStream } from "../engine/huya/getHuyaStreamUrl";
+import { getStreamUrl } from "../engine/getStreamUrl";
 const rootPath = process.cwd();
 log4js.configure({
   appenders: {
@@ -23,7 +23,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger("message");
-export const downloadStream = (stream: HuyaStreamInfo) => {
+export const downloadStream = (stream: StreamInfo) => {
   // 每段视频持续时间，单位s
   const partDuration = "1800"
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
@@ -65,7 +65,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
   for (let key of Object.keys(fakeX)) {
     fakeHeaders = `${fakeHeaders}${key}: ${fakeX[key]}\r\n`
   }
-  const huyaApp = spawn(cmd, [
+  const App = spawn(cmd, [
     "-headers",
     fakeHeaders,
     "-i",
@@ -86,16 +86,16 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
   tags.push("网络游戏", "电子竞技")
   let ffmpegStreamEnded: boolean = false;
   let ffmpegStreamEndedByUser: boolean = false
-  huyaApp.stdout.on("data", (data: any) => {
+  App.stdout.on("data", (data: any) => {
     // console.log(`stdout: ${data}`);
     logger.info(data.toString("utf8"));
   });
-  huyaApp.stderr.on("data", () => {
+  App.stderr.on("data", () => {
 
     // ffmpeg by default the program logs to stderr ,正常流日志不记录
     // logger.error(data.toString("utf8"));
   });
-  huyaApp.on("close", (code: any) => {
+  App.on("close", (code: any) => {
     if (ffmpegStreamEndedByUser) {
       return
     }
@@ -105,7 +105,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     liveStreamStatus.set(stream.liveUrl, 0)
     // 直播流断开，但直播可能没断，不需要上传，继续下载
     setTimeout(() => {
-      getHuyaStream(stream.liveUrl).then((msg) => {
+      getStreamUrl(stream.streamName,stream.liveUrl).then((msg) => {
         // console.log("直播间仍在线", msg)
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
         // Don't do anything
@@ -133,7 +133,7 @@ export const downloadStream = (stream: HuyaStreamInfo) => {
     ffmpegStreamEndedByUser = true
     if (ffmpegStreamEnded === false) {
       ffmpegStreamEnded = true
-      huyaApp.stdin.end('q')
+      App.stdin.end('q')
     }
   })
 };
