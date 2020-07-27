@@ -82,6 +82,21 @@ export const downloadStream = (stream: StreamInfo) => {
     startNumber.toString(),
     fileName,
   ]);
+  const submit = () => {
+    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
+      .then((message) => {
+        logger.info(message)
+        try {
+          deleteFolder(dirName)
+          logger.info(`删除本地文件 ${dirName}`)
+        } catch (err) {
+          logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+        }
+      })
+      .catch(err => {
+        logger.error(`稿件 ${dirName} 投稿失败：${err}`)
+      })
+  }
   const tags: string[] = []
   tags.push("网络游戏", "电子竞技")
   let ffmpegStreamEnded: boolean = false;
@@ -96,6 +111,8 @@ export const downloadStream = (stream: StreamInfo) => {
     // logger.error(data.toString("utf8"));
   });
   App.on("close", (code: any) => {
+    // console.log(App.listeners)
+    App.removeAllListeners()
     if (ffmpegStreamEndedByUser) {
       return
     }
@@ -103,28 +120,22 @@ export const downloadStream = (stream: StreamInfo) => {
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
     liveStreamStatus.set(stream.liveUrl, 0)
-    // 直播流断开，但直播可能没断，不需要上传，继续下载
+
+    // 日期改变，前一天的录播不会再上传，所以这里主动上传
+    let timeNow = dayjs().format("YYYY-MM-DD")
+    if (timeNow !== timeV) {
+      logger.info(`日期改变，上传前一天的录播文件`)
+      submit()
+    }
+
+    // 手动延迟 2min 避免直播流断开，但直播未结束，导致误上传的情况
     setTimeout(() => {
-      getStreamUrl(stream.streamName,stream.liveUrl).then((msg) => {
-        // console.log("直播间仍在线", msg)
+      getStreamUrl(stream.streamName, stream.liveUrl).then((msg) => {
+        // 直播流断开，但直播没断，不需要上传，继续下载
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
-        // Don't do anything
       }).catch(() => {
-        // 直播和直播流都断开，表示直播结束
-        // console.log("catch:", er)
-        upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
-          .then((message) => {
-            logger.info(message)
-            try {
-              deleteFolder(dirName)
-              logger.info(`删除本地文件 ${dirName}`)
-            } catch (err) {
-              logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
-            }
-          })
-          .catch(err => {
-            logger.error(`稿件 ${dirName} 投稿失败：${err}`)
-          })
+        // 直播和直播流都断开，认为直播结束
+        submit()
       })
     }, 120000);
 
