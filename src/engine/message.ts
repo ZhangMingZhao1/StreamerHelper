@@ -111,6 +111,8 @@ export const downloadStream = (stream: StreamInfo) => {
     // logger.error(data.toString("utf8"));
   });
   App.on("close", (code: any) => {
+    // console.log(App.listeners)
+    App.removeAllListeners()
     if (ffmpegStreamEndedByUser) {
       return
     }
