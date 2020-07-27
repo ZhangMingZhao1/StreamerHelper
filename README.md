@@ -65,8 +65,10 @@ npm run serve
 </a>
 
 <br>
+<br>
 
-<div>Thanks：<div/>
+Thanks：
+  
 <div>
 <a class="mr-2" href="/ForgQi">
           <img class="d-block avatar-user" src="https://avatars3.githubusercontent.com/u/34411314?s=64&amp;v=4" width="50" height="50" alt="@ForgQi">
