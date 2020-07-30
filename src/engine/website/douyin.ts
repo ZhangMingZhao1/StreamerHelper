@@ -6,6 +6,11 @@ export function main(url: string) {
             .get(url)
             .then(function (response: any) {
                 const html: string = response.data;
+                if (html.indexOf('直播已结束')!= -1){
+                    reject(
+                        "DOUYIN=>No match results:Maybe the roomid is error,or this room is not open!"
+                    );
+                }
                 const rid: any = html.match(
                     /(?<="room_id_str":")(.+?)(?=",")/g
                 );
