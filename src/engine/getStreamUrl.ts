@@ -11,7 +11,8 @@ const regs: any = [
     [/www\.yy\.com/,require("./website/yy")],
     [/cc\.163\.com/,require("./website/cc")],
     [/egame\.qq\.com/,require("./website/egame")],
-    [/www\.huajiao\.com/,require("./website/huajiao")]
+    [/www\.huajiao\.com/,require("./website/huajiao")],
+    [/live\.kuaishou\.com/,require("./website/kuaishou")]
 ];
 
 export function getStreamUrl(title:string,url: string): Promise<StreamInfo> {
