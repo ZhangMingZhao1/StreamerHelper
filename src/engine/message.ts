@@ -29,7 +29,7 @@ export const downloadStream = (stream: StreamInfo) => {
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   // console.log("开始下载 ", stream.streamName);
-  logger.info("开始下载 ", stream.streamName)
+  logger.info(`开始下载: ${stream.streamName}, 直播流: ${stream.streamUrl}`)
   // const cmd = `ffmpeg -i "${streamUrl}" -f mp4 res.MP4`;
   // 命名加上时间戳
   // console.log("streamUrl", stream.streamUrl);
