@@ -1,6 +1,9 @@
 const fs = require('fs')
 const Path = require('path');
-const { login, upload } = require('./index.js')
+const {
+    login,
+    upload
+} = require('./index.js')
 let deleteFolder = function (path) {
     try {
         let files = [];
@@ -40,7 +43,7 @@ login('', '')
                 desc: ""
             })
         }
-        upload(r.access_token, r.sid, r.mid, parts, 2, "example title", 171, ["tag1", "tag2"].join(','), "", "live url", )
+        upload(dirName, r.access_token, r.sid, r.mid, parts, 2, "example title", 171, ["tag1", "tag2"].join(','), "", "live url", )
             .then(() => {
                 // deleteFolder(dirName)
             })
