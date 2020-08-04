@@ -26,7 +26,7 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
                     desc: ""
                 })
             }
-            upload(r.access_token, r.sid, r.mid, parts, 2, title, 171, tags.join(','), desc, source).then(message => {
+            upload(dirName, r.access_token, r.sid, r.mid, parts, 2, title, 171, tags.join(','), desc, source).then(message => {
                 resolve(message)
             }).catch(err => {
                 reject(err)

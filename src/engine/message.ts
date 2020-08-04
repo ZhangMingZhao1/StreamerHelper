@@ -29,7 +29,7 @@ export const downloadStream = (stream: StreamInfo) => {
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   // console.log("开始下载 ", stream.streamName);
-  logger.info("开始下载 ", stream.streamName)
+  logger.info(`开始下载: ${stream.streamName}, 直播流: ${stream.streamUrl}`)
   // const cmd = `ffmpeg -i "${streamUrl}" -f mp4 res.MP4`;
   // 命名加上时间戳
   // console.log("streamUrl", stream.streamUrl);
@@ -111,7 +111,6 @@ export const downloadStream = (stream: StreamInfo) => {
     // logger.error(data.toString("utf8"));
   });
   App.on("close", (code: any) => {
-    // console.log(App.listeners)
     App.removeAllListeners()
     if (ffmpegStreamEndedByUser) {
       return
@@ -119,22 +118,22 @@ export const downloadStream = (stream: StreamInfo) => {
     ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
-    liveStreamStatus.set(stream.liveUrl, 0)
-
-    // 日期改变，前一天的录播不会再上传，所以这里主动上传
-    let timeNow = dayjs().format("YYYY-MM-DD")
-    if (timeNow !== timeV) {
-      logger.info(`日期改变，上传前一天的录播文件`)
-      submit()
-    }
-
     // 手动延迟 2min 避免直播流断开，但直播未结束，导致误上传的情况
+    // 连续检测三次（to do）
     setTimeout(() => {
+      liveStreamStatus.set(stream.liveUrl, 0)
       getStreamUrl(stream.streamName, stream.liveUrl).then((msg) => {
         // 直播流断开，但直播没断，不需要上传，继续下载
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
+        // 日期改变，前一天的录播不会再上传，所以这里主动上传
+        let timeNow = dayjs().format("YYYY-MM-DD")
+        if (timeNow !== timeV) {
+          logger.info(`日期改变，上传前一天的录播文件`)
+          submit()
+        }
       }).catch(() => {
         // 直播和直播流都断开，认为直播结束
+        App.removeAllListeners()
         submit()
       })
     }, 120000);

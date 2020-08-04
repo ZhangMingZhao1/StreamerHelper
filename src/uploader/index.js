@@ -238,7 +238,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
     })
 }
 
-function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1) {
+function upload(dirName, access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1) {
     return new Promise(async (resolve, reject) => {
         const headers = {
             'Connection': 'keep-alive',
@@ -258,6 +258,7 @@ function upload(access_token, sid, mid, parts, copyright, title, tid, tag, desc,
             'title': title,
             'videos': []
         }
+        logger.info(`开始上传稿件 ${dirName}`)
         for (let video_part of parts) {
             try {
                 video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
