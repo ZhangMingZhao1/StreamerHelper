@@ -5,8 +5,14 @@
   },
   "streamerInfo": [
     {
-      "gushouyu": "https://www.huya.com/gushouyu",
-      "wanmei": "https://www.huya.com/wanmei"
+      "iGNing": {
+        "roomUrl": "https://www.huya.com/980312",
+        "tags": [
+          "英雄联盟",
+          "电子竞技",
+          "iG"
+        ]
+      }
     }
   ]
 }

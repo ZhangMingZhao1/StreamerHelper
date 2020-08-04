@@ -82,6 +82,7 @@ export const downloadStream = (stream: StreamInfo) => {
     startNumber.toString(),
     fileName,
   ]);
+  const tags = stream.streamTags
   const submit = () => {
     upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
       .then((message) => {
@@ -97,8 +98,6 @@ export const downloadStream = (stream: StreamInfo) => {
         logger.error(`稿件 ${dirName} 投稿失败：${err}`)
       })
   }
-  const tags: string[] = []
-  tags.push("网络游戏", "电子竞技")
   let ffmpegStreamEnded: boolean = false;
   let ffmpegStreamEndedByUser: boolean = false
   App.stdout.on("data", (data: any) => {
@@ -122,7 +121,7 @@ export const downloadStream = (stream: StreamInfo) => {
     // 连续检测三次（to do）
     setTimeout(() => {
       liveStreamStatus.set(stream.liveUrl, 0)
-      getStreamUrl(stream.streamName, stream.liveUrl).then((msg) => {
+      getStreamUrl(stream.streamName, stream.liveUrl, stream.streamTags).then((msg) => {
         // 直播流断开，但直播没断，不需要上传，继续下载
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
         // 日期改变，前一天的录播不会再上传，所以这里主动上传
