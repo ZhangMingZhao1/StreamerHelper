@@ -5,7 +5,9 @@
 
 > 🍰 Never miss your Streamer again
 
-[![MIT](https://img.shields.io/apm/l/vim-mode?style=flat-square)](https://github.com/ZhangMingZhao1/StreamerHelper/blob/master/LICENSE)
+[![MIT](https://img.shields.io/github/license/ZhangMingZhao1/StreamerHelper?color=red)](https://github.com/ZhangMingZhao1/StreamerHelper/blob/master/LICENSE)
+[![npm version](https://img.shields.io/npm/v/npm)](https://github.com/ZhangMingZhao1/StreamerHelper/blob/master/package.json)
+[![nodejs version](https://img.shields.io/npm/v/node?color=23&label=node&logoColor=white)](https://github.com/ZhangMingZhao1/StreamerHelper/blob/master/package.json)
 
 ## Introduction
 
@@ -15,7 +17,8 @@
 
 修改templates/info.json文件：
 personInfo为你的要上传的b站账号和密码，
-streamerInfo为你要批量录制的主播，key为标题信息，value为主播地址，像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
+streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
+需要注意，tags不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
 
 ```json
 {
@@ -25,9 +28,21 @@ streamerInfo为你要批量录制的主播，key为标题信息，value为主播
   },
   "streamerInfo": [
     {
-      "古手羽lol第一视角": "https://www.huya.com/gushouyu",
-      "wanmei": "https://www.huya.com/wanmei",
-      "罗永浩抖音直播: ":"https://v.douyin.com/J2Nw8YM/"
+      "iGNing直播第一视角": {
+        "roomUrl": "https://www.huya.com/980312",
+        "tags": [
+          "英雄联盟",
+          "电子竞技",
+          "iG"
+        ]
+      },
+      "罗永浩抖音直播": {
+        "roomUrl": "https://v.douyin.com/J2Nw8YM/",
+        "tags": [
+          "网络红人",
+          "罗老师"
+        ]
+      }
     }
   ]
 }
@@ -65,21 +80,27 @@ npm run serve
 </a>
 
 <br>
+<br>
 
 Thanks：
-
-<a class="mr-2" data-hovercard-type="user" data-hovercard-url="/users/ForgQi/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="/ForgQi">
+  
+<div>
+<a class="mr-2" href="/ForgQi">
           <img class="d-block avatar-user" src="https://avatars3.githubusercontent.com/u/34411314?s=64&amp;v=4" width="50" height="50" alt="@ForgQi">
+</a><a class="mr-2"  href="https://github.com/FortuneDayssss">
+          <img class="d-block avatar-user" src="https://avatars2.githubusercontent.com/u/12007115?s=460&u=f6e499824dbba4197ddb5b7bf113e6641e933d6b&v=4" width="50" height="50" alt="@FortuneDayssss">
 </a>
+</div>
 
 ## TodoList
 
-- [x] 支持虎牙，b站直播，抖音直播，西瓜直播，花椒直播，YY 直播，战旗直播，酷狗繁星，NOW 直播，CC 直播，企鹅电竞直播
+- [x] 支持虎牙，b站直播，抖音直播，快手直播，西瓜直播，花椒直播，YY 直播，战旗直播，酷狗繁星，NOW 直播，CC 直播，企鹅电竞直播
 - [x] 自动监测主播在线
 - [x] 自动上传b站
 - [x] 多p下载多p上传
 - [x] 支持多个主播
-- [ ] 支持twitch, 斗鱼，快手
+- [x] tag可配置，对应在info.json的每个主播
+- [ ] 支持twitch, afreeca，斗鱼
 - [ ] 爬虫定时区间，节省服务器流量...
 - [ ] 重启后同时检测本地是否有上传失败的视频文件，并上传。
 

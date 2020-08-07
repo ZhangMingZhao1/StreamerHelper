@@ -29,7 +29,7 @@ export const downloadStream = (stream: StreamInfo) => {
   // let huyaRoomId = getRoomArrInfo(infoJson.streamerInfo)[0].roomLink;
   // let huyaRoomTitle = getRoomArrInfo(infoJson.streamerInfo)[0].roomTitle;
   // console.log("开始下载 ", stream.streamName);
-  logger.info("开始下载 ", stream.streamName)
+  logger.info(`开始下载: ${stream.streamName}, 直播流: ${stream.streamUrl}`)
   // const cmd = `ffmpeg -i "${streamUrl}" -f mp4 res.MP4`;
   // 命名加上时间戳
   // console.log("streamUrl", stream.streamUrl);
@@ -82,8 +82,22 @@ export const downloadStream = (stream: StreamInfo) => {
     startNumber.toString(),
     fileName,
   ]);
-  const tags: string[] = []
-  tags.push("网络游戏", "电子竞技")
+  const tags = stream.streamTags
+  const submit = () => {
+    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
+      .then((message) => {
+        logger.info(message)
+        try {
+          deleteFolder(dirName)
+          logger.info(`删除本地文件 ${dirName}`)
+        } catch (err) {
+          logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+        }
+      })
+      .catch(err => {
+        logger.error(`稿件 ${dirName} 投稿失败：${err}`)
+      })
+  }
   let ffmpegStreamEnded: boolean = false;
   let ffmpegStreamEndedByUser: boolean = false
   App.stdout.on("data", (data: any) => {
@@ -96,35 +110,30 @@ export const downloadStream = (stream: StreamInfo) => {
     // logger.error(data.toString("utf8"));
   });
   App.on("close", (code: any) => {
+    App.removeAllListeners()
     if (ffmpegStreamEndedByUser) {
       return
     }
     ffmpegStreamEnded = true
     // console.log(`子进程退出，退出码 ${code}`);
     logger.info(`子进程退出，退出码 ${code}`);
-    liveStreamStatus.set(stream.liveUrl, 0)
-    // 直播流断开，但直播可能没断，不需要上传，继续下载
+    // 手动延迟 2min 避免直播流断开，但直播未结束，导致误上传的情况
+    // 连续检测三次（to do）
     setTimeout(() => {
-      getStreamUrl(stream.streamName,stream.liveUrl).then((msg) => {
-        // console.log("直播间仍在线", msg)
+      liveStreamStatus.set(stream.liveUrl, 0)
+      getStreamUrl(stream.streamName, stream.liveUrl, stream.streamTags).then((msg) => {
+        // 直播流断开，但直播没断，不需要上传，继续下载
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
-        // Don't do anything
+        // 日期改变，前一天的录播不会再上传，所以这里主动上传
+        let timeNow = dayjs().format("YYYY-MM-DD")
+        if (timeNow !== timeV) {
+          logger.info(`日期改变，上传前一天的录播文件`)
+          submit()
+        }
       }).catch(() => {
-        // 直播和直播流都断开，表示直播结束
-        // console.log("catch:", er)
-        upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelp强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, stream.liveUrl)
-          .then((message) => {
-            logger.info(message)
-            try {
-              deleteFolder(dirName)
-              logger.info(`删除本地文件 ${dirName}`)
-            } catch (err) {
-              logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
-            }
-          })
-          .catch(err => {
-            logger.error(`稿件 ${dirName} 投稿失败：${err}`)
-          })
+        // 直播和直播流都断开，认为直播结束
+        App.removeAllListeners()
+        submit()
       })
     }, 120000);
 

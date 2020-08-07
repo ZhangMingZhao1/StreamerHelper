@@ -10,7 +10,7 @@ const timer = setInterval(() => {
     // console.log(liveStatus)
     // console.log(RoomIds)
     for (let RoomId of RoomIds) {
-        getStreamUrl(RoomId.roomTitle,RoomId.roomLink)
+        getStreamUrl(RoomId.roomTitle, RoomId.roomLink, RoomId.roomTags)
             .then((stream: StreamInfo) => {
                 // console.log(stream)
                 if (liveStreamStatus.get(RoomId.roomLink) !== 1) {
