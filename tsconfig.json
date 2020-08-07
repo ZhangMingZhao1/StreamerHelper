@@ -16,8 +16,8 @@
     "allowJs": true,
     // "importHelpers": true,                 /* 从tslib导入辅助工具函数(如__importDefault)*/
     "strict": true /* 严格模式开关 等价于noImplicitAny、strictNullChecks、strictFunctionTypes、strictBindCallApply等设置true */,
-    "noUnusedLocals": true /* 未使用局部变量报错*/,
-    "noUnusedParameters": true /* 未使用参数报错*/,
+    "noUnusedLocals": false /* 未使用局部变量报错*/,
+    "noUnusedParameters": false /* 未使用参数报错*/,
     "noImplicitReturns": true /* 有代码路径没有返回值时报错*/,
     "noFallthroughCasesInSwitch": true /* 不允许switch的case语句贯穿*/,
     "moduleResolution": "node" /* 模块解析策略 */,
