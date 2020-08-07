@@ -47,6 +47,19 @@ streamerInfo为你要批量录制的主播，key为标题信息，value为包含
   ]
 }
 ```
+#### 安装ffmpeg
+
+mac:
+```bash
+brew update
+brew install ffmpeg
+```
+linux:
+```
+sudo add-apt-repository ppa:djcj/hybrid
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
 
 部署：
 ```bash
