@@ -5,12 +5,16 @@
   },
   "streamerInfo": [
     {
-      "iGNing": {
+      "斗鱼TEST": {
         "roomUrl": "https://www.douyu.com/1666",
         "tags": [
-          "英雄联盟",
-          "电子竞技",
-          "iG"
+          "DNF"
+        ]
+      },
+      "小骨吖": {
+        "roomUrl": "https://v.douyin.com/J6FtKQp/",
+        "tags": [
+          "美女"
         ]
       }
     }

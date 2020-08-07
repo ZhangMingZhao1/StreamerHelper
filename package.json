@@ -7,7 +7,11 @@
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "serve": "npm run build && npm run move && pm2 start ./dist/app.js",
-    "move": "cp ./src/engine/website/douyu.py ./dist/engine/website/douyu.py"
+    "move": "cp ./src/engine/website/douyu.py ./dist/engine/website/douyu.py",
+    "restart": "rm -rf logs/artanis.log && npm run build && npm run move && pm2 restart ./dist/app.js",
+    "log": "tail -f logs/artanis.log",
+    "usage": "du -h ./download",
+    "stop": "pm2 stop app"
   },
   "repository": {
     "type": "git",
