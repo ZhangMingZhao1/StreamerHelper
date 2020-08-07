@@ -63,7 +63,6 @@ sudo apt-get install ffmpeg
 
 部署：
 ```bash
-brew install ffmpeg
 npm i -g pm2
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
 npm i
