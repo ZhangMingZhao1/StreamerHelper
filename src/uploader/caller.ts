@@ -14,7 +14,7 @@ function readDirSync(path: string) {
     return paths
 }
 
-function upload2bilibili(dirName: string, title: string, desc: string, tags: string[], source: string) {
+function upload2bilibili(dirName: string, title: string, desc: string, tid: Number, tags: string[], source: string) {
     return new Promise((resolve, reject) => {
         login(username, password).then(r => {
             const paths = readDirSync(dirName)
@@ -26,7 +26,7 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
                     desc: ""
                 })
             }
-            upload(dirName, r.access_token, r.sid, r.mid, parts, 2, title, 171, tags.join(','), desc, source).then(message => {
+            upload(dirName, r.access_token, r.sid, r.mid, parts, 2, title, tid, tags.join(','), desc, source).then(message => {
                 resolve(message)
             }).catch(err => {
                 reject(err)
