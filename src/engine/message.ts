@@ -85,7 +85,7 @@ export const downloadStream = (stream: StreamInfo) => {
   const tags = stream.streamTags
   const tid = stream.streamTid
   const submit = () => {
-    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tid, tags, stream.liveUrl)
+    upload2bilibili(dirName, `${stream.streamName} ${timeV}录播`, ``, tid, tags, stream.liveUrl)
       .then((message) => {
         logger.info(message)
         try {
@@ -122,7 +122,7 @@ export const downloadStream = (stream: StreamInfo) => {
     // 连续检测三次（to do）
     setTimeout(() => {
       liveStreamStatus.set(stream.liveUrl, 0)
-      getStreamUrl(stream.streamName, stream.liveUrl, stream.streamTags).then((msg) => {
+      getStreamUrl(stream.streamName, stream.liveUrl, stream.streamTid, stream.streamTags).then((msg) => {
         // 直播流断开，但直播没断，不需要上传，继续下载
         logger.info(`${msg.liveUrl} 断流，但直播间仍在线，继续下载`)
         // 日期改变，前一天的录播不会再上传，所以这里主动上传
