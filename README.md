@@ -16,9 +16,10 @@
 ## Installation
 
 修改templates/info.json文件：
-personInfo为你的要上传的b站账号和密码，
-streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
-需要注意，tags不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
+- personInfo为你的要上传的b站账号和密码，
+- streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
+- tags为投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
+- tid为投稿分区，详见表：xxx（待补充）
 
 ```json
 {
@@ -30,6 +31,7 @@ streamerInfo为你要批量录制的主播，key为标题信息，value为包含
     {
       "iGNing直播第一视角": {
         "roomUrl": "https://www.huya.com/980312",
+        "tid":21,
         "tags": [
           "英雄联盟",
           "电子竞技",
@@ -38,6 +40,7 @@ streamerInfo为你要批量录制的主播，key为标题信息，value为包含
       },
       "罗永浩抖音直播": {
         "roomUrl": "https://v.douyin.com/J2Nw8YM/",
+        "tid":21,
         "tags": [
           "网络红人",
           "罗老师"
