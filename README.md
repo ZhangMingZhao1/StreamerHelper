@@ -16,8 +16,10 @@
 ## Installation
 
 修改templates/info.json文件：
-personInfo为你的要上传的b站账号和密码，
-streamerInfo为你要批量录制的主播，key为标题信息，value为主播地址，像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
+- personInfo为你的要上传的b站账号和密码，
+- streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
+- tags为投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
+- tid为投稿分区，详见表：[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)
 
 ```json
 {
@@ -27,17 +29,43 @@ streamerInfo为你要批量录制的主播，key为标题信息，value为主播
   },
   "streamerInfo": [
     {
-      "古手羽lol第一视角": "https://www.huya.com/gushouyu",
-      "wanmei": "https://www.huya.com/wanmei",
-      "罗永浩抖音直播: ":"https://v.douyin.com/J2Nw8YM/"
+      "iGNing直播第一视角": {
+        "roomUrl": "https://www.huya.com/980312",
+        "tid":21,
+        "tags": [
+          "英雄联盟",
+          "电子竞技",
+          "iG"
+        ]
+      },
+      "罗永浩抖音直播": {
+        "roomUrl": "https://v.douyin.com/J2Nw8YM/",
+        "tid":21,
+        "tags": [
+          "网络红人",
+          "罗老师"
+        ]
+      }
     }
   ]
 }
 ```
+#### 安装ffmpeg
+
+mac:
+```bash
+brew update
+brew install ffmpeg
+```
+linux:
+```
+sudo add-apt-repository ppa:djcj/hybrid
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
 
 部署：
 ```bash
-brew install ffmpeg
 npm i -g pm2
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
 npm i
@@ -86,10 +114,11 @@ Thanks：
 - [x] 自动上传b站
 - [x] 多p下载多p上传
 - [x] 支持多个主播
-- [ ] tag可配置，对应在info.json的每个主播
-- [ ] 支持twitch, 斗鱼
+- [x] tag可配置，对应在info.json的每个主播
+- [ ] 支持twitch, afreeca，斗鱼
 - [ ] 爬虫定时区间，节省服务器流量...
 - [ ] 重启后同时检测本地是否有上传失败的视频文件，并上传。
+- [ ] 增加一个独立脚本遍历download文件夹下的视频文件重新上传(重启上传的折中解决办法，还有解决第一次账号密码配置错误失败上传的问题)
 
 ## Example
 <img src="https://images.cnblogs.com/cnblogs_com/zhangmingzhao/1808511/o_2007170908082.png" alt="例子" width="700">

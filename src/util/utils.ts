@@ -5,18 +5,20 @@ export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
   else return "error";
 };
-export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags: string[] } }[]) => {
+export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tid: Number, tags: string[] } }[]) => {
   let roomInfoArr = [];
   for (let roomInfo of roomObj) {
     for (let key in roomInfo) {
       let roomTitle = key;
       let roomLink = roomInfo[key].roomUrl;
+      let roomTid = roomInfo[key].tid;
       let roomTags = roomInfo[key].tags
       const repObj: any = /\.(\S+)\./.exec(roomLink);
       let roomType = testRoomTypeArr(repObj[1]);
       roomInfoArr.push({
         roomTitle,
         roomLink,
+        roomTid,
         roomType,
         roomTags
       });

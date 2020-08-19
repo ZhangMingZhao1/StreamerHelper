@@ -17,7 +17,7 @@ export function main(url: string) {
                 const real_id: string = data["data"]["room_id"];
                 const config: any = {
                     method: "get",
-                    url: `https://api.live.bilibili.com/xlive/web-room/v1/playUrl/playUrl?cid=${real_id}&platform=h5&otype=json&quality=1&qn=400`,
+                    url: `https://api.live.bilibili.com/xlive/web-room/v1/playUrl/playUrl?cid=${real_id}&platform=h5&qn=10000`,
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
                     },
