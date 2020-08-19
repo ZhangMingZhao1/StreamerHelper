@@ -1,5 +1,25 @@
 const fs = require('fs')
 const Path = require('path');
+const log4js = require("log4js");
+const rootPath = process.cwd()
+log4js.configure({
+    appenders: {
+        cheese: {
+            type: "file",
+            filename: rootPath + "/logs/artanis.log",
+            maxLogSize: 20971520,
+            backups: 10,
+            encoding: "utf-8",
+        },
+    },
+    categories: {
+        default: {
+            appenders: ["cheese"],
+            level: "info"
+        }
+    },
+});
+
 const {
     login,
     upload

@@ -1,4 +1,4 @@
-export interface videoPart {
+export interface VideoPart {
     title: string,
     desc: string,
     path?: string,

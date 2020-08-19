@@ -14,23 +14,6 @@ const logger = log4js.getLogger("message");
 const delay = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
-log4js.configure({
-    appenders: {
-        cheese: {
-            type: "file",
-            filename: rootPath + "/logs/artanis.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-    },
-    categories: {
-        default: {
-            appenders: ["cheese"],
-            level: "info"
-        }
-    },
-});
 
 function getKey() {
     return new Promise(async (resolve, reject) => {
@@ -175,7 +158,13 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
         const local_file_name = video_part.path
         const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
 
-        let fileSize = fs.statSync(video_part.path).size
+        let fileSize
+        try {
+            fileSize = fs.statSync(video_part.path).size
+        } catch (error) {
+            reject(`An error occurred when get videofile stat: ${error}`)
+            return
+        }
         let chunkNum = Math.ceil(fileSize / chunkSize)
         let fileStream = fs.createReadStream(video_part.path)
         let readBuffers = []
