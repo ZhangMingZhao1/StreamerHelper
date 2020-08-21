@@ -1,6 +1,6 @@
 import { readdirSync } from 'fs'
 import { login, upload } from './index'
-import { videoPart } from "type/videoPart";
+import { VideoPart } from "type/VideoPart";
 import { join } from 'path'
 
 const { username, password } = require('../../templates/info.json').personInfo
@@ -14,11 +14,11 @@ function readDirSync(path: string) {
     return paths
 }
 
-function upload2bilibili(dirName: string, title: string, desc: string, tid: Number, tags: string[], source: string) {
+function upload2bilibili(dirName: string, title: string, desc: string, tags: string[], source: string, tid: Number) {
     return new Promise((resolve, reject) => {
         login(username, password).then(r => {
             const paths = readDirSync(dirName)
-            let parts: videoPart[] = []
+            let parts: VideoPart[] = []
             for (let key in paths) {
                 parts.push({
                     path: paths[key],
