@@ -1,22 +1,22 @@
 import * as log4js from "log4js";
 import * as dayjs from "dayjs";
 import * as fs from "fs"
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
+import { spawn } from "child_process";
 import { join } from 'path'
 
-import { StreamInfo } from "type/StreamInfo";
+import { StreamInfo } from "../type/StreamInfo";
 const rootPath = process.cwd();
 const partDuration = "3000"
 const logger = log4js.getLogger("message");
 
 export class Recorder {
-  App!: ChildProcessWithoutNullStreams;
   recorderName: string;
   recorderLink: string
   dirName!: string;
   timeV!: string;
   tags!: string[];
   tid!: Number
+  App!: any;
   ffmpegProcessEnd: boolean = false;
 
   constructor(stream: StreamInfo) {
