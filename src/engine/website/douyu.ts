@@ -2,7 +2,10 @@ const axios = require("axios");
 
 export function main(url: string) {
     return new Promise(function (resolve, reject) {
-        const rid: any = url.match(/(?<=(rid\=))(.+)/g);
+        let rid: any = url.match(/(?<=(rid\=))(.+)/g);
+        if (rid==null || rid.length==0){
+            rid = url.match(/([0-9])+/g);
+        }
         axios
             .get(
                 `https://service-428niun7-1257334448.sh.apigw.tencentcs.com/release/douyu?rid=${rid[0]}`
