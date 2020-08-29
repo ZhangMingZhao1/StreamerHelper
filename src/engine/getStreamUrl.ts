@@ -13,7 +13,8 @@ const regs: any = [
     [/egame\.qq\.com/, require("./website/egame")],
     [/www\.huajiao\.com/, require("./website/huajiao")],
     [/live\.kuaishou\.com/, require("./website/kuaishou")],
-    [/play\.afreecatv\.com/, require("./website/afreecatv")]
+    [/play\.afreecatv\.com/, require("./website/afreecatv")],
+    [/www\.douyu\.com/, require("./website/douyu")]
 ];
 
 export function getStreamUrl(title: string, url: string, tags: string[], tid: Number): Promise<StreamInfo> {
