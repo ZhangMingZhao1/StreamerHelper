@@ -21,10 +21,10 @@ log4js.configure({
     categories: { default: { appenders: ["cheese"], level: "info" } },
 });
 const logger = log4js.getLogger("message");
-let pool: any = []
 let recorderPool: Recorder[] = []
 const Rooms = getRoomArrInfo(require('../templates/info.json').streamerInfo);
-const timer = setInterval(() => {
+
+const runF = () => {
     for (let room of Rooms) {
         let curRecorder: Recorder
         let curRecorderIndex: number
@@ -38,7 +38,8 @@ const timer = setInterval(() => {
             .then((stream: StreamInfo) => {
                 if (RoomStatus.get(room.roomName) !== 1) {
                     RoomStatus.set(room.roomName, 1)
-                    pool.push(stream)
+                    console.log("oh yes")
+                    recorderPool.push(new Recorder(stream))
                 } else {
                     if (curRecorder && curRecorder.recorderStat() === false) {
                         // the recorder is running
@@ -64,18 +65,17 @@ const timer = setInterval(() => {
                     if (curRecorder.recorderStat() === true) {
                         curRecorder.stopRecord()
                     }
-                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags,curRecorder.tid)
+                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
                     recorderPool.splice(curRecorderIndex, 1);
                 }
             });
     }
-    while (pool.length >= 1) {
-        recorderPool.push(new Recorder(pool.pop()))
-    }
-}, 3000);
+}
+runF()
+const timer = setInterval(runF, 120000);
 
 process.on("SIGINT", () => {
-    console.log("Receive exit signal, clear the Interval, exit process.\nThe process exits when the upload task is complete.")
+    console.log("Receive exit signal, clear the Interval.\nIf there is no upload task, the process exits immediately.")
     recorderPool.forEach((elem: Recorder) => {
         elem.stopRecord()
     })
@@ -85,7 +85,7 @@ process.on("SIGINT", () => {
 
 const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number) => {
     if (uploadStatus.get(dirName) === 1) {
-        logger.info(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
+        logger.error(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
         return
     }
     uploadStatus.set(dirName, 1)
