@@ -71,17 +71,17 @@ const runF = () => {
             });
     }
 }
+
 runF()
 const timer = setInterval(runF, 120000);
 
 process.on("SIGINT", () => {
-    console.log("Receive exit signal, clear the Interval.\nIf there is no upload task, the process exits immediately.")
+    console.log("Receive exit signal, clear the Interval.\nIf there is no upload task, the process will exit immediately.")
     recorderPool.forEach((elem: Recorder) => {
         elem.stopRecord()
     })
     clearInterval(timer)
 })
-
 
 const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number) => {
     if (uploadStatus.get(dirName) === 1) {
