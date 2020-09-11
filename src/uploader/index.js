@@ -15,6 +15,29 @@ const delay = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+function auth_token(access_key) {
+    return new Promise(async (resolve,reject) =>{
+        let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${access_key}`
+        try{
+            const result = await superagent
+                .get(url)
+            const data = JSON.parse(result.text)
+            if (data.code !==0){
+                reject(data.message)
+                return({state:false})
+            }
+            resolve({
+                status:true,
+                mid:data.data.mid
+            })
+        }
+        catch(err){
+            reject(`An error occurred when getKey: ${err}`)
+        }
+    })
+    
+}
+
 function getKey() {
     return new Promise(async (resolve, reject) => {
         let post_data = {
@@ -35,9 +58,7 @@ function getKey() {
                 .set(headers)
                 .send(post_data)
             const data = JSON.parse(result.text).data
-            const sid = cookie.parse(result.header['set-cookie'][0]).sid
             resolve({
-                sid: sid,
                 hash: data.hash,
                 key: data.key
             })
@@ -72,7 +93,6 @@ function login(username, password) {
             const result = await superagent
                 .post(url)
                 .set(headers)
-                .set('Cookie', `sid=${data.sid};`)
                 .type('form')
                 .send(post_data)
             const res = JSON.parse(result.text);
@@ -83,7 +103,6 @@ function login(username, password) {
             resolve({
                 access_token: res.data.access_token,
                 mid: res.data.mid,
-                sid: data.sid
             })
         } catch (err) {
             // console.log(err)
@@ -130,7 +149,7 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
     })
 }
 
-function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
+function upload_video_part(access_token, mid, video_part, retryTimes) {
     return new Promise(async (resolve, reject) => {
         const headers = {
             'Connection': 'keep-alive',
@@ -143,7 +162,6 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
             r = await superagent
                 .get(`http://member.bilibili.com/preupload?access_key=${access_token}&mid=${mid}&profile=ugcfr%2Fpc3`)
                 .set(headers)
-                .set('Cookie', `sid=${sid};`)
                 .type('form')
         } catch (err) {
             reject(`An error occurred when fetch previous upload data: ${err}`)
@@ -227,7 +245,7 @@ function upload_video_part(access_token, sid, mid, video_part, retryTimes) {
     })
 }
 
-function upload(dirName, access_token, sid, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1) {
+function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, desc, source = '', cover = '', no_reprint = 0, open_elec = 1) {
     return new Promise(async (resolve, reject) => {
         const headers = {
             'Connection': 'keep-alive',
@@ -250,7 +268,7 @@ function upload(dirName, access_token, sid, mid, parts, copyright, title, tid, t
         logger.info(`开始上传稿件 ${dirName}`)
         for (let video_part of parts) {
             try {
-                video_part.server_file_name = await upload_video_part(access_token, sid, mid, video_part, 5)
+                video_part.server_file_name = await upload_video_part(access_token, mid, video_part, 5)
             } catch (err) {
                 reject(`An error occurred when upload: ${err}`)
                 return
@@ -272,7 +290,6 @@ function upload(dirName, access_token, sid, mid, parts, copyright, title, tid, t
                     .post("http://member.bilibili.com/x/vu/client/add")
                     .query(params)
                     .set(headers)
-                    .set('Cookie', `sid=${sid};`)
                     .send(post_data)
                 // console.log("Upload ended, returns:", result.text)
                 if (JSON.parse(result.text).code !== 0) {
@@ -294,6 +311,7 @@ function upload(dirName, access_token, sid, mid, parts, copyright, title, tid, t
 }
 
 module.exports = {
+    auth_token,
     login,
     upload
 }

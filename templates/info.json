@@ -1,7 +1,8 @@
 {
   "personInfo": {
     "username": "",
-    "password": ""
+    "password": "",
+    "access_token":""
   },
   "streamerInfo": [
     {
