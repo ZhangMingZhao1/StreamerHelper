@@ -84,7 +84,7 @@ npm run serve
 | 12.18.2 | 6.14.5 |3.9.6 |
 
 
-## Core Contributor
+## Contributor
 <a class="mr-2" data-hovercard-type="user" data-hovercard-url="/users/ZhangMingZhao1/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/ZhangMingZhao1">
           <img class="d-block avatar-user" src="https://avatars3.githubusercontent.com/u/29058747?s=64&amp;v=4" width="50" height="50" alt="@ZhangMingZhao1">
 </a>
@@ -93,6 +93,15 @@ npm run serve
 </a>
 <a class="mr-2" href="https://github.com/ni00">
           <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/56543214?s=64&amp;v=4" width="50" height="50" alt="@ni00">
+</a>
+<a class="mr-2" href="https://github.com/daofeng2015">
+          <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/14891398?s=64&v=4" width="50" height="50" alt="@daofeng2015">
+</a>
+<a class="mr-2" href="https://github.com/FortuneDayssss">
+          <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/12007115?s=64&v=4" width="50" height="50" alt="@FortuneDayssss">
+</a>
+<a class="mr-2" href="https://github.com/bulai0408">
+          <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/31983330?s=64&v=4" width="50" height="50" alt="@bulai0408">
 </a>
 
 <br>
