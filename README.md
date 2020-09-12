@@ -125,6 +125,7 @@ Thanks：
 - [x] 多p下载多p上传
 - [x] 支持多个主播
 - [x] tag可配置，对应在info.json的每个主播
+- [x] 支持access_token验证，防验证码
 - [ ] 支持twitch
 - [ ] 支持docker部署
 - [ ] 爬虫定时区间，节省服务器流量...
