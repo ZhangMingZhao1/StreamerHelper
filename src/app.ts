@@ -72,7 +72,7 @@ const timer = setInterval(() => {
     while (pool.length >= 1) {
         recorderPool.push(new Recorder(pool.pop()))
     }
-}, 3000);
+}, 120000);
 
 process.on("SIGINT", () => {
     console.log("Receive exit signal, clear the Interval, exit process.\nThe process exits when the upload task is complete.")
