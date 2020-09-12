@@ -15,30 +15,35 @@ const delay = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function auth_token(access_key) {
-    return new Promise(async (resolve,reject) =>{
+function auth_by_token(access_key) {
+    return new Promise(async (resolve, reject) => {
+        if (access_key === "") {
+            reject()
+            logger.error(`Access_key undefined, try to use the account to auth`)
+            return
+        }
         let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${access_key}`
-        try{
+        try {
             const result = await superagent
                 .get(url)
             const data = JSON.parse(result.text)
-            if (data.code !==0){
-                reject(data.message)
-                return({state:false})
+            if (data.code !== 0) {
+                reject()
+                logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
             }
             resolve({
-                status:true,
-                mid:data.data.mid
+                status: true,
+                mid: data.data.mid
             })
-        }
-        catch(err){
-            reject(`An error occurred when getKey: ${err}`)
+        } catch (err) {
+            reject()
+            logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
         }
     })
-    
+
 }
 
-function getKey() {
+function get_key() {
     return new Promise(async (resolve, reject) => {
         let post_data = {
             'appkey': APPKEY,
@@ -72,7 +77,7 @@ function getKey() {
 
 function login(username, password) {
     return new Promise(async (resolve, reject) => {
-        let data = await getKey()
+        let data = await get_key()
         const encoded_password = crypt.make_rsa(`${data.hash}${password}`, data.key)
         const url = "https://passport.bilibili.com/api/oauth2/login"
         const headers = {
@@ -311,7 +316,7 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
 }
 
 module.exports = {
-    auth_token,
+    auth_token: auth_by_token,
     login,
     upload
 }
