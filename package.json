@@ -23,6 +23,7 @@
     "cookie-parse": "^0.4.0",
     "coroutine": "^0.3.1",
     "crypto": "^1.0.1",
+    "crypto-js": "^4.0.0",
     "dayjs": "^1.8.17",
     "delete-files": "^0.1.0",
     "fs-extra": "^8.1.0",
@@ -31,7 +32,8 @@
     "node-rsa": "^1.0.8",
     "qs": "^6.9.4",
     "rsuite": "^4.0.4",
-    "superagent": "^5.2.2"
+    "superagent": "^5.2.2",
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
