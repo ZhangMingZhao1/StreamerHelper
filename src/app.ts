@@ -48,7 +48,7 @@ const timer = setInterval(() => {
                         let timeNow = dayjs().format("YYYY-MM-DD")
                         if (timeNow !== curRecorder.timeV) {
                             logger.info(`日期改变，上传前一天的录播文件`)
-                            submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
+                            submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid,curRecorder.intros)
                         }
                         curRecorder.startRecord(stream)
                     }
@@ -64,7 +64,7 @@ const timer = setInterval(() => {
                     if (curRecorder.recorderStat() === true) {
                         curRecorder.stopRecord()
                     }
-                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags,curRecorder.tid)
+                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags,curRecorder.tid,curRecorder.intros)
                     recorderPool.splice(curRecorderIndex, 1);
                 }
             });
@@ -82,14 +82,18 @@ process.on("SIGINT", () => {
     clearInterval(timer)
 })
 
+const introAdd = (introArr: string[]) => {
+    // const temp = ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`
+    return introArr.join("\n")
+}
 
-const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number) => {
+const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number, intros: string[]) => {
     if (uploadStatus.get(dirName) === 1) {
         logger.info(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
         return
     }
     uploadStatus.set(dirName, 1)
-    upload2bilibili(dirName, `${roomName} ${timeV}录播`, ` 本录播由StreamerHelper强力驱动:  https://github.com/ZhangMingZhao1/StreamerHelper，对您有帮助的话，求个star`, tags, roomLink, tid)
+    upload2bilibili(dirName, `${roomName} ${timeV}录播`, introAdd(intros), tags, roomLink, tid)
         .then((message) => {
             uploadStatus.set(dirName, 0)
             logger.info(message)

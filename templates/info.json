@@ -13,6 +13,12 @@
           "英雄联盟",
           "电子竞技",
           "iG"
+        ],
+        "intros": [
+          "本录播由StreamerHelper强力驱动:",
+          "  https://github.com/ZhangMingZhao1/StreamerHelper，",
+          "对您有帮助的话，",
+          "求个star!"
         ]
       }
     }

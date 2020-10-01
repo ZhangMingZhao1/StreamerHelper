@@ -16,6 +16,7 @@ export class Recorder {
   timeV!: string;
   tags!: string[];
   tid!: Number
+  intros!: string[];
   App!: any;
   ffmpegProcessEnd: boolean = false;
 
