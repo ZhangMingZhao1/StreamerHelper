@@ -1,6 +1,6 @@
 import * as log4js from "log4js";
 import * as dayjs from "dayjs";
-import { getRoomArrInfo } from "./util/utils";
+import { getRoomArrInfo, emitter } from "./util/utils";
 import { StreamInfo } from "type/StreamInfo";
 import { getStreamUrl } from "./engine/getStreamUrl";
 import { RoomStatus } from "./engine/RoomStatus"
@@ -20,14 +20,50 @@ log4js.configure({
     },
     categories: { default: { appenders: ["cheese"], level: "info" } },
 });
-const logger = log4js.getLogger("message");
-let pool: any = []
-let recorderPool: Recorder[] = []
+
 const Rooms = getRoomArrInfo(require('../templates/info.json').streamerInfo);
-const timer = setInterval(() => {
+const logger = log4js.getLogger("message");
+let recorderPool: Recorder[] = []
+
+// event of stream disconnected
+emitter.on('streamDiscon', (curRecorder: Recorder) => {
+    recorderPool.forEach((elem: Recorder) => {
+        if (elem.recorderName === curRecorder.recorderName) {
+            curRecorder = elem
+        }
+    })
+
+    setTimeout(() => {
+        getStreamUrl(curRecorder.recorderName, curRecorder.recorderLink, curRecorder.tags, curRecorder.tid)
+            .then((stream: StreamInfo) => {
+                // the stream disconnected
+                // but room online
+                let timeNow = dayjs().format("YYYY-MM-DD")
+                if (timeNow !== curRecorder.timeV) {
+                    logger.info(`日期改变，上传前一天的录播文件`)
+                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
+                }
+                // so restart the recorder
+                // continue downloading
+                logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
+                curRecorder.startRecord(stream)
+
+            })
+            .catch(() => {
+                RoomStatus.set(curRecorder.recorderName, 0)
+            })
+
+    }, 5000);
+
+})
+
+
+
+const F = () => {
     for (let room of Rooms) {
         let curRecorder: Recorder
         let curRecorderIndex: number
+        // get current Recorder
         recorderPool.forEach((elem: Recorder, index: number) => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
@@ -38,54 +74,51 @@ const timer = setInterval(() => {
             .then((stream: StreamInfo) => {
                 if (RoomStatus.get(room.roomName) !== 1) {
                     RoomStatus.set(room.roomName, 1)
-                    pool.push(stream)
-                } else {
-                    if (curRecorder && curRecorder.recorderStat() === false) {
-                        // the recorder is running
-                        // but the stream disconnected
-                        // and room online
-                        // so restart the recorder
-                        let timeNow = dayjs().format("YYYY-MM-DD")
-                        if (timeNow !== curRecorder.timeV) {
-                            logger.info(`日期改变，上传前一天的录播文件`)
-                            submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
-                        }
-                        curRecorder.startRecord(stream)
-                    }
+                    recorderPool.push(new Recorder(stream))
+                } else if (curRecorder.ffmpegProcessEnd === true) {
+                    recorderPool.push(new Recorder(stream))
                 }
+
             })
             .catch(() => {
+                // room offline
+                // it is time to submit
                 RoomStatus.set(room.roomName, 0)
                 if (curRecorder) {
-                    // room offline
                     // but the stream isn't disconnected
-                    // so stop the recorder
-                    // and submit
-                    if (curRecorder.recorderStat() === true) {
-                        curRecorder.stopRecord()
-                    }
-                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags,curRecorder.tid)
-                    recorderPool.splice(curRecorderIndex, 1);
+                    // so stop the recorder before submit
+                    setTimeout(() => {
+                        if (curRecorder.recorderStat() === true) {
+                            curRecorder.stopRecord()
+                        }
+                        logger.info(`准备投稿 ${curRecorder.recorderName}`)
+                        // submit
+                        submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
+                        recorderPool.splice(curRecorderIndex, 1);
+                    }, 5000);
                 }
-            });
+            })
     }
-    while (pool.length >= 1) {
-        recorderPool.push(new Recorder(pool.pop()))
-    }
-}, 120000);
+}
+
+F()
+const timer = setInterval(F, 120000);
 
 process.on("SIGINT", () => {
-    console.log("Receive exit signal, clear the Interval, exit process.\nThe process exits when the upload task is complete.")
+    console.log("Receive exit signal, the process will exit after 3 seconds.")
+    logger.info("Process exited by user.")
+    clearInterval(timer)
+    emitter.removeAllListeners("streamDiscon")
     recorderPool.forEach((elem: Recorder) => {
         elem.stopRecord()
     })
-    clearInterval(timer)
+    setTimeout(() => {
+        process.exit()
+    }, 3000);
 })
-
-
 const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number) => {
     if (uploadStatus.get(dirName) === 1) {
-        logger.info(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
+        logger.error(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
         return
     }
     uploadStatus.set(dirName, 1)
@@ -93,12 +126,12 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
         .then((message) => {
             uploadStatus.set(dirName, 0)
             logger.info(message)
-            try {
-                deleteFolder(dirName)
-                logger.info(`删除本地文件 ${dirName}`)
-            } catch (err) {
-                logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
-            }
+               try {
+                   deleteFolder(dirName)
+                   logger.info(`删除本地文件 ${dirName}`)
+               } catch (err) {
+                   logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+               }
         })
         .catch(err => {
             uploadStatus.set(dirName, 0)

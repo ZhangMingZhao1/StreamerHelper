@@ -18,9 +18,8 @@ const delay = function (ms) {
 function auth_by_token(access_key) {
     return new Promise(async (resolve, reject) => {
         if (access_key === "") {
-            reject()
             logger.error(`Access_key undefined, try to use the account to auth`)
-            return
+            return reject()
         }
         let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${access_key}`
         try {
@@ -28,16 +27,14 @@ function auth_by_token(access_key) {
                 .get(url)
             const data = JSON.parse(result.text)
             if (data.code !== 0) {
-                reject()
                 logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
+                reject()
             }
-            resolve({
-                status: true,
-                mid: data.data.mid
-            })
+            logger.info(`Use access_token to auth`)
+            resolve(data.data.mid)
         } catch (err) {
+            logger.error(`An error occurred when try to auth by access_token: ${err}`)
             reject()
-            logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
         }
     })
 
@@ -77,7 +74,12 @@ function get_key() {
 
 function login(username, password) {
     return new Promise(async (resolve, reject) => {
-        let data = await get_key()
+        let data
+        try {
+            data = await get_key()
+        } catch (error) {
+            return reject(`An error occurred when login: ${error}`)
+        }
         const encoded_password = crypt.make_rsa(`${data.hash}${password}`, data.key)
         const url = "https://passport.bilibili.com/api/oauth2/login"
         const headers = {
@@ -102,8 +104,7 @@ function login(username, password) {
                 .send(post_data)
             const res = JSON.parse(result.text);
             if (res.code !== 0) {
-                reject(`An error occurred when login: ${res.message}`)
-                return
+                return reject(`An error occurred when login: ${res.message}`)
             }
             resolve({
                 access_token: res.data.access_token,
@@ -139,14 +140,13 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
                     .attach('file', Buffer.concat(chunk_data), 'application/octet-stream')
                 // console.log(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
                 logger.info(`chunk #${chunk_id} upload ended, returns: ${r.text}`)
-                resolve()
-                break;
+                return resolve()
             } catch (err) {
                 // console.log(err)
                 //手动暂停 10s
                 logger.error(`Upload chunk error: ${err} , retry in 10 seconds...`)
                 if (i === retryTimes) {
-                    reject(`An error occurred when upload chunk: ${err}`)
+                    return reject(`An error occurred when upload chunk: ${err}`)
                 }
                 await delay(10000)
             }
@@ -169,8 +169,7 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
                 .set(headers)
                 .type('form')
         } catch (err) {
-            reject(`An error occurred when fetch previous upload data: ${err}`)
-            return
+            return reject(`An error occurred when fetch previous upload data: ${err}`)
         }
 
         const pre_upload_data = JSON.parse(r.text)
@@ -185,8 +184,7 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
         try {
             fileSize = fs.statSync(video_part.path).size
         } catch (error) {
-            reject(`An error occurred when get videofile stat: ${error}`)
-            return
+            return reject(`An error occurred when get videofile stat: ${error}`)
         }
         let chunkNum = Math.ceil(fileSize / chunkSize)
         let fileStream = fs.createReadStream(video_part.path)
@@ -211,8 +209,7 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
                 try {
                     await upload_chunk(upload_url, server_file_name, local_file_name, readBuffers, readLength, nowChunk, chunkNum, retryTimes)
                 } catch (err) {
-                    reject(`An error occurred when upload video part: ${err}`)
-                    return
+                    return reject(`An error occurred when upload video part: ${err}`)
                 }
                 fileStream.resume()
                 readLength = 0
@@ -229,20 +226,27 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
                 'name': local_file_name,
                 'version': '2.0.0.1054',
             }
-            try {
-                let r = await superagent
-                    .post(complete_upload_url)
-                    .set(headers)
-                    .send(post_data)
-                // console.log(r.text)
-                logger.info(`video part ${video_part.path} ${video_part.title} uplaod ended, returns ${r.text}`)
-            } catch (err) {
-                // console.log(err)
-                // logger.info(err)
-                reject(`An error occurred when merge file: ${err}`)
-                return
+
+            for (let i = 1; i <= 5; i++) {
+                try {
+                    let r = await superagent
+                        .post(complete_upload_url)
+                        .set(headers)
+                        .send(post_data)
+                    // console.log(r.text)
+                    logger.info(`video part ${video_part.path} ${video_part.title} uplaod ended, returns ${r.text}`)
+                    return resolve(server_file_name)
+                } catch (err) {
+                    // console.log(err)
+                    // logger.info(err)
+                    logger.error(`Merge file error: ${err}, retry in 10 seconds...`)
+                    if (i === 5) {
+                        return reject(`An error occurred when merge file: ${err}`)
+                    }
+                    await delay(10000)
+                }
+
             }
-            resolve(server_file_name)
         })
         fileStream.on('error', (error) => {
             logger.error(`An error occurred while listening fileStream: ${error}`)
@@ -271,12 +275,12 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
             'videos': []
         }
         logger.info(`开始上传稿件 ${dirName}`)
+        console.log(parts)
         for (let video_part of parts) {
             try {
                 video_part.server_file_name = await upload_video_part(access_token, mid, video_part, 5)
             } catch (err) {
-                reject(`An error occurred when upload: ${err}`)
-                return
+                return reject(`An error occurred when upload: ${err}`)
             }
             // console.log("server_file_name:  ", video_part.server_file_name)
             post_data['videos'].push({
@@ -298,16 +302,14 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
                     .send(post_data)
                 // console.log("Upload ended, returns:", result.text)
                 if (JSON.parse(result.text).code !== 0) {
-                    reject(`Upload failed: ${result.text}`)
-                    return
+                    return reject(`Upload failed: ${result.text}`)
                 }
                 logger.info(`Upload ended, returns:, ${result.text}`)
-                resolve(`Upload ended, returns:, ${result.text}`)
-                break;
+                return resolve(`Upload ended, returns:, ${result.text}`)
             } catch (err) {
                 logger.error(`Final upload error: ${err}, retry in 10 seconds...`)
                 if (i == 5) {
-                    reject(`An error occurred when final upload: ${err}`)
+                    return reject(`An error occurred when final upload: ${err}`)
                 }
                 await delay(10000)
             }

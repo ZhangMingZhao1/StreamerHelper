@@ -3,7 +3,7 @@ import * as dayjs from "dayjs";
 import * as fs from "fs"
 import { spawn } from "child_process";
 import { join } from 'path'
-
+import { emitter } from "../util/utils";
 import { StreamInfo } from "../type/StreamInfo";
 const rootPath = process.cwd();
 const partDuration = "3000"
@@ -18,7 +18,7 @@ export class Recorder {
   tid!: Number
   App!: any;
   ffmpegProcessEnd: boolean = false;
-
+  ffmpegProcessEndByUser: boolean = false
   constructor(stream: StreamInfo) {
     this.recorderName = stream.roomName
     this.recorderLink = stream.roomLink
@@ -31,6 +31,7 @@ export class Recorder {
     this.tid = stream.roomTid
     this.timeV = dayjs().format("YYYY-MM-DD");
     this.ffmpegProcessEnd = false
+    this.ffmpegProcessEndByUser = false
     this.tags = stream.roomTags
     const cmd = `ffmpeg`;
     let savePath = join(rootPath, "/download")
@@ -86,13 +87,18 @@ export class Recorder {
       // ffmpeg by default the program logs to stderr ,正常流日志不记录
       // logger.error(data.toString("utf8"));
     });
-    this.App.on("close", (code: any) => {
+    this.App.on("exit", (code: number) => {
       this.ffmpegProcessEnd = true
-      logger.info(`下载流 ${stream.roomName} 退出，退出码 ${code}`);
+      logger.info(`下载流 ${stream.roomName} 退出，退出码: ${code}`);
+      if (this.ffmpegProcessEndByUser === false) {
+        emitter.emit('streamDiscon', this)
+      }
+
     });
   };
 
   stopRecord() {
+    this.ffmpegProcessEndByUser = true
     if (this.ffmpegProcessEnd === false) {
       this.App.stdin.end('q')
     }
