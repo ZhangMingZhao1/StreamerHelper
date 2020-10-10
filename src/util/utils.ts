@@ -1,6 +1,7 @@
 import * as fs from "fs"
 import { join } from 'path'
 import { StreamInfo } from "type/StreamInfo";
+import { EventEmitter } from 'events'
 export const RoomTypeArr = ["huya", "bilibili", "douyu"];
 export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
@@ -45,3 +46,5 @@ export const deleteFolder = function (path: string) {
     throw err
   }
 };
+
+export const emitter = new EventEmitter();
