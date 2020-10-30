@@ -17,11 +17,15 @@ export class Recorder {
   tags!: string[];
   tid!: Number
   App!: any;
+  deleteLocalFile: Boolean;
+  uploadLocalFile: Boolean;
   ffmpegProcessEnd: boolean = false;
   ffmpegProcessEndByUser: boolean = false
   constructor(stream: StreamInfo) {
     this.recorderName = stream.roomName
     this.recorderLink = stream.roomLink
+    this.deleteLocalFile = stream.deleteLocalFile === undefined ? true : stream.deleteLocalFile
+    this.uploadLocalFile = stream.uploadLocalFile === undefined ? true : stream.uploadLocalFile
     this.startRecord(stream)
   }
 

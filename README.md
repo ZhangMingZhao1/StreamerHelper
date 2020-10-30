@@ -21,6 +21,8 @@
 - streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
 - tags为投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
 - tid为投稿分区，详见表：[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)
+- uploadLocalFile为是否投稿，填false表示仅下载，不上传，不填写该字段则默认上传
+- deleteLocalFile为是否在投稿后删除本地文件，该选项仅在uploadLocalFile设置为true时启用，不填写该字段则默认删除
 
 ```json
 {
@@ -33,6 +35,8 @@
       "iGNing直播第一视角": {
         "roomUrl": "https://www.huya.com/980312",
         "tid":21,
+        "uploadLocalFile": true,
+        "deleteLocalFile": false,
         "tags": [
           "英雄联盟",
           "电子竞技",
@@ -42,6 +46,7 @@
       "罗永浩抖音直播": {
         "roomUrl": "https://v.douyin.com/J2Nw8YM/",
         "tid":21,
+        "uploadLocalFile": true,
         "tags": [
           "网络红人",
           "罗老师"

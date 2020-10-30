@@ -41,7 +41,8 @@ emitter.on('streamDiscon', (curRecorder: Recorder) => {
                 let timeNow = dayjs().format("YYYY-MM-DD")
                 if (timeNow !== curRecorder.timeV) {
                     logger.info(`日期改变，上传前一天的录播文件`)
-                    submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
+                    if (curRecorder.uploadLocalFile)
+                        submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid, curRecorder.deleteLocalFile)
                 }
                 // so restart the recorder
                 // continue downloading
@@ -74,6 +75,8 @@ const F = () => {
             .then((stream: StreamInfo) => {
                 if (RoomStatus.get(room.roomName) !== 1) {
                     RoomStatus.set(room.roomName, 1)
+                    stream.deleteLocalFile = room.deleteLocalFile
+                    stream.uploadLocalFile = room.uploadLocalFile
                     recorderPool.push(new Recorder(stream))
                 } else if (curRecorder.ffmpegProcessEnd === true) {
                     recorderPool.push(new Recorder(stream))
@@ -91,9 +94,11 @@ const F = () => {
                         if (curRecorder.recorderStat() === true) {
                             curRecorder.stopRecord()
                         }
-                        logger.info(`准备投稿 ${curRecorder.recorderName}`)
                         // submit
-                        submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid)
+                        if (curRecorder.uploadLocalFile) {
+                            logger.info(`准备投稿 ${curRecorder.recorderName}`)
+                            submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid, curRecorder.deleteLocalFile)
+                        }
                         recorderPool.splice(curRecorderIndex, 1);
                     }, 5000);
                 }
@@ -116,7 +121,7 @@ process.on("SIGINT", () => {
         process.exit()
     }, 3000);
 })
-const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number) => {
+const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number, deleteLocalFile: Boolean) => {
     if (uploadStatus.get(dirName) === 1) {
         logger.error(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
         return
@@ -126,12 +131,14 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
         .then((message) => {
             uploadStatus.set(dirName, 0)
             logger.info(message)
-               try {
-                   deleteFolder(dirName)
-                   logger.info(`删除本地文件 ${dirName}`)
-               } catch (err) {
-                   logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
-               }
+            if (deleteLocalFile) {
+                try {
+                    deleteFolder(dirName)
+                    logger.info(`删除本地文件 ${dirName}`)
+                } catch (err) {
+                    logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
+                }
+            }
         })
         .catch(err => {
             uploadStatus.set(dirName, 0)
