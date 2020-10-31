@@ -7,7 +7,7 @@ export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
   else return "error";
 };
-export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags: string[], tid: Number } }[]): StreamInfo[] => {
+export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags: string[], tid: Number, deleteLocalFile: Boolean, uploadLocalFile: Boolean } }[]): StreamInfo[] => {
   let roomInfoArr = [];
   for (let roomInfo of roomObj) {
     for (let key in roomInfo) {
@@ -15,6 +15,8 @@ export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags
       let roomLink = roomInfo[key].roomUrl;
       let roomTags = roomInfo[key].tags
       let roomTid = roomInfo[key].tid
+      let deleteLocalFile = roomInfo[key].deleteLocalFile
+      let uploadLocalFile = roomInfo[key].uploadLocalFile
       // const repObj: any = /\.(\S+)\./.exec(roomLink);
       // let roomType = testRoomTypeArr(repObj[1]);
       roomInfoArr.push({
@@ -22,7 +24,9 @@ export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags
         roomLink,
         roomTags,
         streamUrl: "",
-        roomTid
+        roomTid,
+        deleteLocalFile,
+        uploadLocalFile
       });
     }
   }

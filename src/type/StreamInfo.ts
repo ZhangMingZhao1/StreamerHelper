@@ -1,7 +1,9 @@
 export interface StreamInfo {
   roomLink: string;
   roomName: string;
-  roomTags: string[]
+  roomTags: string[];
   streamUrl: string;
-  roomTid: Number
+  roomTid: Number;
+  deleteLocalFile?: Boolean;
+  uploadLocalFile?: Boolean;
 }

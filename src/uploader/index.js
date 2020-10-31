@@ -275,7 +275,7 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
             'videos': []
         }
         logger.info(`开始上传稿件 ${dirName}`)
-        console.log(parts)
+        // console.log(parts)
         for (let video_part of parts) {
             try {
                 video_part.server_file_name = await upload_video_part(access_token, mid, video_part, 5)

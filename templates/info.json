@@ -2,13 +2,15 @@
   "personInfo": {
     "username": "",
     "password": "",
-    "access_token":""
+    "access_token": ""
   },
   "streamerInfo": [
     {
       "iGNing": {
+        "uploadLocalFile": true,
+        "deleteLocalFile": false,
         "roomUrl": "https://www.huya.com/980312",
-        "tid":21,
+        "tid": 121,
         "tags": [
           "英雄联盟",
           "电子竞技",
