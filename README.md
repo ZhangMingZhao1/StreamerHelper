@@ -138,7 +138,7 @@ Thanks：
 - [ ] 增加一个独立脚本遍历download文件夹下的视频文件重新上传(重启上传的折中解决办法，还有解决第一次账号密码配置错误失败上传的问题)
 
 ## Example
-<img src="https://images.cnblogs.com/cnblogs_com/zhangmingzhao/1808511/o_2007170908082.png" alt="例子" width="700">
+<img src="https://i.loli.net/2020/11/12/MUNDe1bPR2iGfpB.jpg" alt="例子" width="500">
 
 见：https://space.bilibili.com/3356199 或者 https://space.bilibili.com/11314291
 
@@ -148,3 +148,10 @@ Thanks：
 
 
 有问题加qq群1142141023，备注streamerHelper
+
+## 请开发者喝杯咖啡 
+
+**您的捐赠和star是开发者持续维护的最大动力!**
+<br>
+<img src="https://i.loli.net/2020/11/12/gWbme18FhpSVCJy.png" width = "200"  alt="" />
+<img src="https://i.loli.net/2020/11/12/l1kirIpOa2voDhM.png" width = "200"  alt=""  />
