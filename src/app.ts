@@ -8,6 +8,8 @@ import { Recorder } from "./engine/message";
 import { upload2bilibili } from './uploader/caller'
 import { uploadStatus } from "./uploader/uploadStatus"
 import { deleteFolder } from './util/utils'
+import { memoryInfo } from './util/memory';
+
 log4js.configure({
     appenders: {
         cheese: {
@@ -17,12 +19,20 @@ log4js.configure({
             backups: 10,
             encoding: "utf-8",
         },
+        memory: {
+            type: "file",
+            filename: process.cwd() + "/logs/memory.log",
+            maxLogSize: 20971520,
+            backups: 10,
+            encoding: "utf-8",
+        }
     },
-    categories: { default: { appenders: ["cheese"], level: "info" } },
+    categories: { default: { appenders: ["cheese","memory"], level: "info" } },
 });
 
 const Rooms = getRoomArrInfo(require('../templates/info.json').streamerInfo);
-const logger = log4js.getLogger("message");
+const logger = log4js.getLogger("cheese");
+const memoryLogger = log4js.getLogger("memory");
 let recorderPool: Recorder[] = []
 
 // event of stream disconnected
@@ -145,3 +155,7 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
             logger.error(`稿件 ${dirName} 投稿失败：${err}`)
         })
 }
+
+setInterval(() => {
+    memoryLogger.info(`${new Date().toLocaleString()}: ${memoryInfo}`)
+}, 1000);
