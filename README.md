@@ -34,7 +34,7 @@
     {
       "iGNing直播第一视角": {
         "roomUrl": "https://www.huya.com/980312",
-        "tid":21,
+        "tid": 21,
         "uploadLocalFile": true,
         "deleteLocalFile": false,
         "tags": [
@@ -42,10 +42,12 @@
           "电子竞技",
           "iG"
         ]
-      },
+      }
+    },
+    {
       "罗永浩抖音直播": {
         "roomUrl": "https://v.douyin.com/J2Nw8YM/",
-        "tid":21,
+        "tid": 21,
         "uploadLocalFile": true,
         "tags": [
           "网络红人",
