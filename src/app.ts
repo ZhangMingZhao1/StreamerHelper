@@ -27,7 +27,17 @@ log4js.configure({
             encoding: "utf-8",
         }
     },
-    categories: { default: { appenders: ["cheese","memory"], level: "info" } },
+    categories: {
+        cheese: {
+            appenders: ["cheese"], level: "info"
+        },
+        memory: {
+            appenders: ["memory"], level: "info"
+        },
+        default: {
+            appenders: ["cheese"], level: "info"
+        },
+    },
 });
 
 const Rooms = getRoomArrInfo(require('../templates/info.json').streamerInfo);
@@ -158,4 +168,4 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
 
 setInterval(() => {
     memoryLogger.info(`${new Date().toLocaleString()}: ${memoryInfo}`)
-}, 1000);
+}, 10000);
