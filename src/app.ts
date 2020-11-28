@@ -63,6 +63,9 @@ emitter.on('streamDiscon', (curRecorder: Recorder) => {
                     logger.info(`日期改变，上传前一天的录播文件`)
                     if (curRecorder.uploadLocalFile)
                         submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid, curRecorder.deleteLocalFile)
+                    else {
+                        logger.info(`读取用户配置，取消上传`)
+                    }
                 }
                 // so restart the recorder
                 // continue downloading
@@ -118,6 +121,8 @@ const F = () => {
                         if (curRecorder.uploadLocalFile) {
                             logger.info(`准备投稿 ${curRecorder.recorderName}`)
                             submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid, curRecorder.deleteLocalFile)
+                        } else {
+                            logger.info(`读取用户配置，取消上传`)
                         }
                         recorderPool.splice(curRecorderIndex, 1);
                     }, 5000);
@@ -158,6 +163,8 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
                 } catch (err) {
                     logger.error(`稿件 ${dirName} 删除本地文件失败：${err}`)
                 }
+            } else {
+                logger.info(`读取用户配置，取消删除本地文件`)
             }
         })
         .catch(err => {
