@@ -33,16 +33,11 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
             })
         }).catch(() => {
             login(username, password).then(r => {
-                fs.readFile('./templates/info.json', "utf8", (err, data) => {
-                    if (err) {
-                        reject(`An error occurred when read info.json`)
-                        return
-                    };
-                    let test1 = JSON.parse(data)
-                    test1.personInfo.access_token = r.access_token
-                    let t = JSON.stringify(test1)
-                    fs.writeFileSync('./templates/info.json', t)
-                })
+                const text = fs.readFileSync('./templates/info.json')
+                const obj = JSON.parse(text.toString())
+                obj.personInfo.access_token = r.access_token
+                const stringified = JSON.stringify(obj, null, '  ')
+                fs.writeFileSync('./templates/info.json', stringified)
                 //用户密码登录
                 upload(dirName, r.access_token, r.mid, parts, 2, title, tid, tags.join(','), desc, source).then(message => {
                     resolve(message)
