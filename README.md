@@ -58,6 +58,21 @@
   ]
 }
 ```
+
+#### Docker
+
+配置文件: `/app/templates/info.json`
+
+视频目录: `/app/download`
+
+容器的保活使用docker提供的`restart`参数，不再使用PM2。
+
+DNS参数可以根据地区以及实际情况进行配置。
+
+```shell
+docker run --name stream -itd -v /path/to/config/info.json:/app/templates/info.json -v /path/to/download/:/app/download --dns 114.114.114.114 --restart always zsnmwy/streamerhelper
+```
+
 #### 安装ffmpeg
 
 mac:
