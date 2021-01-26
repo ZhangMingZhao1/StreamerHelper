@@ -25,17 +25,20 @@ log4js.configure({
             maxLogSize: 20971520,
             backups: 10,
             encoding: "utf-8",
+        },
+        console: {
+            type: "console"
         }
     },
     categories: {
         cheese: {
-            appenders: ["cheese"], level: "info"
+            appenders: ["cheese", "console"], level: "info"
         },
         memory: {
             appenders: ["memory"], level: "info"
         },
         default: {
-            appenders: ["cheese"], level: "info"
+            appenders: ["cheese", "console"], level: "info"
         },
     },
 });
