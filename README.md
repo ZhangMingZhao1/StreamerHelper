@@ -125,6 +125,9 @@ npm run serve
 <a class="mr-2" href="https://github.com/bulai0408">
           <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/31983330?s=64&v=4" width="50" height="50" alt="@bulai0408">
 </a>
+<a class="mr-2" href="https://github.com/zsnmwy">
+          <img class="d-block avatar-user" src="https://avatars1.githubusercontent.com/u/35299017?s=64&v=4" width="50" height="50" alt="@zsnmwy">
+</a>
 
 <br>
 <br>
@@ -132,7 +135,7 @@ npm run serve
 Thanks：
   
 <div>
-<a class="mr-2" href="/ForgQi">
+<a class="mr-2" href="https://github.com/ForgQi">
           <img class="d-block avatar-user" src="https://avatars3.githubusercontent.com/u/34411314?s=64&amp;v=4" width="50" height="50" alt="@ForgQi">
 </a><a class="mr-2"  href="https://github.com/FortuneDayssss">
           <img class="d-block avatar-user" src="https://avatars2.githubusercontent.com/u/12007115?s=460&u=f6e499824dbba4197ddb5b7bf113e6641e933d6b&v=4" width="50" height="50" alt="@FortuneDayssss">
