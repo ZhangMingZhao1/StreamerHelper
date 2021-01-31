@@ -1,4 +1,8 @@
 {
+  "StreamerHelper": {
+    "debug": false,
+    "roomCheckTime": 120
+  },
   "personInfo": {
     "username": "",
     "password": "",
