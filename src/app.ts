@@ -1,4 +1,3 @@
-import * as log4js from "log4js";
 import * as dayjs from "dayjs";
 import { getRoomArrInfo, emitter } from "./util/utils";
 import { StreamInfo } from "type/StreamInfo";
@@ -9,43 +8,12 @@ import { upload2bilibili } from './uploader/caller'
 import { uploadStatus } from "./uploader/uploadStatus"
 import { deleteFolder } from './util/utils'
 import { memoryInfo } from './util/memory';
-
-log4js.configure({
-    appenders: {
-        cheese: {
-            type: "file",
-            filename: process.cwd() + "/logs/artanis.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        memory: {
-            type: "file",
-            filename: process.cwd() + "/logs/memory.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        console: {
-            type: "console"
-        }
-    },
-    categories: {
-        cheese: {
-            appenders: ["cheese", "console"], level: "info"
-        },
-        memory: {
-            appenders: ["memory"], level: "info"
-        },
-        default: {
-            appenders: ["cheese", "console"], level: "info"
-        },
-    },
-});
+import {logger, memoryLogger} from "./log";
+const chalk = require('chalk');
+const checkTime = parseInt(String(require('../templates/info.json').StreamerHelper.roomCheckTime * 1000)) || 120000
 
 const Rooms = getRoomArrInfo(require('../templates/info.json').streamerInfo);
-const logger = log4js.getLogger("cheese");
-const memoryLogger = log4js.getLogger("memory");
+
 let recorderPool: Recorder[] = []
 
 // event of stream disconnected
@@ -87,7 +55,9 @@ emitter.on('streamDiscon', (curRecorder: Recorder) => {
 
 
 const F = () => {
+    let curRecorderText: string = ''
     for (let room of Rooms) {
+        console.log(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
         let curRecorder: Recorder
         let curRecorderIndex: number
         // get current Recorder
@@ -95,16 +65,25 @@ const F = () => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
                 curRecorderIndex = index
+                curRecorderText = `
+    直播间名称 ${chalk.red(curRecorder.recorderName)}
+    直播间地址 ${curRecorder.recorderLink}
+    时间 ${chalk.cyan(curRecorder.timeV)}
+    是否删除本地文件 ${curRecorder.deleteLocalFile ? chalk.yellow('是') : chalk.red('否')}
+    是否上传本地文件 ${curRecorder.uploadLocalFile ? chalk.yellow('是') : chalk.red('否')} 
+` + curRecorderText
+                logger.trace(`curRecorder: ${JSON.stringify(curRecorder, null, 2)} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
             }
         })
         getStreamUrl(room.roomName, room.roomLink, room.roomTags, room.roomTid)
             .then((stream: StreamInfo) => {
+                logger.debug(`stream ${JSON.stringify(stream,null,2)}`)
                 if (RoomStatus.get(room.roomName) !== 1) {
                     RoomStatus.set(room.roomName, 1)
                     stream.deleteLocalFile = room.deleteLocalFile
                     stream.uploadLocalFile = room.uploadLocalFile
                     recorderPool.push(new Recorder(stream))
-                } else if (curRecorder.ffmpegProcessEnd === true) {
+                } else if (curRecorder.ffmpegProcessEnd) {
                     recorderPool.push(new Recorder(stream))
                 }
 
@@ -117,11 +96,12 @@ const F = () => {
                     // but the stream isn't disconnected
                     // so stop the recorder before submit
                     setTimeout(() => {
-                        if (curRecorder.recorderStat() === true) {
+                        if (curRecorder.recorderStat()) {
                             curRecorder.stopRecord()
                         }
                         // submit
                         if (curRecorder.uploadLocalFile) {
+                            logger.debug(`curRecorder ${curRecorder}`)
                             logger.info(`准备投稿 ${curRecorder.recorderName}`)
                             submit(curRecorder.dirName, curRecorder.recorderName, curRecorder.recorderLink, curRecorder.timeV, curRecorder.tags, curRecorder.tid, curRecorder.deleteLocalFile)
                         } else {
@@ -132,13 +112,19 @@ const F = () => {
                 }
             })
     }
+
+    if (curRecorderText) curRecorderText += `
+    检测间隔 ${chalk.yellow(`${checkTime / 1000}s`)}
+    系统时间 ${chalk.green(dayjs().format('YYYY-MM-DD hh:mm:ss'))}
+    `
+    console.log(curRecorderText);
 }
 
 F()
-const timer = setInterval(F, 120000);
+const timer = setInterval(F, checkTime);
 
 process.on("SIGINT", () => {
-    console.log("Receive exit signal, the process will exit after 3 seconds.")
+    logger.info("Receive exit signal, the process will exit after 3 seconds.")
     logger.info("Process exited by user.")
     clearInterval(timer)
     emitter.removeAllListeners("streamDiscon")
@@ -150,6 +136,7 @@ process.on("SIGINT", () => {
     }, 3000);
 })
 const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number, deleteLocalFile: Boolean) => {
+    logger.debug(`submit uploadStatus: ${uploadStatus}`)
     if (uploadStatus.get(dirName) === 1) {
         logger.error(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
         return

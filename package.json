@@ -6,7 +6,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "serve": "npm run build && pm2 start ./dist/app.js"
+    "serve": "npm run build && pm2 start ./dist/app.js",
+    "dev": "npm run build && node ./dist/app.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "homepage": "https://github.com/ZhangMingZhao1/StreamerHelper#readme",
   "dependencies": {
     "axios": "^0.19.0",
+    "chalk": "^4.1.0",
     "cookie-parse": "^0.4.0",
     "coroutine": "^0.3.1",
     "crypto": "^1.0.1",

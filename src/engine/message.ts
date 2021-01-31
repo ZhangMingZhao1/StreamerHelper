@@ -1,13 +1,13 @@
-import * as log4js from "log4js";
 import * as dayjs from "dayjs";
 import * as fs from "fs"
 import { spawn } from "child_process";
 import { join } from 'path'
 import { emitter } from "../util/utils";
 import { StreamInfo } from "../type/StreamInfo";
+import {logger} from "../log";
+import * as chalk from "chalk";
 const rootPath = process.cwd();
 const partDuration = "3000"
-const logger = log4js.getLogger("message");
 
 export class Recorder {
   recorderName: string;
@@ -93,8 +93,8 @@ export class Recorder {
     });
     this.App.on("exit", (code: number) => {
       this.ffmpegProcessEnd = true
-      logger.info(`下载流 ${stream.roomName} 退出，退出码: ${code}`);
-      if (this.ffmpegProcessEndByUser === false) {
+      logger.info(`下载流 ${chalk.red(stream.roomName)} 退出，退出码: ${code}`);
+      if (!this.ffmpegProcessEndByUser) {
         emitter.emit('streamDiscon', this)
       }
 
@@ -103,8 +103,9 @@ export class Recorder {
 
   stopRecord() {
     this.ffmpegProcessEndByUser = true
-    if (this.ffmpegProcessEnd === false) {
+    if (!this.ffmpegProcessEnd) {
       this.App.stdin.end('q')
+      logger.info(`停止录制 ${chalk.red(this.recorderName)}`)
     }
   }
 
