@@ -193,7 +193,7 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
         const complete_upload_url = pre_upload_data['complete']
 
         const server_file_name = pre_upload_data['filename']
-        const local_file_name = video_part.path
+
         const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
 
         let chunkNum = Math.ceil(fileSize / chunkSize)
