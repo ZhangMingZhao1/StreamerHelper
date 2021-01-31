@@ -4,12 +4,14 @@ const fs = require('fs')
 const cookie = require('cookie-parse')
 const superagent = require('superagent')
 const crypt = require("../util/crypt")
+const chalk = require('chalk')
 const {logger} = require('../log')
 
 const rootPath = process.cwd();
 const APPKEY = 'aae92bc66f3edfab'
 const APPSECRET = 'af125a0d5279fd576c1b4418a3e8276d'
-
+const videoPartLimitSize = 1024 * 1024 * require('../../templates/info.json').StreamerHelper.videoPartLimitSize || 1024 * 1024 * 5
+const videoPartLimitInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize
 
 const delay = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -157,6 +159,19 @@ function upload_chunk(upload_url, server_file_name, local_file_name, chunk_data,
 
 function upload_video_part(access_token, mid, video_part, retryTimes) {
     return new Promise(async (resolve, reject) => {
+        const local_file_name = video_part.path
+        let fileSize
+        try {
+            fileSize = fs.statSync(local_file_name).size
+            if (fileSize < videoPartLimitSize) {
+                logger.info(`${chalk.red('放弃该分P上传')} ${local_file_name}, 文件大小 ${Math.round(fileSize / 1024 / 1024)}M, 未满足文件上传大小要求${videoPartLimitInput}M`)
+                return resolve(false)
+            }
+        } catch (error) {
+            logger.error(`An error occurred when get videofile stat: ${error}`)
+            return reject(`An error occurred when get videofile stat: ${error}`)
+        }
+
         const headers = {
             'Connection': 'keep-alive',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -181,12 +196,6 @@ function upload_video_part(access_token, mid, video_part, retryTimes) {
         const local_file_name = video_part.path
         const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
 
-        let fileSize
-        try {
-            fileSize = fs.statSync(video_part.path).size
-        } catch (error) {
-            return reject(`An error occurred when get videofile stat: ${error}`)
-        }
         let chunkNum = Math.ceil(fileSize / chunkSize)
         let fileStream = fs.createReadStream(video_part.path)
         let readBuffers = []
@@ -276,16 +285,15 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
             'videos': []
         }
         logger.info(`开始上传稿件 ${dirName}`)
-        // console.log(parts)
-        logger.debug(`parts: ${parts}`)
         for (let video_part of parts) {
             try {
                 video_part.server_file_name = await upload_video_part(access_token, mid, video_part, 5)
             } catch (err) {
+                logger.error(`An error occurred when upload: ${err}`)
                 return reject(`An error occurred when upload: ${err}`)
             }
-            // console.log("server_file_name:  ", video_part.server_file_name)
-            post_data['videos'].push({
+            logger.debug("function upload server_file_name:  ", video_part.server_file_name)
+            video_part.server_file_name && post_data['videos'].push({
                 "desc": video_part.desc,
                 "filename": video_part.server_file_name,
                 "title": video_part.title
