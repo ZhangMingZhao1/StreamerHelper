@@ -4,12 +4,12 @@ const fs = require('fs')
 const cookie = require('cookie-parse')
 const superagent = require('superagent')
 const crypt = require("../util/crypt")
-const log4js = require("log4js");
+const {logger} = require('../log')
 
 const rootPath = process.cwd();
 const APPKEY = 'aae92bc66f3edfab'
 const APPSECRET = 'af125a0d5279fd576c1b4418a3e8276d'
-const logger = log4js.getLogger("message");
+
 
 const delay = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -97,6 +97,7 @@ function login(username, password) {
         }
         post_data["sign"] = md5(crypt.make_sign(post_data, APPSECRET))
         try {
+            logger.debug(`Login Post Data: ${post_data}`)
             const result = await superagent
                 .post(url)
                 .set(headers)
@@ -276,6 +277,7 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
         }
         logger.info(`开始上传稿件 ${dirName}`)
         // console.log(parts)
+        logger.debug(`parts: ${parts}`)
         for (let video_part of parts) {
             try {
                 video_part.server_file_name = await upload_video_part(access_token, mid, video_part, 5)
@@ -308,7 +310,7 @@ function upload(dirName, access_token, mid, parts, copyright, title, tid, tag, d
                 return resolve(`Upload ended, returns:, ${result.text}`)
             } catch (err) {
                 logger.error(`Final upload error: ${err}, retry in 10 seconds...`)
-                if (i == 5) {
+                if (i === 5) {
                     return reject(`An error occurred when final upload: ${err}`)
                 }
                 await delay(10000)
