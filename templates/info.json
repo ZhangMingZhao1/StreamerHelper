@@ -1,7 +1,8 @@
 {
   "StreamerHelper": {
     "debug": false,
-    "roomCheckTime": 120
+    "roomCheckTime": 120,
+    "videoPartLimitSize": 100
   },
   "personInfo": {
     "username": "",
