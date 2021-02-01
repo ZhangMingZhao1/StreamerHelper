@@ -211,6 +211,9 @@ const submit = (
 // 启动时检测所有未上传文件
 const cwd = process.cwd();
 const downloadFolder = join(cwd, '/download');
+if (!fs.existsSync(downloadFolder)) {
+    fs.mkdirSync(downloadFolder)
+}
 const streamerFolders = fs.readdirSync(downloadFolder);
 
 streamerFolders.forEach((streamerFolderName) => {
