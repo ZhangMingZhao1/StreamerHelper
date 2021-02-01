@@ -1,5 +1,7 @@
 import * as log4js from "log4js";
 import * as dayjs from "dayjs";
+import * as fs from 'fs'
+import { join } from 'path'
 import { getRoomArrInfo, emitter } from "./util/utils";
 import { StreamInfo } from "type/StreamInfo";
 import { getStreamUrl } from "./engine/getStreamUrl";
@@ -9,19 +11,19 @@ import { upload2bilibili } from './uploader/caller'
 import { uploadStatus } from "./uploader/uploadStatus"
 import { deleteFolder } from './util/utils'
 import { memoryInfo } from './util/memory';
-
+const cwd = process.cwd()
 log4js.configure({
     appenders: {
         cheese: {
             type: "file",
-            filename: process.cwd() + "/logs/artanis.log",
+            filename: cwd + "/logs/artanis.log",
             maxLogSize: 20971520,
             backups: 10,
             encoding: "utf-8",
         },
         memory: {
             type: "file",
-            filename: process.cwd() + "/logs/memory.log",
+            filename: cwd + "/logs/memory.log",
             maxLogSize: 20971520,
             backups: 10,
             encoding: "utf-8",
@@ -84,8 +86,6 @@ emitter.on('streamDiscon', (curRecorder: Recorder) => {
 
 })
 
-
-
 const F = () => {
     for (let room of Rooms) {
         let curRecorder: Recorder
@@ -134,21 +134,6 @@ const F = () => {
     }
 }
 
-F()
-const timer = setInterval(F, 120000);
-
-process.on("SIGINT", () => {
-    console.log("Receive exit signal, the process will exit after 3 seconds.")
-    logger.info("Process exited by user.")
-    clearInterval(timer)
-    emitter.removeAllListeners("streamDiscon")
-    recorderPool.forEach((elem: Recorder) => {
-        elem.stopRecord()
-    })
-    setTimeout(() => {
-        process.exit()
-    }, 3000);
-})
 const submit = (dirName: string, roomName: string, roomLink: string, timeV: string, tags: string[], tid: Number, deleteLocalFile: Boolean) => {
     if (uploadStatus.get(dirName) === 1) {
         logger.error(`目录 ${dirName} 正在上传中，避免重复上传，取消此次上传任务`)
@@ -175,6 +160,49 @@ const submit = (dirName: string, roomName: string, roomLink: string, timeV: stri
             logger.error(`稿件 ${dirName} 投稿失败：${err}`)
         })
 }
+
+// 启动时检测所有未上传文件
+const downloadFolder = join(cwd, '/download')
+const streamerFolders = fs.readdirSync(downloadFolder)
+
+streamerFolders.forEach(streamerFolderName => {    
+    // 获取对应的直播间对象
+    const roomObj = Rooms.find(item => item.roomName === streamerFolderName)
+    if (!roomObj || !roomObj.uploadLocalFile)
+        return
+    const streamerFolderPath = join(downloadFolder, streamerFolderName)
+    const videoFolders = fs.readdirSync(streamerFolderPath)
+    videoFolders.forEach(videoFolderName => {
+        const videoFolderPath = join(streamerFolderPath, videoFolderName)
+        logger.info(`检测到未上传稿件 ${videoFolderPath}，即将上传`)
+        // 中间文件名
+        const newVideoFolderPath = videoFolderPath + `-intermediate-${Math.random().toString(36).substring(2)}`
+        try {
+            fs.renameSync(videoFolderPath, newVideoFolderPath)
+        } catch (err) {
+            logger.error(`重命名文件夹 ${videoFolderPath} 失败：${err}`)
+        }
+        submit(newVideoFolderPath, roomObj.roomName, roomObj.roomLink, videoFolderName, roomObj.roomTags, roomObj.roomTid, roomObj.deleteLocalFile ? true : false)
+    })
+})
+
+F()
+
+const timer = setInterval(F, 120000);
+
+process.on("SIGINT", () => {
+    console.log("Receive exit signal, the process will exit after 3 seconds.")
+    logger.info("Process exited by user.")
+    clearInterval(timer)
+    emitter.removeAllListeners("streamDiscon")
+    recorderPool.forEach((elem: Recorder) => {
+        elem.stopRecord()
+    })
+    setTimeout(() => {
+        process.exit()
+    }, 3000);
+})
+
 
 setInterval(() => {
     memoryLogger.info(`${new Date().toLocaleString()}: ${memoryInfo}`)
