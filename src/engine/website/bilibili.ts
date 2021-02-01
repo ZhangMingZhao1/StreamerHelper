@@ -1,3 +1,5 @@
+import {logger} from "../../log";
+
 const axios = require("axios");
 
 export function main(url: string) {
@@ -25,6 +27,7 @@ export function main(url: string) {
 
                 axios(config).then(function (response: any) {
                     const html: any = response.data;
+                    logger.trace(`获取哔哩哔哩房间 ${rid} 的推流信息 ${JSON.stringify(html, null, 2)}`)
                     const links: any = html["data"]["durl"];
                     let m3u8_url = links[0]["url"];
                     resolve(m3u8_url);
