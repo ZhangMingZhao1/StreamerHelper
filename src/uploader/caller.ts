@@ -1,7 +1,8 @@
 import * as fs from "fs"
 import { auth_token, login, upload } from './index'
-import { VideoPart } from "type/VideoPart";
+import { VideoPart } from "../type/VideoPart";
 import { join } from 'path'
+import {logger} from "../log";
 
 const { access_token, username, password } = require('../../templates/info.json').personInfo
 
@@ -25,10 +26,12 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
                 desc: ""
             })
         }
+        logger.debug(`upload2bilibili paths: ${paths} \n parts: ${JSON.stringify(parts, null, 2)}`)
         auth_token(access_token).then(r => {
             upload(dirName, access_token, r, parts, 2, title, tid, tags.join(','), desc, source).then(message => {
                 resolve(message)
             }).catch(err => {
+                logger.trace(err)
                 reject(err)
             })
         }).catch(() => {
@@ -42,6 +45,7 @@ function upload2bilibili(dirName: string, title: string, desc: string, tags: str
                 upload(dirName, r.access_token, r.mid, parts, 2, title, tid, tags.join(','), desc, source).then(message => {
                     resolve(message)
                 }).catch(err => {
+                    logger.trace(err)
                     reject(err)
                 })
             }).catch(err => {
