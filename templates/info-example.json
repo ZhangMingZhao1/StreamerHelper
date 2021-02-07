@@ -1,0 +1,50 @@
+{
+  "StreamerHelper": {
+    "debug": false,
+    "roomCheckTime": 130,
+    "videoPartLimitSize": 10,
+    "denyTime": 2
+  },
+  "personInfo": {
+    "nickname": "",
+    "username": "",
+    "password": "",
+    "access_token": "",
+    "refresh_token": "",
+    "expires_in": "",
+    "tokenSignDate": "",
+    "mid": 0
+  },
+  "streamerInfo": [
+    {
+      "花花嫦娥": {
+        "uploadLocalFile": true,
+        "deleteLocalFile": true,
+        "templateTitle": "",
+        "desc": "",
+        "source": "",
+        "roomUrl": "https://live.bilibili.com/21438739",
+        "tid": 121,
+        "tags": [
+          "王者荣耀",
+          "电子竞技",
+          "花花嫦娥"
+        ]
+      },
+      "温柔睿ya": {
+        "uploadLocalFile": true,
+        "deleteLocalFile": false,
+        "templateTitle": "",
+        "desc": "",
+        "source": "",
+        "roomUrl": "https://live.bilibili.com/22348202",
+        "tid": 121,
+        "tags": [
+          "王者荣耀",
+          "电子竞技",
+          "温柔睿ya"
+        ]
+      }
+    }
+  ]
+}

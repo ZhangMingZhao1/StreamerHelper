@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
+    "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+    "watch": "tsc -w --project tsconfig.json && tsc-alias -w -p tsconfig.json",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "serve": "npm run build && pm2 start ./dist/app.js",
-    "dev": "npm run build && node ./dist/app.js"
+    "dev": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json && node ./dist/index.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,9 @@
   },
   "homepage": "https://github.com/ZhangMingZhao1/StreamerHelper#readme",
   "dependencies": {
-    "axios": "^0.19.0",
+    "@types/chalk": "^2.2.0",
+    "axios": "0.19.2",
+    "axios-retry": "^3.1.9",
     "chalk": "^4.1.0",
     "cookie-parse": "^0.4.0",
     "coroutine": "^0.3.1",
@@ -28,18 +30,25 @@
     "crypto-js": "^4.0.0",
     "dayjs": "^1.8.17",
     "delete-files": "^0.1.0",
+    "filehound": "^1.17.4",
+    "form-data": "^3.0.0",
     "fs-extra": "^8.1.0",
     "log4js": "^5.3.0",
     "md5-node": "^1.0.1",
     "node-rsa": "^1.0.8",
+    "parse-headers": "^2.0.3",
     "qs": "^6.9.4",
     "rsuite": "^4.0.4",
     "superagent": "^5.2.2",
+    "superagent-retry-delay": "^2.6.2",
+    "terminal-image": "^1.2.1",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
     "babel-preset-rsuite": "^4.0.0",
+    "ts-node": "^9.1.1",
+    "tsc-alias": "^1.2.6",
     "typescript": "^3.6.4"
   }
 }

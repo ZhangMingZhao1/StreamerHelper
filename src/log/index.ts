@@ -28,6 +28,9 @@ log4js.configure({
         memory: {
             appenders: ["memory"], level: "info"
         },
+        check: {
+            appenders: ["console"], level: "debug"
+        },
         default: {
             appenders: ["cheese", "console"], level: logStatus
         },
@@ -39,5 +42,6 @@ const memoryLogger = log4js.getLogger("memory");
 
 export {
     logger,
-    memoryLogger
+    memoryLogger,
+    log4js
 }

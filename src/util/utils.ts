@@ -7,7 +7,7 @@ export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
   else return "error";
 };
-export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags: string[], tid: Number, deleteLocalFile: Boolean, uploadLocalFile: Boolean } }[]): StreamInfo[] => {
+export const getRoomArrInfo = (roomObj: { [key: string]: { roomUrl: string, tags: string[], tid: number, deleteLocalFile: boolean, uploadLocalFile: boolean } }[]): StreamInfo[] => {
   let roomInfoArr = [];
   for (let roomInfo of roomObj) {
     for (let key in roomInfo) {
@@ -40,7 +40,7 @@ export const deleteFolder = function (path: string) {
       files = fs.readdirSync(path);
       files.forEach((file) => {
         let curPath = join(path, file)
-        if (fs.statSync(curPath).isDirectory() === false) {
+        if (!fs.statSync(curPath).isDirectory()) {
           fs.unlinkSync(curPath);
         }
       });
