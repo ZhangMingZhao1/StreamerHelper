@@ -10,7 +10,7 @@ RUN apk update && \
     echo "Asia/Shanghai" > /etc/timezone && \
     apk del tzdata
 # install node packages
-RUN npm set progress=false && npm config set depth 0
+RUN npm set progress=false && npm config set depth 0 && npm config set legacy-peer-deps true
 RUN npm i
 # compile
 COPY . /app
