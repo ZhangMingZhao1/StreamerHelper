@@ -6,9 +6,7 @@ import {join, basename} from "path";
 import {emitter} from "@/util/utils";
 import {getStreamUrl} from "@/engine/getStreamUrl";
 import {StreamInfo} from "@/type/StreamInfo";
-import * as dayjs from "dayjs";
 import {RoomStatus} from "@/engine/RoomStatus";
-import {Upload} from "@/uploader/Upload";
 import {RecorderType} from "type/RecorderType";
 
 interface personInfo {
@@ -39,6 +37,7 @@ class APP {
     init = async () => {
         return new Promise(async (reject) => {
             try {
+                this.initUnCaughtException()
                 await this.initUser()
                 await this.initExitSignal()
                 await this.initStreamDisconnect()
@@ -51,7 +50,7 @@ class APP {
                 setTimeout(()=> {
                     // @ts-ignore
                     this.schedule.recycleFile.task(this)
-                }, 25000)
+                }, 15000)
 
             } catch (e) {
                 reject(e)
@@ -130,6 +129,13 @@ class APP {
         })
     }
 
+    initUnCaughtException = () => {
+        this.logger.info(`initUnCaughtException`)
+        process.on("uncaughtException", (err) => {
+            this.logger.error("exception caught: ", err);
+        });
+    }
+
     initStreamDisconnect = async () => {
         emitter.on('streamDisconnect', (curRecorder: RecorderType) => {
             this.recorderPool.forEach((elem: RecorderType) => {
@@ -143,15 +149,6 @@ class APP {
                     .then((stream: StreamInfo) => {
                         // the stream disconnected
                         // but room online
-                        let timeNow = dayjs().format("YYYY-MM-DD")
-                        if (timeNow !== curRecorder.timeV) {
-                            logger.info(`日期改变，上传前一天的录播文件`)
-                            if (curRecorder.uploadLocalFile)
-                                new Upload(stream).upload()
-                            else {
-                                logger.info(`读取用户配置，取消上传`)
-                            }
-                        }
                         // so restart the recorder
                         // continue downloading
                         logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
@@ -159,7 +156,7 @@ class APP {
 
                     })
                     .catch(() => {
-                        RoomStatus.set(curRecorder.recorderName, 0)
+                        RoomStatus.delete(curRecorder.recorderName)
                     })
 
             }, 5000);

@@ -31,24 +31,24 @@ export interface FileStatus {
 
 
 interface videoParts {
-    succeedUploaded: succeedUploaded;
-    failUpload :failUpload;
+    succeedUploaded?: succeedUploaded[];
+    failUpload?:failUpload;
 }
 
-interface succeedUploaded {
+export interface succeedUploaded {
     desc: string;
     title: string
     filename: string;
+    path: string;
 }
 
-interface failUpload{
-    path: string;
-    totalChunk: number;
-    uploadedChunk: number;
-    failChunk: number;
-    uploadUrl: string;
-    completeUploadUrl: string;
-    serverFileName: string;
-    uploadStartTime: number
-    deadline: number
+export interface failUpload{
+    path?: string;
+    uploadUrl?: string;
+    completeUploadUrl?: string;
+    serverFileName?: string;
+    uploadStartTime?: number
+    deadline?: number
+    succeedUploadChunk?: number
+    succeedTotalLength?: number
 }

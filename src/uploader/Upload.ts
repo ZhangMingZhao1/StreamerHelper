@@ -6,13 +6,15 @@ import {$axios} from "@/http";
 import {uploadStatus} from "@/uploader/uploadStatus";
 import {StreamInfo} from "type/StreamInfo";
 import {app} from "@/index";
-import {FileStatus} from "type/FileStatus";
+import {failUpload, FileStatus, succeedUploaded} from "type/FileStatus";
+
 const fs = require('fs');
 const crypt = require("../util/crypt")
 const chalk = require('chalk')
 const crypto = require('crypto')
 const querystring = require('querystring');
 const FormData = require('form-data');
+
 export class Upload {
     private readonly APPSECRET: string;
     private readonly videoPartLimitSizeInput: number;
@@ -33,12 +35,20 @@ export class Upload {
 
     private readonly uploadLocalFile: Boolean;
     private readonly recorderName: string;
+    private deadline: number;
+    private uploadStartTime: number;
+    private succeedUploaded: succeedUploaded[] | undefined
+    private isUploadFail: boolean | undefined;
+    private failUpload: failUpload | undefined;
+    private succeedUploadChunk: number;
+    private succeedTotalLength: number;
 
     constructor(stream: StreamInfo) {
         this.logger = log4js.getLogger(`Upload ${stream.roomName}`)
+        this.logger.debug(`Upload Stream Info ${JSON.stringify(stream, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this.filePath = stream.dirName || ''
-        this.access_token = require('../../templates/info.json').personInfo.access_token || 'xxx'
+        this.access_token = app.user?.access_token || 'xxx'
         this.mid = require('../../templates/info.json').personInfo.mid || 0
         this.copyright = stream.copyright || 2
         this.cover = ''
@@ -53,6 +63,10 @@ export class Upload {
         this.videoPartLimitSizeInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize || 100
         this.uploadLocalFile = stream.uploadLocalFile || true
         this.recorderName = stream.roomName || ''
+        this.deadline = 0
+        this.uploadStartTime = 0
+        this.succeedTotalLength = 0
+        this.succeedUploadChunk = 0
     }
 
     upload = async () => {
@@ -70,6 +84,25 @@ export class Upload {
 
                 this.logger.info(`开始上传稿件 ${this.filePath}`)
 
+                this.logger.info(`锁定稿件文件目录，避免重复上传 ${this.filePath}`)
+                uploadStatus.set(this.filePath, 1)
+
+                const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                if (fs.existsSync(fileStatusPath)) {
+                    const text = fs.readFileSync(fileStatusPath)
+                    const obj: FileStatus = JSON.parse(text.toString())
+                    this.logger.debug(`Read fileStatus.json ${JSON.stringify(obj, null, 2)}`)
+                    this.succeedUploaded = obj?.videoParts?.succeedUploaded
+                    this.isUploadFail = obj.isFail
+                    if (obj.isFail) {
+                        this.failUpload = obj.videoParts?.failUpload
+                        this.succeedTotalLength = obj.videoParts?.failUpload?.succeedTotalLength || 0
+                        this.succeedUploadChunk = obj.videoParts?.failUpload?.succeedUploadChunk || 0
+                        this.uploadStartTime = obj.videoParts?.failUpload?.uploadStartTime || 0
+                        this.deadline = obj.videoParts?.failUpload?.deadline || 0
+                    }
+                }
+
                 // Get video path
                 this.logger.info(`Get Video Parts ... PATH ${this.filePath}`)
                 const videoParts: VideoPart[] = await this.getVideoParts(this.filePath)
@@ -78,8 +111,19 @@ export class Upload {
 
                 // Upload video part
                 this.logger.info(`Start to upload videoParts ...`)
-                const videos = await this.preUploadVideoPart(videoParts) || []
+                let videos: any = await this.UploadVideoPart(videoParts) || []
                 this.logger.info(`Upload videoParts END`)
+
+                if (this.succeedUploaded) {
+                    this.logger.info(`Found succeed uploaded videos ... Concat ...`)
+                    videos = this.succeedUploaded.concat(videos)
+                    videos = videos.map((video: { title: string; }, index: number) => {
+                        video.title = `P${index + 1}`
+                        return video
+                    })
+                    this.logger.info(JSON.stringify(videos, null, 2))
+                }
+
                 this.logger.info(`videos ${JSON.stringify(videos, null, 2)}`)
 
                 // Post video
@@ -88,34 +132,17 @@ export class Upload {
 
                 // Delete Dir
 
-                uploadStatus.set(this.filePath, 0)
-                // @ts-ignore
-                app.schedule.recycleFile.task()
+                uploadStatus.delete(this.filePath)
 
                 // Write status to file
-                const fileStatusPath = join(this.filePath, 'fileStatus.json')
 
-                if (fs.existsSync(fileStatusPath)) {
-                    const text = fs.readFileSync(fileStatusPath)
-                    const obj :FileStatus = JSON.parse(text.toString())
-                    obj.isPost = true
-                    const stringifies = JSON.stringify(obj, null, '  ')
-                    fs.writeFileSync(fileStatusPath, stringifies)
-                    this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
-                }
-                // if (this.deleteLocalFile) {
-                //     try {
-                //         deleteFolder(this.filePath)
-                //         logger.info(`删除本地文件 ${this.filePath}`)
-                //     } catch (err) {
-                //         logger.error(`稿件 ${this.filePath} 删除本地文件失败：${err}`)
-                //     }
-                // } else {
-                //     logger.info(`读取用户配置，取消删除本地文件`)
-                // }
+                this.changeFileStatus({isPost: true})
+
+                // @ts-ignore
+                app.schedule.recycleFile.task()
                 resolve()
             } catch (e) {
-                uploadStatus.set(this.filePath, 0)
+                uploadStatus.delete(this.filePath)
                 this.logger.error(e)
                 reject()
             }
@@ -127,6 +154,7 @@ export class Upload {
 
         const videoPartLimitSize = this.videoPartLimitSizeInput * 1024 * 1024
         this.logger.info(`videoPartLimitSize ${videoPartLimitSize}`)
+        this.logger.info(`succeedUploaded ${JSON.stringify(this.succeedUploaded, null, 2)}`)
         let videoParts: VideoPart[] = []
         let videoIndex = 0
         fs.readdirSync(path).forEach((shortPath: string) => {
@@ -135,14 +163,27 @@ export class Upload {
             this.logger.debug(`fileSize ${fileSize}`)
             if (fileSize < videoPartLimitSize) {
                 this.logger.info(`${chalk.red('放弃该分P上传')} ${fullPath}, 文件大小 ${Math.round(fileSize / 1024 / 1024)}M, 限制${this.videoPartLimitSizeInput}M`)
-            } else {
-                videoParts.push({
-                    path: fullPath,
-                    title: `P${videoIndex + 1}`,
-                    desc: ``,
-                    fileSize
-                })
-                videoIndex++
+            } else if (this.succeedUploaded && this.succeedUploaded.find(item => item.path === fullPath)) {
+                this.logger.info(`该分P已经上传成功，跳过 ${fullPath}`)
+            } else { // @ts-ignore
+                if (this.isUploadFail && this.failUpload?.path === fullPath && this?.failUpload?.deadline > (this?.failUpload?.uploadStartTime + 7200)) {
+                    this.logger.info(`Push upload error video to videoParts`)
+                    videoParts.push({
+                        isFail: true,
+                        path: this.failUpload?.path,
+                        title: `P${videoIndex + 1}`,
+                        desc: ``,
+                        fileSize
+                    })
+                } else {
+                    videoParts.push({
+                        path: fullPath,
+                        title: `P${videoIndex + 1}`,
+                        desc: ``,
+                        fileSize
+                    })
+                    videoIndex++
+                }
             }
         })
 
@@ -150,24 +191,62 @@ export class Upload {
         return videoParts
     }
 
-    preUploadVideoPart = async (videoParts: VideoPart[]) => {
+    UploadVideoPart = async (videoParts: VideoPart[]) => {
         return new Promise(async (resolve, reject) => {
             this.logger.info(`uploadVideoPart Start ...`)
 
             const videos: { desc: string; filename: string; title: string }[] = []
 
             for (let i = 0; i < videoParts.length; i++) {
-                let {fileSize = 0, path = '', title = '', desc = ''} = videoParts[i]
+                let {fileSize = 0, path = '', title = '', desc = '', isFail = false} = videoParts[i]
 
                 try {
-                    let {uploadUrl, completeUploadUrl, serverFileName}: any = await this.getPreUploadData()
+                    let uploadUrl = '', completeUploadUrl = '', serverFileName = '';
+                    if (isFail) {
+                        uploadUrl = this.failUpload?.uploadUrl || ''
+                        completeUploadUrl = this.failUpload?.completeUploadUrl || ''
+                        serverFileName = this.failUpload?.serverFileName || ''
+                        this.logger.info(`Get Fail Video Upload Status serverFileName ${serverFileName} uploadUrl${uploadUrl} completeUploadUrl${completeUploadUrl}`)
+                    } else {
+                        // {uploadUrl, completeUploadUrl, serverFileName}: any = await this.getPreUploadData()
+                        const result = await this.getPreUploadData()
+                        if (typeof result !== "boolean") {
+                            uploadUrl = result.uploadUrl
+                            completeUploadUrl = result.completeUploadUrl
+                            serverFileName = result.serverFileName
+                        }
+                    }
+
                     this.logger.debug(`path ${path} serverFileName ${serverFileName} uploadUrl${uploadUrl} completeUploadUrl${completeUploadUrl}`)
-                    let video: any = await this.uploadVideoPart(fileSize, path, title, desc, uploadUrl, completeUploadUrl, serverFileName)
+                    let video: any = await this.uploadVideoPart(fileSize, path, title, desc, uploadUrl, completeUploadUrl, serverFileName, isFail)
                     videos.push(video)
+
+                    // Record upload succeed videos
+                    const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                    if (fs.existsSync(fileStatusPath)) {
+                        const text = fs.readFileSync(fileStatusPath)
+                        const obj: FileStatus = JSON.parse(text.toString())
+
+                        if (!obj.videoParts) obj.videoParts = {};
+                        if (!obj.videoParts.succeedUploaded) obj.videoParts.succeedUploaded = [];
+
+                        const result = obj.videoParts.succeedUploaded.find(item => item.path === video.path)
+                        if (result) return this.logger.info(`Fond Exist Video ${video.path}`);
+
+                        obj.videoParts.succeedUploaded.push(video)
+                        this.logger.info(`Record Succeed video ${JSON.stringify(video, null, 2)}`)
+
+                        const stringifies = JSON.stringify(obj, null, '  ')
+                        fs.writeFileSync(fileStatusPath, stringifies)
+                        this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
+                    }
+
+
                 } catch (e) {
                     this.logger.error(e)
-                    uploadStatus.set(this.filePath, 0)
+                    uploadStatus.delete(this.filePath)
                     reject(e)
+                    break
                 }
             }
             resolve(videos)
@@ -176,7 +255,7 @@ export class Upload {
 
     getPreUploadData = async (): Promise<{ uploadUrl: string; completeUploadUrl: string; serverFileName: string; } | boolean> => {
         return new Promise((async (resolve, reject) => {
-            this.logger.info(`_getPreUploadData Start ...`)
+            this.logger.debug(`getPreUploadData Start ...`)
             const headers = {
                 'Connection': 'keep-alive',
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -202,93 +281,139 @@ export class Upload {
                     reject()
                 }
 
-                this.logger.info(`_getPreUploadData url ${url}`)
-                this.logger.info(`_getPreUploadData filename ${filename}`)
-                this.logger.info(`_getPreUploadData complete ${complete}`)
+                this.logger.debug(`_getPreUploadData url ${url}`)
+                this.logger.debug(`_getPreUploadData filename ${filename}`)
+                this.logger.debug(`_getPreUploadData complete ${complete}`)
                 const uploadUrl: string = url, completeUploadUrl: string = complete, serverFileName: string = filename;
+
+                const {deadline, uploadstart} = querystring.parse(uploadUrl)
+
+                this.deadline = deadline
+                this.uploadStartTime = uploadstart
+                this.logger.debug(`_getPreUploadData deadline ${this.deadline} uploadStartTime ${this.uploadStartTime}`)
                 resolve({uploadUrl, completeUploadUrl, serverFileName})
             } catch (e) {
-                uploadStatus.set(this.filePath, 0)
+                uploadStatus.delete(this.filePath)
                 this.logger.error(`_getPreUploadData ${JSON.stringify(e, null, 2)}`)
                 reject(`_getPreUploadData ${JSON.stringify(e, null, 2)}`)
             }
         }))
     }
 
-    uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any) => {
+    uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any, isResume: boolean = false) => {
         return new Promise(async (resolve, reject) => {
+            let fileHash = crypto.createHash('md5')
 
             const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
             let chunkNum = Math.ceil(fileSize / chunkSize)
-            let fileStream = fs.createReadStream(path)
-            let readBuffers: any[] = []
-            let readLength = 0
-            let totalReadLength = 0
+
+            let succeedUpload = isResume ? this.succeedUploadChunk : -1
             let nowChunk = 0
-            let fileHash = crypto.createHash('md5')
+
             this.logger.info(`开始上传 ${path}，文件大小：${fileSize}，分块数量：${chunkNum}`)
 
+            let fileStream = fs.createReadStream(path, {highWaterMark: chunkSize})
             fileStream.on('data', async (chunk: any) => {
-                readBuffers.push(chunk)
-                readLength += chunk.length
-                totalReadLength += chunk.length
-                fileHash.update(chunk)
-                if (readLength >= chunkSize || totalReadLength === fileSize) {
-                    nowChunk++
-                    this.logger.info(`正在上传 ${path} 第 ${nowChunk}/${chunkNum} 分块`)
+
+                if (nowChunk >= succeedUpload) {
+                    fileHash.update(chunk)
+                    this.logger.info(`正在上传 第 ${nowChunk + 1}/${chunkNum} 分块 ${path} succeedUpload ${succeedUpload}`)
                     fileStream.pause()
                     try {
-                        await this.upload_chunk(uploadUrl, serverFileName, path, readBuffers, readLength, nowChunk, chunkNum)
+                        this.logger.debug(` nowChunk ${nowChunk} succeedUpload ${succeedUpload} uploadUrl ${uploadUrl}, serverFileName ${serverFileName}, path ${path}, chunk.length ${chunk.length}, nowChunk + 1 ${nowChunk + 1}, chunkNum ${chunkNum}`)
+                        await this.upload_chunk(uploadUrl, serverFileName, path, chunk, chunk.length, nowChunk + 1, chunkNum)
                     } catch (err) {
-                        uploadStatus.set(this.filePath, 0)
-                        reject(`An error occurred when upload video part: ${err}`)
+                        fileStream.destroy()
+
+                        uploadStatus.delete(this.filePath)
+
+                        this.changeFileStatus({
+                            isFail: true,
+                            videoParts: {
+                                failUpload: {
+                                    path,
+                                    uploadUrl,
+                                    completeUploadUrl,
+                                    serverFileName,
+                                    succeedUploadChunk: nowChunk === 0 ? -1 : nowChunk - 1,
+                                    deadline: this.deadline,
+                                    uploadStartTime: this.uploadStartTime,
+                                    succeedTotalLength: this.succeedTotalLength
+                                }
+                            }
+                        })
+
+                        reject(`An error occurred when upload video part: chunk ${nowChunk + 1}/${chunkNum} 分块 ${path} ${err}`)
                     }
+
+                    if (nowChunk + 1 === chunkNum) {
+
+                        setTimeout(async ()=> {
+
+                            let post_data = {
+                                'chunks': chunkNum,
+                                'filesize': fileSize,
+                                'md5': fileHash.digest('hex'),
+                                'name': path,
+                                'version': '2.0.0.1054',
+                            }
+
+                            try {
+                                const headers = {
+                                    'Connection': 'keep-alive',
+                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'User-Agent': '',
+                                    'Accept-Encoding': 'gzip,deflate',
+                                }
+                                const {OK, info} = await $axios.$request({
+                                    method: "POST",
+                                    url: completeUploadUrl,
+                                    headers,
+                                    data: querystring.stringify(post_data)
+                                })
+                                this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
+
+                                if (info.match('error')) {
+                                    this.logger.error(`Filesize error`)
+                                    const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                                    if (fs.existsSync(fileStatusPath)) {
+                                        const text = fs.readFileSync(fileStatusPath)
+                                        const obj: FileStatus = JSON.parse(text.toString())
+                                        if (obj.videoParts) {
+                                            obj.videoParts.failUpload = {}
+                                            const stringifies = JSON.stringify(obj, null, 2)
+                                            fs.writeFileSync(fileStatusPath, stringifies)
+                                            this.logger.error(`DELETE failUpload Record`)
+                                        }
+                                    }
+
+                                    reject(info)
+                                }
+
+                                uploadStatus.delete(this.filePath)
+                                resolve({
+                                    desc,
+                                    title,
+                                    filename: serverFileName,
+                                    path
+                                })
+                            } catch (err) {
+                                this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
+                                reject(err)
+                            }
+
+                        }, 5000)
+                    }
+
                     fileStream.resume()
-                    readLength = 0
-                    readBuffers = []
                 }
-            })
-
-            fileStream.on('end', async () => {
-                let post_data = {
-                    'chunks': chunkNum,
-                    'filesize': fileSize,
-                    'md5': fileHash.digest('hex'),
-                    'name': path,
-                    'version': '2.0.0.1054',
-                }
-
-                try {
-                    const headers = {
-                        'Connection': 'keep-alive',
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'User-Agent': '',
-                        'Accept-Encoding': 'gzip,deflate',
-                    }
-                    const result = await $axios.$request({
-                        method: "POST",
-                        url: completeUploadUrl,
-                        headers,
-                        data: querystring.stringify(post_data)
-                    })
-                    this.logger.info(`video part ${path} ${title} upload end, returns ${JSON.stringify(result, null, 2)}`)
-                    uploadStatus.delete(this.filePath)
-                    resolve({
-                        desc,
-                        title,
-                        filename: serverFileName
-                    })
-                } catch (err) {
-
-                    this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
-                    reject(err)
-                }
-
+                nowChunk++
             })
 
             fileStream.on('error', (error: any) => {
                 this.logger.error(`An error occurred while listening fileStream: ${error}`)
-                uploadStatus.set(this.filePath, 0)
+                uploadStatus.delete(this.filePath)
+                fileStream.destroy()
                 reject(error)
             })
         })
@@ -296,15 +421,12 @@ export class Upload {
     }
 
 
-    upload_chunk = async (uploadUrl: any, serverFileName: any, path: any, chunk_data: Uint8Array[], chunk_size: any, chunk_id: any, chunk_total_num: any) => {
+    upload_chunk = async (uploadUrl: any, serverFileName: any, path: any, chunk_data: Uint8Array, chunk_size: any, chunk_id: any, chunk_total_num: any) => {
 
         return new Promise(async (resolve, reject) => {
-            let chunkHash = crypto.createHash('md5')
-            for (let v of chunk_data) {
-                chunkHash.update(v)
-            }
-
             try {
+                let chunkHash = crypto.createHash('md5')
+                chunkHash.update(chunk_data)
                 let form = new FormData()
                 form.append('version', '2.0.0.1054')
                 form.append('filesize', chunk_size)
@@ -312,7 +434,7 @@ export class Upload {
                 form.append('chunks', chunk_total_num)
                 form.append('md5', chunkHash.digest('hex'))
                 // @ts-ignore
-                form.append('file', Buffer.concat(chunk_data), 'application/octet-stream')
+                form.append('file', chunk_data, 'application/octet-stream')
 
                 const formHeaders = form.getHeaders();
 
@@ -327,11 +449,14 @@ export class Upload {
                     headers,
                     data: form.getBuffer()
                 })
-                this.logger.info(`chunk #${chunk_id} upload ended, returns: ${JSON.stringify(result)} \n ${path}`)
+                this.logger.info(`chunk #${chunk_id}/${chunk_total_num} upload ended, returns: ${JSON.stringify(result)} \n ${path}`)
+                if (result.info !== "Successful.") {
+                    reject(`Upload Chunk #${chunk_id}/${chunk_total_num} Return Outside Of Expect: ${result.info}`)
+                }
                 resolve()
             } catch (e) {
-                    this.logger.error(`Upload chunk error: ${e} ...`)
-                    uploadStatus.set(this.filePath, 0)
+                this.logger.error(`Upload chunk error: ${e} ...`)
+                uploadStatus.delete(this.filePath)
                 reject(e)
             }
         })
@@ -388,15 +513,15 @@ export class Upload {
                 })
 
                 if (code === 0) {
-                    this.logger.info(`Post End ${code} message ${message} ttl ${ttl} aid ${aid} bvid${bvid}}`)
+                    this.logger.info(`Post End ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
                     resolve(`Post End: ${code} message ${message} ttl ${ttl} aid ${aid} bvid${bvid}`)
                 } else {
-                    uploadStatus.set(this.filePath, 0)
-                    reject(`Upload fails, returns:, ${code} message ${message} ttl ${ttl} aid ${aid} bvid${bvid}}`)
+                    uploadStatus.delete(this.filePath)
+                    reject(`Upload fails, returns:, ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
                 }
 
             } catch (err) {
-                uploadStatus.set(this.filePath, 0)
+                uploadStatus.delete(this.filePath)
                 this.logger.error(err)
             }
         })
@@ -405,15 +530,17 @@ export class Upload {
     getTitle = (stream: StreamInfo) => {
         return `${stream.roomName} ${stream.timeV} 录播`
     }
+
+    changeFileStatus = (status: FileStatus) => {
+        const fileStatusPath = join(this.filePath, 'fileStatus.json')
+
+        if (fs.existsSync(fileStatusPath)) {
+            const text = fs.readFileSync(fileStatusPath)
+            const obj: FileStatus = JSON.parse(text.toString())
+            Object.assign(obj, status)
+            const stringifies = JSON.stringify(obj, null, 2)
+            fs.writeFileSync(fileStatusPath, stringifies)
+            this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
+        }
+    }
 }
-
-
-// const path = `/Users/zsnmwy/code/StreamerHelper/download/MrH4U/2021-01-31`
-//
-// const upload = new Upload(path, `测试稿件`, `测试构建的描述`, `MrH4U 2021-01-31`, 121, [
-//     "英雄联盟",
-//     "电子竞技",
-//     "iG"
-// ], `MrH4U 粉丝动态`)
-//
-// upload.upload().then(r => r)

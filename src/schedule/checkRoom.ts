@@ -5,7 +5,6 @@ import {RoomStatus} from "@/engine/RoomStatus";
 import * as dayjs from "dayjs";
 import {getRoomArrInfo} from "@/util/utils";
 import {log4js} from "@/log";
-import {Upload} from "@/uploader/Upload";
 import {RecorderType} from "type/RecorderType";
 import {uploadStatus} from "@/uploader/uploadStatus";
 import {RoomStatusPath} from "@/engine/RoomStatusPath";
@@ -27,6 +26,7 @@ module.exports = {
         let curRecorderText: string = ''
         let curRecorder: any;
         let curRecorderIndex: number
+        loggerCheck.debug(`Rooms ${JSON.stringify(Rooms, null, 2)}`)
         for (let room of Rooms) {
             loggerCheck.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
             // get current Recorder
@@ -40,8 +40,7 @@ module.exports = {
                 }
             })
 
-            // console.log(curRecorder);
-
+            loggerCheck.debug(`room ${JSON.stringify(room, null, 2)}`)
             let stream: StreamInfo = {
                 roomLink: room.roomLink,
                 roomName: room.roomName,
@@ -54,7 +53,8 @@ module.exports = {
                 desc: room.desc,
                 source: room.source,
                 dynamic: room.dynamic,
-                copyright: room.copyright
+                copyright: room.copyright,
+                denyTime: room.denyTime
             };
 
             try {
@@ -82,22 +82,17 @@ module.exports = {
                     // but the stream isn't disconnected
                     // so stop the recorder before submit
                     setTimeout(() => {
-                        console.log('curRecorder', curRecorder, typeof curRecorder);
                         if (curRecorder.recorderStat()) {
                             curRecorder.stopRecord()
                         }
                         // submit
                         if (curRecorder.uploadLocalFile) {
-                            logger.debug(`curRecorder ${curRecorder}`)
-                            logger.info(`准备投稿 ${curRecorder.recorderName}`)
-                            stream = Object.assign(stream, curRecorder)
-                            console.log(stream);
-                            new Upload(stream).upload()
+                            app.schedule.recycleFile.task()
                         } else {
                             logger.info(`读取用户配置，取消上传`)
                         }
                         app.recorderPool.splice(curRecorderIndex, 1);
-                    }, 5000);
+                    }, 25000);
                 }
             }
         }
@@ -108,7 +103,7 @@ module.exports = {
     `
 
         loggerCheck.info(curRecorderText);
-        logger.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
+        loggerCheck.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
         console.log("RoomStatus",RoomStatus);
         console.log("uploadStatus", uploadStatus);
         console.log("RoomStatusPath", RoomStatusPath);

@@ -9,6 +9,7 @@ import * as chalk from "chalk";
 import {Logger} from "log4js";
 import {FileStatus} from "type/FileStatus";
 import {RoomStatusPath} from "@/engine/RoomStatusPath";
+import {uploadStatus} from "@/uploader/uploadStatus";
 const rootPath = process.cwd();
 const partDuration = "3000"
 
@@ -25,19 +26,21 @@ export class Recorder {
   ffmpegProcessEnd: boolean = false;
   ffmpegProcessEndByUser: boolean = false
   private logger: Logger;
-  private stream: StreamInfo;
+  private readonly stream: StreamInfo;
+  private isPost: boolean
     constructor(stream: StreamInfo) {
     this.recorderName = stream.roomName
     this.recorderLink = stream.roomLink
     this.deleteLocalFile = stream.deleteLocalFile === undefined ? true : stream.deleteLocalFile
     this.uploadLocalFile = stream.uploadLocalFile === undefined ? true : stream.uploadLocalFile
     this.tid = stream.roomTid
-    this.timeV = dayjs().format("YYYY-MM-DD");
+    this.timeV = `${dayjs().format("YYYY-MM-DD")} ${this.getTitlePostfix()}`;
     this.ffmpegProcessEnd = false
     this.ffmpegProcessEndByUser = false
     this.tags = stream.roomTags
     this.logger = log4js.getLogger(`Recorder ${this.recorderName}`)
     this.stream = stream
+    this.isPost = false
   }
 
   startRecord(stream: StreamInfo) {
@@ -55,8 +58,14 @@ export class Recorder {
       fs.mkdirSync(this.dirName)
     }
     this.dirName = join(this.dirName, this.timeV)
+    this.readFileStatus(this.dirName)
     if (!fs.existsSync(this.dirName)) {
       fs.mkdirSync(this.dirName)
+    } else if(fs.existsSync(this.dirName) && (this.isPost || uploadStatus.get(this.dirName) === 1) ){
+      const newPath = `${this.dirName} ${dayjs().format("HH-mm")}`
+      this.dirName = newPath
+      this.timeV = `${this.timeV} ${dayjs().format("HH-mm")}`
+      fs.mkdirSync(newPath)
     } else {
       let ps = fs.readdirSync(this.dirName);
       startNumber = ps.length
@@ -111,7 +120,7 @@ export class Recorder {
       if (!this.ffmpegProcessEndByUser) {
         emitter.emit('streamDisconnect', this)
       }
-      RoomStatusPath.set(this.dirName, 0)
+      RoomStatusPath.delete(this.dirName)
     });
   };
 
@@ -122,7 +131,7 @@ export class Recorder {
       this.logger.info(`停止录制 ${chalk.red(this.recorderName)}`)
       this.logger.info(`记录退出时间 ${chalk.red(this.recorderName)}`)
       this.writeInfoToFileStatus(this.dirName,this.stream)
-      RoomStatusPath.set(this.dirName, 0)
+      RoomStatusPath.delete(this.dirName)
     }
   }
 
@@ -147,7 +156,7 @@ export class Recorder {
         deleteLocalFile: this.deleteLocalFile,
         isPost: false,
         isFail: false,
-        denyTime: 2,
+        denyTime: stream.denyTime || 2,
         templateTitle: stream.templateTitle || '',
         desc: stream.desc || '',
         source: stream.source || '',
@@ -166,8 +175,31 @@ export class Recorder {
       Object.assign(tmpObj, obj)
       const stringifies = JSON.stringify(tmpObj, null, '  ')
       fs.writeFileSync(fileStatusPath, stringifies)
-      this.logger.info(`Write Content ${JSON.stringify(tmpObj, null, 2)}`)
+      this.logger.info(`Write Content - endRecordTime ${JSON.stringify(tmpObj, null, 2)}`)
     }
+  }
+
+  readFileStatus(dirName: string) {
+    const fileStatusPath = join(dirName, 'fileStatus.json')
+
+    if (fs.existsSync(fileStatusPath)) {
+      const text = fs.readFileSync(fileStatusPath)
+      const obj = JSON.parse(text.toString())
+      this.isPost = obj?.isPost
+    }
+  }
+
+  getTitlePostfix() {
+    const hour = parseInt(dayjs().format("HH"))
+
+    if (hour >= 0 && hour < 6) return '凌晨'
+
+    if (hour >= 6 && hour < 12) return '早上'
+
+    if (hour >= 12 && hour < 18) return '下午'
+
+    if (hour >= 18 && hour < 24) return '晚上'
+    return ''
   }
 }
 

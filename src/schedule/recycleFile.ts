@@ -56,9 +56,9 @@ module.exports = {
 
                 if (!obj.path) throw(`NOT FOUND THE FILE PATH`);
 
-                if (RoomStatusPath.get(obj.path) === 0) throw(`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+                if (RoomStatusPath.get(obj.path) === 1) throw(`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
 
-                if (uploadStatus.get(<string>obj.path) === 0) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+                if (uploadStatus.get(<string>obj.path) === 1) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
                 let stream :StreamInfo = {
                     copyright: obj.copyright,
