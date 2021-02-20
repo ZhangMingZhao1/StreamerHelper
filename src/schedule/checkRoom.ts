@@ -78,10 +78,11 @@ module.exports = {
                 // room offline
                 // it is time to submit
                 RoomStatus.set(room.roomName, 0)
-                if (curRecorder) {
+                if (curRecorder && curRecorder.recorderName === room.roomName) {
                     // but the stream isn't disconnected
                     // so stop the recorder before submit
                     setTimeout(() => {
+                        logger.info(`Room offline ${room.roomName}`)
                         if (curRecorder.recorderStat()) {
                             curRecorder.stopRecord()
                         }
