@@ -16,4 +16,4 @@ RUN npm i
 COPY . /app
 RUN npm run build
 
-CMD node /app/dist/app.js
+CMD node /app/dist/index.js
