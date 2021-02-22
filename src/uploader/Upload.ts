@@ -398,6 +398,7 @@ export class Upload {
                                     path
                                 })
                             } catch (err) {
+                                uploadStatus.delete(this.filePath)
                                 this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
                                 reject(err)
                             }
