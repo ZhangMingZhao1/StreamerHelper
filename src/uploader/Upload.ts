@@ -386,11 +386,11 @@ export class Upload {
                                             this.logger.error(`DELETE failUpload Record`)
                                         }
                                     }
-
+                                    uploadStatus.delete(this.filePath)
                                     reject(info)
                                 }
 
-                                uploadStatus.delete(this.filePath)
+
                                 resolve({
                                     desc,
                                     title,
