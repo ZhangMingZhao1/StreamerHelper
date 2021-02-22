@@ -30,7 +30,7 @@ module.exports = {
 
                 if (RoomStatusPath.get(obj.path) === 1) throw(`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
 
-                if (uploadStatus.get(<string>obj.path) === 1) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+                if (uploadStatus.get(obj.path) === 1) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
                 // @ts-ignore
                 const time = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime).valueOf()) / (1000 * 60 * 60 *  24))
@@ -58,7 +58,7 @@ module.exports = {
 
                 if (RoomStatusPath.get(obj.path) === 1) throw(`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
 
-                if (uploadStatus.get(<string>obj.path) === 1) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+                if (uploadStatus.get(obj.path) === 1) throw(`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
                 let stream :StreamInfo = {
                     copyright: obj.copyright,
@@ -85,6 +85,8 @@ module.exports = {
                 logger.info(`_uploadLocalFile ${obj.recorderName}`)
 
         }
+
+        console.log('uploadStatus', uploadStatus)
 
         const files :string[] = await FileHound.create()
             .paths(join(process.cwd(), "/download"))
