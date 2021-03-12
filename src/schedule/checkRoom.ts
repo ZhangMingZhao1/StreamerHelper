@@ -19,10 +19,10 @@ module.exports = {
     },
     // @ts-ignore
     task: async function (app) {
-        logger.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
+        loggerCheck.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
         console.log(RoomStatus);
         console.log(uploadStatus);
-        logger.info(`Start checkRoom. Interval ${checkTime / 1000}s`)
+        loggerCheck.info(`Start checkRoom. Interval ${checkTime / 1000}s`)
         let curRecorderText: string = ''
         let curRecorder: any;
         let curRecorderIndex: number
