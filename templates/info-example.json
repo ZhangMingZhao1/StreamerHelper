@@ -1,8 +1,8 @@
 {
   "StreamerHelper": {
     "debug": false,
-    "roomCheckTime": 130,
-    "videoPartLimitSize": 10,
+    "roomCheckTime": 120,
+    "videoPartLimitSize": 100,
     "denyTime": 2
   },
   "personInfo": {
@@ -23,6 +23,8 @@
         "templateTitle": "",
         "desc": "",
         "source": "",
+        "dynamic": "",
+        "copyright": 2,
         "roomUrl": "https://live.bilibili.com/21438739",
         "tid": 121,
         "tags": [
