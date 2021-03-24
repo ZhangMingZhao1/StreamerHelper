@@ -10,8 +10,7 @@ function make_sign(post_data, APPSECRET) {
         post_list.push(`${key}=${encodeURIComponent(post_data[key])}`)
         // 转义数字必须大写
     }
-    const sign = `${post_list.join("&")}${APPSECRET}`
-    return sign
+    return `${post_list.join("&")}${APPSECRET}`
 }
 
 function make_rsa(text, pubkey) {
@@ -19,8 +18,7 @@ function make_rsa(text, pubkey) {
     key.setOptions({
         encryptionScheme: 'pkcs1'
     })
-    const encrypted = key.encrypt(text, 'base64')
-    return encrypted
+    return key.encrypt(text, 'base64')
 }
 module.exports = {
     make_sign,

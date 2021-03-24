@@ -17,7 +17,7 @@ const regs: any = [
     [/www\.douyu\.com/, require("./website/douyu")]
 ];
 
-export function getStreamUrl(title: string, url: string, tags: string[], tid: Number): Promise<StreamInfo> {
+export function getStreamUrl(title: string, url: string, tags: string[], tid: number): Promise<StreamInfo> {
     return new Promise((resolve, reject) => {
         //循环正则判断直播站点类型
         let website: any = null;
