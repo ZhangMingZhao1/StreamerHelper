@@ -533,12 +533,24 @@ export class Upload {
     }
 
     changeFileStatus = (status: FileStatus) => {
+        // Merge a `source` object to a `target` recursively
+        const merge = (target: any, source:any ) => {
+            // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
+            for (const key of Object.keys(source)) {
+                if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
+            }
+
+            // Join `target` and modified `source`
+            Object.assign(target || {}, source)
+            return target
+        }
+
         const fileStatusPath = join(this.filePath, 'fileStatus.json')
 
         if (fs.existsSync(fileStatusPath)) {
             const text = fs.readFileSync(fileStatusPath)
             const obj: FileStatus = JSON.parse(text.toString())
-            Object.assign(obj, status)
+            merge(obj, status)
             const stringifies = JSON.stringify(obj, null, 2)
             fs.writeFileSync(fileStatusPath, stringifies)
             this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
