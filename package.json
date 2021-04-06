@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
+    "@types/node-rsa": "^1.1.0",
     "babel-preset-rsuite": "^4.0.0",
     "ts-node": "^9.1.1",
     "tsc-alias": "^1.2.6",

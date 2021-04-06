@@ -1,8 +1,7 @@
+import { remoteVideoPart } from "./video";
 
 export interface FileStatus {
-
     path?: string;
-
     recorderName?: string;
     recorderLink?: string;
     tags?: string[];
@@ -15,31 +14,22 @@ export interface FileStatus {
     timeV?: string;
     startRecordTime?: Date;
     endRecordTime?: Date;
-
-
     isPost?: boolean;
-    isFail?: boolean;
+    isFailed?: boolean;
     uploadLocalFile?: boolean;
-
-
     deleteLocalFile?: boolean;
-    denyTime?: number;
-
-
+    delayTime?: number;
     videoParts?: videoParts;
 }
-
 
 interface videoParts {
     succeedUploaded?: succeedUploaded[];
     failUpload?:failUpload;
 }
 
-export interface succeedUploaded {
-    desc: string;
-    title: string
-    filename: string;
-    path: string;
+
+export interface succeedUploaded extends remoteVideoPart{
+    localFilePath: string
 }
 
 export interface failUpload{

@@ -3,7 +3,7 @@
     "debug": false,
     "roomCheckTime": 120,
     "videoPartLimitSize": 100,
-    "denyTime": 2
+    "delayTime": 2
   },
   "personInfo": {
     "nickname": "",

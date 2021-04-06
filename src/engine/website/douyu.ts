@@ -5,7 +5,7 @@ const uuid = require("uuid");
 export function main(url: string) {
     return new Promise(function (resolve, reject) {
         let rid: any = url.match(/(?<=www.douyu.com\/)(.+)/g);
-        if (rid==null || rid.length==0){
+        if (rid == null || rid.length == 0) {
             rid = url.match(/([0-9])+/g);
         }
         axios
@@ -17,7 +17,7 @@ export function main(url: string) {
                 let device_id = uuid.v4();
                 device_id = device_id.toString().replace(/\-/g, '');
                 const sign_algorithm_data: any = response.data;
-                if(sign_algorithm_data['error'] != 0){
+                if (sign_algorithm_data['error'] != 0) {
                     reject('DOUYU=>Get douyu sign algorithm fail.');
                 }
 
@@ -35,7 +35,7 @@ export function main(url: string) {
                 // use sign algorithm, sign(room_id, device_uuid, utc10_timestamp)
                 eval(sign_alg + `;result=foo('${rid}', '${device_id}', '${request_time}');`)
 
-                if(result == 'dummy'){
+                if (result == 'dummy') {
                     reject('DOUYU=>Douyu sign fail')
                 }
 
@@ -46,7 +46,7 @@ export function main(url: string) {
 
                 const post_data: string = `cdn=tct-h5&did=${device_id}&iar=1&ive=0&rate=0&v=${version}&tt=${request_time}&sign=${sign}`
                 axios
-                    .post(`https://www.douyu.com/lapi/live/getH5Play/${rid}`, post_data,{
+                    .post(`https://www.douyu.com/lapi/live/getH5Play/${rid}`, post_data, {
                         headers: {
                             'Accept': 'application/json, text/plain, */*',
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -56,14 +56,17 @@ export function main(url: string) {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(function (response: any){
+                    .then(function (response: any) {
                         let h5_play_data: any = response.data
-                        if(h5_play_data['error'] != 0){
+                        if (h5_play_data['error'] != 0) {
                             reject('DOUYU=>No match results:' + h5_play_data['msg'])
                         }
                         let stream_url: string = h5_play_data['data']['rtmp_url'] + "/" + h5_play_data['data']['rtmp_live']
                         resolve(String(stream_url));
                     })
+                    .catch(function (error: any) {
+                        reject(error);
+                    });
 
             })
             .catch(function (error: any) {
