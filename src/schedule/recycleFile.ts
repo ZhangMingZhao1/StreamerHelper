@@ -78,11 +78,17 @@ export default new Scheduler(interval, async function () {
 
 
         if (obj.path != null) {
-            logger.info(`NEW Upload ${stream.roomName} ${stream.dirName}`);
+            logger.info(`NEW Upload Task ${stream.roomName} ${stream.dirName}`);
             const uploadTask = new uploader(stream)
-            uploadTask.upload().catch((e) => {
-                logger.error(e)
-            })
+            setTimeout(() => {
+                uploadTask.upload().then(() => {
+                    uploadStatus.delete(stream.dirName as string)
+                }).catch((e) => {
+                    uploadStatus.delete(stream.dirName as string)
+                    logger.error(e)
+                })
+
+            }, 5000);
         }
         logger.info(`_uploadLocalFile ${obj.recorderName}`)
 
@@ -101,7 +107,7 @@ export default new Scheduler(interval, async function () {
         const text = fs.readFileSync(file)
         const obj: FileStatus = JSON.parse(text.toString())
 
-        logger.debug(`file ${file} ${JSON.stringify(obj, null, 2)}`)
+        logger.debug(`fileStatus: ${file} ${JSON.stringify(obj, null, 2)}`)
         try {
             //  Check uploadLocalFile
             if (obj.uploadLocalFile && !obj.isPost) _uploadLocalFile(obj)

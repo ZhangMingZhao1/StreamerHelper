@@ -98,8 +98,7 @@ class App {
                     const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', path))).default
                     console.log("注册", schedulerFileName, scheduleModule)
                     this.schedulers[schedulerFileName] = { scheduler: scheduleModule }
-                    // console.log(scheduleModule.interval);
-
+                    
                     if (typeof (scheduleModule.interval) === 'number') {
                         console.log("开始定时器");
                         this.schedulers[schedulerFileName].timer = setInterval(() => {

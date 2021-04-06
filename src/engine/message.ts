@@ -50,7 +50,7 @@ export class Recorder {
     stream.timeV = this.timeV    
     this.logger.info(`开始下载: ${stream.roomName}, 直播流: ${stream.streamUrl}`)
     const cmd = `ffmpeg`;
-    let savePath = join(rootPath, "/download")
+    const savePath = join(rootPath, "/download")
     let startNumber = 0
     this.dirName = join(savePath, stream.roomName)
     if (!fs.existsSync(this.dirName)) {
@@ -64,10 +64,9 @@ export class Recorder {
       const newPath = `${this.dirName} ${dayjs().format("HH-mm")}`
       this.dirName = newPath
       this.timeV = `${this.timeV} ${dayjs().format("HH-mm")}`
-      this.recorderName = `${this.recorderName} `
       fs.mkdirSync(newPath)
     } else {
-      let ps = fs.readdirSync(this.dirName);
+      const ps = fs.readdirSync(this.dirName);
       startNumber = ps.length
     }
 

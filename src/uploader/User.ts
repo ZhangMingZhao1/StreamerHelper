@@ -1,13 +1,13 @@
+import * as fs from "fs";
+import * as querystring from 'querystring'
+import * as terminalImage from 'terminal-image'
+import { Logger } from "log4js";
+
 import { $axios } from "../http";
 import { log4js } from "../log";
-import { Logger } from "log4js";
-import * as fs from "fs";
-
+import * as crypt from '@/util/crypt'
 
 const md5 = require('md5-node')
-const crypt = require("../util/crypt")
-const querystring = require('querystring');
-const terminalImage = require('terminal-image');
 
 export class User {
     private readonly APPKEY: string

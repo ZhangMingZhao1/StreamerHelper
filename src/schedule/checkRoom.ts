@@ -72,6 +72,7 @@ export default new Scheduler(interval, async function (app: App) {
             if (RoomStatus.get(room.roomName) !== 1 || curRecorder && curRecorder.ffmpegProcessEnd) {
                 if (curRecorder) {
                     logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
+                    curRecorder.stopRecord()
                     app.recorderPool.splice(curRecorderIndex as number, 1)
                 }
                 RoomStatus.set(room.roomName, 1)
@@ -79,7 +80,7 @@ export default new Scheduler(interval, async function (app: App) {
                 tmp.startRecord(stream)
                 app.recorderPool.push(tmp)
             }
-            // console.log(`app.recorderPool`, app.recorderPool);
+            console.log(`app.recorderPool`, app.recorderPool);
         } catch (e) {
             // room offline
             // it is time to submit
