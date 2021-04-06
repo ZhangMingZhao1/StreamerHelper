@@ -69,7 +69,7 @@ export default new Scheduler(interval, async function (app: App) {
 
             logger.debug(`stream ${JSON.stringify(stream, null, 2)}`)
             // start a recorder
-            if (RoomStatus.get(room.roomName) !== 1 || curRecorder && curRecorder.ffmpegProcessEnd) {
+            if (RoomStatus.get(room.roomName) !== 1 || curRecorder && curRecorder.recorderStat() === false) {
                 if (curRecorder) {
                     logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
                     curRecorder.stopRecord()
