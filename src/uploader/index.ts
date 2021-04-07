@@ -134,6 +134,7 @@ export class uploader {
                 uploadStatus.delete(this.dirName)
 
                 // Write status to file
+                this.logger.info(`Upload Success.`)
 
                 this.changeFileStatus({ isPost: true })
 
@@ -466,7 +467,7 @@ export class uploader {
     }
 
     postVideo = async (remoteVideos: remoteVideoPart[]) => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
             const headers = {
                 'Connection': 'keep-alive',
                 'Content-Type': 'application/json',
@@ -514,7 +515,7 @@ export class uploader {
 
                 if (code === 0) {
                     this.logger.info(`Post End ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
-                    resolve(`Post End: ${code} message ${message} ttl ${ttl} aid ${aid} bvid${bvid}`)
+                    resolve()
                 } else {
                     uploadStatus.delete(this.dirName)
                     reject(`Upload fails, returns:, ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
