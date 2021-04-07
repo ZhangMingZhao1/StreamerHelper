@@ -104,7 +104,7 @@ export class uploader {
                 this.logger.info(`Get Video Parts ... PATH ${this.dirName}`)
                 const localVideos = this.getLocalVideos(this.dirName)
 
-                if (localVideos.length === 0) {
+                if (localVideos.length === 0 && !this.succeedUploaded) {
                     return reject(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
                 }
 
@@ -113,14 +113,15 @@ export class uploader {
                 let remoteVideos: remoteVideoPart[] = await this.uploadVideoParts(localVideos) || []
                 this.logger.info(`Upload videoParts END, remoteVideos: ${remoteVideos}`)
 
-                if (remoteVideos.length !== 0) {
+                if (this.succeedUploaded) {
                     this.logger.info(`Found succeed uploaded videos ... Concat ...`)
-                    remoteVideos = remoteVideos.map((video: remoteVideoPart, index: number) => {
-                        video.title = `P${index + 1}`
-                        return video
-                    })
+                    remoteVideos = remoteVideos.concat(this.succeedUploaded)
                     this.logger.info(JSON.stringify(remoteVideos, null, 2))
                 }
+                remoteVideos = remoteVideos.map((video: remoteVideoPart, index: number) => {
+                    video.title = `P${index + 1}`
+                    return video
+                })
 
                 this.logger.info(`videos ${JSON.stringify(remoteVideos, null, 2)}`)
 
