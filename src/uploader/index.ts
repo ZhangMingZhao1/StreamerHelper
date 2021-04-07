@@ -17,7 +17,7 @@ import * as formData from 'form-data'
 export class uploader {
     private readonly APPSECRET: string;
     private readonly videoPartLimitSizeInput: number;
-    private readonly filePath: string;
+    private readonly dirName: string;
     private readonly mid: number;
     private readonly access_token: string;
     private readonly logger: Logger;
@@ -45,7 +45,7 @@ export class uploader {
         this.logger = log4js.getLogger(`Upload ${stream.roomName}`)
         this.logger.debug(`Upload Stream Info ${JSON.stringify(stream, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
-        this.filePath = stream.dirName || ''
+        this.dirName = stream.dirName || ''
         this.access_token = app.user?.access_token || 'xxx'
         this.mid = require('../../templates/info.json').personInfo.mid || 0
         this.copyright = stream.copyright || 2
@@ -72,19 +72,19 @@ export class uploader {
 
             if (!this.uploadLocalFile) return this.logger.info(`User config => ${this.recorderName} uploadLocalFile ${this.uploadLocalFile}. Upload give up...`)
 
-            if (!this.filePath) return this.logger.error(`filePath is not set...`)
+            if (!this.dirName) return this.logger.error(`filePath is not set...`)
 
             try {
                 this.logger.info(`Check Upload`)
 
-                if (uploadStatus.get(this.filePath) === 1) return this.logger.error(`目录 ${this.filePath} 正在上传中，避免重复上传，取消此次上传任务`)
+                if (uploadStatus.get(this.dirName) === 1) return this.logger.error(`目录 ${this.dirName} 正在上传中，避免重复上传，取消此次上传任务`)
 
-                this.logger.info(`开始上传稿件 ${this.filePath}`)
+                this.logger.info(`开始上传稿件 ${this.dirName}`)
 
-                this.logger.info(`锁定稿件文件目录，避免重复上传 ${this.filePath}`)
-                uploadStatus.set(this.filePath, 1)
+                this.logger.info(`锁定稿件文件目录，避免重复上传 ${this.dirName}`)
+                uploadStatus.set(this.dirName, 1)
 
-                const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                const fileStatusPath = join(this.dirName, 'fileStatus.json')
                 if (fs.existsSync(fileStatusPath)) {
                     const text = fs.readFileSync(fileStatusPath)
                     const obj = JSON.parse(text.toString()) as FileStatus
@@ -101,19 +101,19 @@ export class uploader {
                 }
 
                 // Get video path
-                this.logger.info(`Get Video Parts ... PATH ${this.filePath}`)
-                const localVideos = this.getLocalVideos(this.filePath)
+                this.logger.info(`Get Video Parts ... PATH ${this.dirName}`)
+                const localVideos = this.getLocalVideos(this.dirName)
 
                 if (localVideos.length === 0) {
-                    return reject(`${this.filePath} 上传目录为空，或视频文件均不满足上传大小限制`)
+                    return reject(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
                 }
 
                 // Upload video part
                 this.logger.info(`Start to upload videoParts ...`)
                 let remoteVideos: remoteVideoPart[] = await this.uploadVideoParts(localVideos) || []
-                this.logger.info(`Upload videoParts END`)
+                this.logger.info(`Upload videoParts END, remoteVideos: ${remoteVideos}`)
 
-                if (this.succeedUploaded) {
+                if (remoteVideos.length !== 0) {
                     this.logger.info(`Found succeed uploaded videos ... Concat ...`)
                     remoteVideos = remoteVideos.map((video: remoteVideoPart, index: number) => {
                         video.title = `P${index + 1}`
@@ -130,7 +130,7 @@ export class uploader {
 
                 // Delete Dir
 
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
 
                 // Write status to file
 
@@ -139,7 +139,7 @@ export class uploader {
                 // app.schedulers.recycleFile.scheduler.task(app)
                 resolve()
             } catch (e) {
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
                 // this.logger.error(e)
                 reject(e)
             }
@@ -189,14 +189,14 @@ export class uploader {
         return localVideoParts
     }
 
-    uploadVideoParts = async (videoParts: localVideoPart[]) => {
+    uploadVideoParts = async (localVideoParts: localVideoPart[]) => {
         return new Promise<remoteVideoPart[]>(async (resolve, reject) => {
             this.logger.info(`uploadVideoPart Start ...`)
 
             const remoteVideos: remoteVideoPart[] = []
 
-            for (let i = 0; i < videoParts.length; i++) {
-                const { fileSize: fileSize = 0, localFilePath = '', title = '', desc = '', isFailed } = videoParts[i]
+            for (let i = 0; i < localVideoParts.length; i++) {
+                const { fileSize: fileSize = 0, localFilePath = '', title = '', desc = '', isFailed } = localVideoParts[i]
 
                 try {
                     let uploadUrl = '', completeUploadUrl = '', serverFileName = '';
@@ -218,7 +218,7 @@ export class uploader {
                     remoteVideos.push(videoOnServer)
 
                     // Record upload succeed videos
-                    const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                    const fileStatusPath = join(this.dirName, 'fileStatus.json')
                     if (fs.existsSync(fileStatusPath)) {
                         const text = fs.readFileSync(fileStatusPath)
                         const obj: FileStatus = JSON.parse(text.toString())
@@ -227,7 +227,10 @@ export class uploader {
                         if (!obj.videoParts.succeedUploaded) obj.videoParts.succeedUploaded = [];
 
                         const result = obj.videoParts.succeedUploaded.find(item => item.localFilePath === localFilePath)
-                        if (result) return this.logger.info(`Fond Exist Video ${localFilePath}`);
+                        if (result) {
+                            this.logger.info(`Found Exist Video ${localFilePath}`);
+                            continue
+                        }
 
                         obj.videoParts.succeedUploaded.push({ ...videoOnServer, localFilePath })
                         this.logger.info(`Record Succeed video ${JSON.stringify(videoOnServer, null, 2)}`)
@@ -240,7 +243,7 @@ export class uploader {
 
                 } catch (e) {
                     // this.logger.error(e)
-                    uploadStatus.delete(this.filePath)
+                    uploadStatus.delete(this.dirName)
                     return reject(e)
                 }
             }
@@ -292,7 +295,7 @@ export class uploader {
                 this.logger.debug(`_getPreUploadData deadline ${this.deadline} uploadStartTime ${this.uploadStart}`)
                 resolve({ uploadUrl, completeUploadUrl, serverFileName })
             } catch (e) {
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
                 // this.logger.error(`_getPreUploadData ${JSON.stringify(e, null, 2)}`)
                 reject(`_getPreUploadData: ${e}`)
             }
@@ -326,7 +329,7 @@ export class uploader {
                     } catch (err) {
                         fileStream.destroy()
 
-                        uploadStatus.delete(this.filePath)
+                        uploadStatus.delete(this.dirName)
 
                         this.changeFileStatus({
                             isFailed: true,
@@ -376,7 +379,7 @@ export class uploader {
 
                                 if (parseInt(OK) !== 1 || info.match('error')) {
                                     this.logger.error(`Filesize error`)
-                                    const fileStatusPath = join(this.filePath, 'fileStatus.json')
+                                    const fileStatusPath = join(this.dirName, 'fileStatus.json')
                                     if (fs.existsSync(fileStatusPath)) {
                                         const text = fs.readFileSync(fileStatusPath)
                                         const obj: FileStatus = JSON.parse(text.toString())
@@ -387,7 +390,7 @@ export class uploader {
                                             this.logger.error(`DELETE failUpload Record`)
                                         }
                                     }
-                                    uploadStatus.delete(this.filePath)
+                                    uploadStatus.delete(this.dirName)
                                     return reject(info)
                                 }
                                 resolve({
@@ -396,7 +399,7 @@ export class uploader {
                                     filename: serverFileName
                                 })
                             } catch (err) {
-                                uploadStatus.delete(this.filePath)
+                                uploadStatus.delete(this.dirName)
                                 // this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
                                 reject(`Merge file error: ${JSON.stringify(err, null, 2)}`)
                             }
@@ -411,7 +414,7 @@ export class uploader {
 
             fileStream.on('error', (error: any) => {
                 // this.logger.error(`An error occurred while listening fileStream: ${error}`)
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
                 fileStream.destroy()
                 reject(`An error occurred while listening fileStream: ${error}`)
             })
@@ -454,7 +457,7 @@ export class uploader {
                 resolve()
             } catch (e) {
                 // this.logger.error(`Upload chunk error: ${e} ...`)
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
                 reject(`Upload chunk error: ${e} ...`)
             }
         })
@@ -512,12 +515,12 @@ export class uploader {
                     this.logger.info(`Post End ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
                     resolve(`Post End: ${code} message ${message} ttl ${ttl} aid ${aid} bvid${bvid}`)
                 } else {
-                    uploadStatus.delete(this.filePath)
+                    uploadStatus.delete(this.dirName)
                     reject(`Upload fails, returns:, ${code} message ${message} ttl ${ttl} aid ${aid} bvid ${bvid}`)
                 }
 
             } catch (err) {
-                uploadStatus.delete(this.filePath)
+                uploadStatus.delete(this.dirName)
                 this.logger.error(err)
             }
         })
@@ -540,7 +543,7 @@ export class uploader {
             return target
         }
 
-        const fileStatusPath = join(this.filePath, 'fileStatus.json')
+        const fileStatusPath = join(this.dirName, 'fileStatus.json')
 
         if (fs.existsSync(fileStatusPath)) {
             const text = fs.readFileSync(fileStatusPath)
