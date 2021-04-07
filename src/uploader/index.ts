@@ -307,113 +307,113 @@ export class uploader {
 
     uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any, isResume: boolean = false) => {
         return new Promise<remoteVideoPart>(async (resolve, reject) => {
-            let fileHash = crypto.createHash('md5')
 
+            let fileHash = crypto.createHash('md5')
             const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
             const chunkNum = Math.ceil(fileSize / chunkSize)
-
-            const succeedUpload = isResume ? this.succeedUploadChunk : -1
+            const successUploadedChunks = isResume ? this.succeedUploadChunk : -1
+            let fileStream = fs.createReadStream(path)
+            let readBuffers: Buffer = Buffer.from('')
+            let readLength = 0
+            let totalReadLength = 0
             let nowChunk = 0
 
-            this.logger.info(`开始上传 ${path}，文件大小：${fileSize}，分块数量：${chunkNum}`)
+            this.logger.info(`开始上传 ${path}，文件大小：${fileSize}，分块数量：${chunkNum}， succeedUploa：${successUploadedChunks}`)
             console.log(`file size: ${fileSize}, chunks: ${chunkNum}`)
-            let fileStream = fs.createReadStream(path, { highWaterMark: chunkSize })
+
             fileStream.on('data', async (chunk: any) => {
-
-                if (nowChunk >= succeedUpload) {
-                    console.log(`now chunk: ${nowChunk}, chunk size: ${chunk.length}`)
-                    fileHash.update(chunk)
-                    this.logger.info(`正在上传 第 ${nowChunk + 1}/${chunkNum} 分块 ${path} succeedUpload ${succeedUpload}`)
-                    fileStream.pause()
-                    try {
-                        this.logger.debug(` nowChunk ${nowChunk} succeedUpload ${succeedUpload} uploadUrl ${uploadUrl}, serverFileName ${serverFileName}, path ${path}, chunk.length ${chunk.length}, nowChunk + 1 ${nowChunk + 1}, chunkNum ${chunkNum}`)
-                        await this.uploadChunk(uploadUrl, serverFileName, path, chunk, chunk.length, nowChunk + 1, chunkNum)
-                    } catch (err) {
-                        fileStream.destroy()
-
-                        uploadStatus.delete(this.dirName)
-
-                        this.changeFileStatus({
-                            isFailed: true,
-                            videoParts: {
-                                failUpload: {
-                                    path,
-                                    uploadUrl,
-                                    completeUploadUrl,
-                                    serverFileName,
-                                    succeedUploadChunk: nowChunk === 0 ? -1 : nowChunk - 1,
-                                    deadline: this.deadline,
-                                    uploadStartTime: this.uploadStart,
-                                    succeedTotalLength: this.succeedTotalLength
-                                }
-                            }
-                        })
-
-                        return reject(`An error occurred when upload video part: chunk ${nowChunk + 1}/${chunkNum} 分块 ${path} ${err}`)
-                    }
-
-                    if (nowChunk + 1 === chunkNum) {
-
-                        setTimeout(async () => {
-
-                            let post_data = {
-                                'chunks': chunkNum,
-                                'filesize': fileSize,
-                                'md5': fileHash.digest('hex'),
-                                'name': path,
-                                'version': '2.0.0.1054',
-                            }
-
-                            try {
-                                const headers = {
-                                    'Connection': 'keep-alive',
-                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                                    'User-Agent': '',
-                                    'Accept-Encoding': 'gzip,deflate',
-                                }
-                                const { OK, info } = await $axios.$request({
-                                    method: "POST",
-                                    url: completeUploadUrl,
-                                    headers,
-                                    data: querystring.stringify(post_data)
-                                })
-                                this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
-
-                                if (parseInt(OK) !== 1 || info.match('error')) {
-                                    this.logger.error(`Filesize error`)
-                                    const fileStatusPath = join(this.dirName, 'fileStatus.json')
-                                    if (fs.existsSync(fileStatusPath)) {
-                                        const text = fs.readFileSync(fileStatusPath)
-                                        const obj: FileStatus = JSON.parse(text.toString())
-                                        if (obj.videoParts) {
-                                            obj.videoParts.failUpload = {}
-                                            const stringifies = JSON.stringify(obj, null, 2)
-                                            fs.writeFileSync(fileStatusPath, stringifies)
-                                            this.logger.error(`DELETE failUpload Record`)
-                                        }
+                readBuffers = Buffer.concat([readBuffers, chunk], readLength + chunk.length)
+                readLength += chunk.length
+                totalReadLength += chunk.length
+                fileHash.update(chunk)
+                if (readLength >= chunkSize || totalReadLength === fileSize) {
+                    nowChunk++
+                    if (nowChunk >= successUploadedChunks) {
+                        console.log(`now chunk: ${nowChunk}, chunk size: ${readBuffers.length}`)
+                        this.logger.info(`正在上传 第 ${nowChunk}/${chunkNum} 分块 ${path}`)
+                        fileStream.pause()
+                        try {
+                            this.logger.debug(` nowChunk ${nowChunk} succeedUpload ${successUploadedChunks} uploadUrl ${uploadUrl}, serverFileName ${serverFileName}, path ${path}, chunk.length ${chunk.length}, nowChunk + 1 ${nowChunk + 1}, chunkNum ${chunkNum}`)
+                            await this.uploadChunk(uploadUrl, serverFileName, path, readBuffers, readBuffers.length, nowChunk, chunkNum)
+                        } catch (err) {
+                            fileStream.destroy()
+                            uploadStatus.delete(this.dirName)
+                            this.changeFileStatus({
+                                isFailed: true,
+                                videoParts: {
+                                    failUpload: {
+                                        path,
+                                        uploadUrl,
+                                        completeUploadUrl,
+                                        serverFileName,
+                                        succeedUploadChunk: nowChunk === 0 ? -1 : nowChunk,
+                                        deadline: this.deadline,
+                                        uploadStartTime: this.uploadStart,
+                                        succeedTotalLength: this.succeedTotalLength
                                     }
-                                    uploadStatus.delete(this.dirName)
-                                    return reject(info)
                                 }
-                                resolve({
-                                    desc,
-                                    title,
-                                    filename: serverFileName
-                                })
-                            } catch (err) {
-                                uploadStatus.delete(this.dirName)
-                                // this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
-                                reject(`Merge file error: ${JSON.stringify(err, null, 2)}`)
-                            }
+                            })
 
-                        }, 5000)
+                            return reject(`An error occurred when upload video part: chunk ${nowChunk}/${chunkNum} 分块 ${path} ${err}`)
+                        }
                     }
-
                     fileStream.resume()
+                    readLength = 0
+                    readBuffers = Buffer.from('')
                 }
-                nowChunk++
             })
+            fileStream.on('end', async () => {
+                let post_data = {
+                    'chunks': chunkNum,
+                    'filesize': fileSize,
+                    'md5': fileHash.digest('hex'),
+                    'name': path,
+                    'version': '2.0.0.1054',
+                }
 
+                try {
+                    const headers = {
+                        'Connection': 'keep-alive',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'User-Agent': '',
+                        'Accept-Encoding': 'gzip,deflate',
+                    }
+                    const { OK, info } = await $axios.$request({
+                        method: "POST",
+                        url: completeUploadUrl,
+                        headers,
+                        data: querystring.stringify(post_data)
+                    })
+
+                    this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
+
+                    if (parseInt(OK) !== 1 || info.match('error')) {
+                        this.logger.error(`Filesize error`)
+                        const fileStatusPath = join(this.dirName, 'fileStatus.json')
+                        if (fs.existsSync(fileStatusPath)) {
+                            const text = fs.readFileSync(fileStatusPath)
+                            const obj: FileStatus = JSON.parse(text.toString())
+                            if (obj.videoParts) {
+                                obj.videoParts.failUpload = {}
+                                const stringifies = JSON.stringify(obj, null, 2)
+                                fs.writeFileSync(fileStatusPath, stringifies)
+                                this.logger.error(`DELETE failUpload Record`)
+                            }
+                        }
+                        uploadStatus.delete(this.dirName)
+                        return reject(info)
+                    }
+                    resolve({
+                        desc,
+                        title,
+                        filename: serverFileName
+                    })
+                } catch (err) {
+                    uploadStatus.delete(this.dirName)
+                    // this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
+                    reject(`Merge file error: ${JSON.stringify(err, null, 2)}`)
+                }
+            })
             fileStream.on('error', (error: any) => {
                 // this.logger.error(`An error occurred while listening fileStream: ${error}`)
                 uploadStatus.delete(this.dirName)
@@ -425,7 +425,7 @@ export class uploader {
     }
 
 
-    uploadChunk = async (uploadUrl: any, serverFileName: any, path: any, chunk_data: Uint8Array, chunk_size: any, chunk_id: any, chunk_total_num: any) => {
+    uploadChunk = async (uploadUrl: any, serverFileName: any, path: any, chunk_data: Buffer, chunk_size: any, chunk_id: any, chunk_total_num: any) => {
 
         return new Promise<void>(async (resolve, reject) => {
             try {
