@@ -50,13 +50,6 @@ class App {
                 await this.initExitSignal()
                 await this.initStreamDisconnect()
                 await this.initSchedule()
-
-                this.schedulers.checkRoom.scheduler.task(this)
-
-                setTimeout(() => {
-                    this.schedulers.recycleFile.scheduler.task(this)
-                }, 15 * 1000)
-
             } catch (e) {
                 return reject(e)
             }
