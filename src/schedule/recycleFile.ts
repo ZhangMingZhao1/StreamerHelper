@@ -20,7 +20,7 @@ export default new Scheduler(interval, async function () {
     logger.info(`Task recycleFile Start ...`)
 
     function _deleteLocalFile(obj: FileStatus) {
-        logger.info(`_deleteLocalFile ${obj.recorderName}`)
+        logger.info(`_deleteLocalFile ${obj.path}`)
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
         if (!obj.deleteLocalFile) throw (`[User Config] ${obj.path} Don't Delete The File SKIP...`);
         if (!obj.endRecordTime) {
@@ -33,7 +33,7 @@ export default new Scheduler(interval, async function () {
         if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
         const time = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
-        const delayTime = obj.delayTime || require('../../templates/info.json').StreamerHelper.delayTime || 2
+        const delayTime = obj.delayTime ?? require('../../templates/info.json').StreamerHelper.delayTime ?? 2
 
         if (time >= delayTime && obj.isPost) {
             logger.info(`Time to delete file ${obj.path}`)
@@ -49,7 +49,7 @@ export default new Scheduler(interval, async function () {
 
     function _uploadLocalFile(obj: FileStatus) {
 
-        logger.info(`_uploadLocalFile ${obj.recorderName}`)
+        logger.info(`_uploadLocalFile ${obj.path}`)
 
         if (!obj.uploadLocalFile) throw (`[User Config] ${obj.path} Don't Upload The File SKIP...`);
 
