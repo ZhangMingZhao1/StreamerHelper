@@ -69,39 +69,27 @@ export default new Scheduler(interval, async function (app: App) {
 
             logger.debug(`stream ${JSON.stringify(stream, null, 2)}`)
             // start a recorder
-            if (RoomStatus.get(room.roomName) !== 1 || curRecorder && curRecorder.recorderStat() === false) {
-                if (curRecorder) {
-                    logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
-                    curRecorder.stopRecord()
-                    app.recorderPool.splice(curRecorderIndex as number, 1)
-                }
+            if (RoomStatus.get(room.roomName) !== 1 && !curRecorder) {
                 RoomStatus.set(room.roomName, 1)
                 const tmp = new Recorder(stream)
                 tmp.startRecord(stream)
                 app.recorderPool.push(tmp)
+            } else if (curRecorder?.recorderStat() === false) {
+                logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
+                curRecorder.startRecord(stream)
             }
             console.log(`app.recorderPool`, app.recorderPool);
         } catch (e) {
             // room offline
             // it is time to submit
             RoomStatus.delete(room.roomName)
-            if (curRecorder) {
-                // but the stream isn't disconnected
-                // so stop the recorder before submit
-                if (curRecorder.recorderStat()) {
-                    curRecorder.stopRecord()
-                }
-                setTimeout(() => {
-                    logger.info(`Room offline ${room.roomName}`)
-                    // submit
-                    if (curRecorder && curRecorder.uploadLocalFile) {
-                        app.schedulers.recycleFile.scheduler.task(app)
-                    } else {
-                        logger.info(`读取用户配置，取消上传`)
-                    }
-                    app.recorderPool.splice(curRecorderIndex as number, 1);
-                }, 25 * 1000);
+            // but the stream isn't disconnected
+            // so stop the recorder before submit
+            if (curRecorder?.recorderStat()) {
+                curRecorder.stopRecord()
             }
+            // 保证同一时刻一个直播间只有一个Recorder
+            app.recorderPool.splice(curRecorderIndex as number, 1)
 
         }
     }

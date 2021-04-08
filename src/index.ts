@@ -142,7 +142,7 @@ class App {
                     curRecorder = elem
                 }
             })
-
+            
             // setTimeout(() => {
             //     getStreamUrl(curRecorder.recorderName, curRecorder.recorderLink, curRecorder.tags, curRecorder.tid)
             //         .then((stream: StreamInfo) => {
