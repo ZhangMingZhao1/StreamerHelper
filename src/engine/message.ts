@@ -47,7 +47,7 @@ export class Recorder {
 
   startRecord(stream: StreamInfo) {
     if (!this.recorderName) return
-    stream.timeV = this.timeV    
+    stream.timeV = this.timeV
     this.logger.info(`开始下载: ${stream.roomName}, 直播流: ${stream.streamUrl}`)
     const cmd = `ffmpeg`;
     const savePath = join(rootPath, "/download")
@@ -56,7 +56,7 @@ export class Recorder {
     if (!fs.existsSync(this.dirName)) {
       fs.mkdirSync(this.dirName)
     }
-    this.dirName = join(this.dirName, this.timeV)    
+    this.dirName = join(this.dirName, this.timeV)
     this.readFileStatus(this.dirName)
     if (!fs.existsSync(this.dirName)) {
       fs.mkdirSync(this.dirName)
@@ -70,7 +70,7 @@ export class Recorder {
       startNumber = ps.length
     }
 
-    this.logger.info(`记录相关信息到文件 ${chalk.red(this.recorderName)}`)
+    this.logger.info(`记录相关信息到文件 ${chalk.red(this.recorderName)}，目录：${this.dirName}`)
     this.writeInfoToFileStatus(this.dirName, stream)
 
     const fileName: string = join(this.dirName, `${stream.roomName}-${this.timeV}-part-%03d.mp4`);
@@ -113,7 +113,7 @@ export class Recorder {
     });
     this.App.on("exit", (code: number) => {
       this.ffmpegProcessEnd = true
-      this.logger.info(`下载流 ${chalk.red(stream.roomName)} 退出，退出码: ${code}`);
+      this.logger.info(`下载流 ${chalk.red(stream.roomName)} 退出，退出码: ${code}，目录：${this.dirName}`);
       this.logger.info(`记录退出时间 ${chalk.red(this.recorderName)}`)
       this.writeInfoToFileStatus(this.dirName, stream)
       if (!this.ffmpegProcessEndByUser) {
@@ -164,6 +164,7 @@ export class Recorder {
         timeV: this.timeV
       }
       fs.writeFileSync(fileStatusPath, JSON.stringify(obj, null, '  '))
+      this.logger.info(`Create fileStatus.json: ${JSON.stringify(obj, null, 2)}`)
     } else {
       // When ffmpeg exit, write endRecordTime to file
       const obj: FileStatus = {

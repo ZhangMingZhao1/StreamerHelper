@@ -77,19 +77,17 @@ export default new Scheduler(interval, async function () {
         }
 
 
-        if (obj.path != null) {
-            logger.info(`NEW Upload Task ${stream.roomName} ${stream.dirName}`);
-            const uploadTask = new uploader(stream)
-            setTimeout(() => {
-                uploadTask.upload().then(() => {
-                    uploadStatus.delete(stream.dirName as string)
-                }).catch((e) => {
-                    uploadStatus.delete(stream.dirName as string)
-                    logger.error(e)
-                })
+        logger.info(`NEW Upload Task ${stream.roomName} ${stream.dirName}`);
+        const uploadTask = new uploader(stream)
+        setTimeout(() => {
+            uploadTask.upload().then(() => {
+                uploadStatus.delete(stream.dirName as string)
+            }).catch((e) => {
+                uploadStatus.delete(stream.dirName as string)
+                logger.error(e)
+            })
 
-            }, 5000);
-        }
+        }, 5000);
         logger.info(`_uploadLocalFile ${obj.recorderName}`)
 
     }
