@@ -2,6 +2,7 @@
   "StreamerHelper": {
     "debug": false,
     "roomCheckTime": 120,
+    "recycleCheckTime": 180,
     "videoPartLimitSize": 100,
     "delayTime": 2
   },

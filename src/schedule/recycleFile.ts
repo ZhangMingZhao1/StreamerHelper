@@ -11,10 +11,9 @@ import { uploader } from "@/uploader";
 import { StreamInfo } from "@/type/streamInfo";
 import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
-
 const logger = log4js.getLogger(`recycleFile`);
-
-const interval = 1000 * 60 * 3
+const recycleCheckTime = require("../../templates/info.json").recycleCheckTime
+const interval = recycleCheckTime ? recycleCheckTime * 1000 : 3 * 60 * 1000
 // const interval = 1000 * 20
 export default new Scheduler(interval, async function () {
     logger.info(`Task recycleFile Start ...`)
