@@ -6,6 +6,9 @@ import { join, basename } from "path";
 import { emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
+import { RoomStatus } from "./engine/roomStatus";
+import { RoomStatusPath } from "./engine/roomPathStatus";
+import { uploadStatus } from "./uploader/uploadStatus";
 
 interface personInfo {
     username: string;
@@ -85,8 +88,11 @@ class App {
     initSchedule = async () => {
         return new Promise<void>(async (resolve, reject) => {
             setInterval(() => {
-                this.logger.info('schedules:')
-                this.logger.info(this.schedulers);
+                this.logger.info('status:')
+                this.logger.info(RoomStatus)
+                this.logger.info(RoomStatusPath)
+                this.logger.info(uploadStatus)
+                this.logger.info(this.recorderPool);
             }, 1000 * 10)
             try {
                 fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
@@ -99,8 +105,6 @@ class App {
                             scheduleModule.task(this)
                         }, scheduleModule.interval);
                     }
-
-
                 })
                 resolve()
             } catch (e) {
@@ -143,6 +147,8 @@ class App {
             this.recorderPool.forEach((elem: Recorder) => {
                 if (elem.recorderName === curRecorder.recorderName) {
                     curRecorder = elem
+                    this.logger.info(`有一个Recorder退出`)
+                    this.logger.info(curRecorder)
                 }
             })
 
