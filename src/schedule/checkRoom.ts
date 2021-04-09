@@ -48,6 +48,8 @@ export default new Scheduler(interval, async function (app: App) {
                 logger.trace(`curRecorder: ${JSON.stringify(curRecorder, null, 2)} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
             }
         })
+        logger.info(`after forEach app.recorderPool: length:${app.recorderPool.length}`)
+        logger.info(app.recorderPool)
 
         loggerCheck.debug(`room ${JSON.stringify(room, null, 2)}`)
         let stream: StreamInfo = {
