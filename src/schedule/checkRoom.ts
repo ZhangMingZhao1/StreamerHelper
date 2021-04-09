@@ -7,7 +7,6 @@ import { RoomStatus } from "@/engine/roomStatus";
 import { getRoomArrInfo } from "@/util/utils";
 import { log4js } from "@/log";
 import { uploadStatus } from "@/uploader/uploadStatus";
-import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 import { App } from "..";
 import { Recorder } from "@/engine/message";
@@ -102,10 +101,6 @@ export default new Scheduler(interval, async function (app: App) {
 `
 
     loggerCheck.info(curRecorderText);
-    loggerCheck.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
-    console.log("RoomStatus", RoomStatus);
-    console.log("uploadStatus", uploadStatus);
-    console.log("RoomStatusPath", RoomStatusPath);
 
     function getTipsString(curRecorder: Recorder) {
         return `

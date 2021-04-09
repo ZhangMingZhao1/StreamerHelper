@@ -1,11 +1,14 @@
 import { User } from "@/uploader/user";
-import { log4js } from "@/log";
+import { log4js, logger } from "@/log";
 import { Logger } from "log4js";
 import * as fs from "fs";
 import { join, basename } from "path";
 import { emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
+import { RoomStatus } from "./engine/roomStatus";
+import { uploadStatus } from "./uploader/uploadStatus";
+import { RoomStatusPath } from "./engine/roomPathStatus";
 
 interface personInfo {
     username: string;
@@ -85,6 +88,13 @@ class App {
     initSchedule = async () => {
         return new Promise<void>(async (resolve, reject) => {
             try {
+                setInterval(()=>{
+                    this.logger.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)} RoomPathStatus ${JSON.stringify(RoomStatusPath, null, 2)}`)
+                    this.logger.info(`RecorderPool size ${this.recorderPool.length} RecorderPool `)
+                    this.recorderPool.forEach((elem: Recorder, index: number) => {
+                        this.logger.info(`index ${index} recorder ${elem.recorderName} dir ${elem.dirName}`)
+                    })
+                },20000)
                 fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
                     const schedulerFileName = basename(fileName, '.js')
                     this.logger.info(`Load Schedule [${schedulerFileName}]`)
