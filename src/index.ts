@@ -89,7 +89,7 @@ class App {
         return new Promise<void>(async (resolve, reject) => {
             try {
                 setInterval(()=>{
-                    this.logger.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)} RoomPathStatus ${JSON.stringify(RoomStatusPath, null, 2)}`)
+                    this.logger.info(`RoomStatus ${RoomStatus} UploadStatus ${uploadStatus} RoomPathStatus ${RoomStatusPath}`)
                     this.logger.info(`RecorderPool size ${this.recorderPool.length} RecorderPool `)
                     this.recorderPool.forEach((elem: Recorder, index: number) => {
                         this.logger.info(`index ${index} recorder ${elem.recorderName} dir ${elem.dirName}`)

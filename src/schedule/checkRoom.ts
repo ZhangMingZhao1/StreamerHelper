@@ -39,11 +39,9 @@ export default new Scheduler(interval, async function (app: App) {
                 curRecorder = elem
                 curRecorderIndex = index
                 curRecorderText = getTipsString(curRecorder) + curRecorderText
-                logger.info(`room ${JSON.stringify(room, null, 2)} curRecorder: ${JSON.stringify(curRecorder, null, 2)} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
+                logger.info(`room ${room.roomName} ${room.dirName} curRecorder: ${curRecorder.recorderName} ${curRecorder.dirName} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
             }
         })
-
-        loggerCheck.debug(`room ${JSON.stringify(room, null, 2)}`)
         let stream: StreamInfo = {
             roomLink: room.roomLink,
             roomName: room.roomName,
@@ -88,6 +86,7 @@ export default new Scheduler(interval, async function (app: App) {
             }
             // 保证同一时刻一个直播间只有一个Recorder
             if (curRecorder) {
+                logger.info(`Will delete ${curRecorder.dirName} ${curRecorder.recorderName} ${curRecorderIndex}`)
                 app.recorderPool.splice(curRecorderIndex as number, 1)
             }
 
