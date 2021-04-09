@@ -84,20 +84,23 @@ class App {
     * */
     initSchedule = async () => {
         return new Promise<void>(async (resolve, reject) => {
+            setInterval(() => {
+                this.logger.info('schedules:')
+                this.logger.info(this.schedulers);
+            }, 1000 * 10)
             try {
-                fs.readdirSync(join(__dirname, 'schedule')).forEach(async (path) => {
-                    const schedulerFileName = basename(path, '.js')
+                fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
+                    const schedulerFileName = basename(fileName, '.js')
                     this.logger.info(`Load Schedule [${schedulerFileName}]`)
-                    const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', path))).default
-                    console.log("注册", schedulerFileName, scheduleModule)
+                    const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', fileName))).default
                     this.schedulers[schedulerFileName] = { scheduler: scheduleModule }
-                    
                     if (typeof (scheduleModule.interval) === 'number') {
-                        console.log("开始定时器");
                         this.schedulers[schedulerFileName].timer = setInterval(() => {
                             scheduleModule.task(this)
                         }, scheduleModule.interval);
                     }
+
+
                 })
                 resolve()
             } catch (e) {
@@ -142,7 +145,7 @@ class App {
                     curRecorder = elem
                 }
             })
-            
+
             // setTimeout(() => {
             //     getStreamUrl(curRecorder.recorderName, curRecorder.recorderLink, curRecorder.tags, curRecorder.tid)
             //         .then((stream: StreamInfo) => {

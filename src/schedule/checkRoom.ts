@@ -13,7 +13,8 @@ import { App } from "..";
 import { RecorderType } from "@/type/recorderType";
 import { Recorder } from "@/engine/message";
 
-const checkTime = parseInt(String(require('../../templates/info.json').StreamerHelper.roomCheckTime * 1000)) || 120 * 1000
+const roomCheckTime = require('../../templates/info.json').StreamerHelper.roomCheckTime
+const checkTime = roomCheckTime ? roomCheckTime * 1000 : 120 * 1000*6
 const rooms = getRoomArrInfo(require('../../templates/info.json').streamerInfo);
 const logger = log4js.getLogger(`checkRoom`)
 const loggerCheck = log4js.getLogger(`check`)
@@ -35,6 +36,8 @@ export default new Scheduler(interval, async function (app: App) {
         loggerCheck.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
         // get current Recorder
         // console.log(`app.recorderPool`, app.recorderPool);
+        logger.info(`app.recorderPool:`)
+        logger.info(app.recorderPool)
         app.recorderPool.forEach((elem: RecorderType, index: number) => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
@@ -78,7 +81,6 @@ export default new Scheduler(interval, async function (app: App) {
                 logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
                 curRecorder.startRecord(stream)
             }
-            console.log(`app.recorderPool`, app.recorderPool);
         } catch (e) {
             // room offline
             // it is time to submit
@@ -89,6 +91,7 @@ export default new Scheduler(interval, async function (app: App) {
                 curRecorder.stopRecord()
             }
             // 保证同一时刻一个直播间只有一个Recorder
+            // TODO: complete destory the recorder object just removed
             app.recorderPool.splice(curRecorderIndex as number, 1)
 
         }

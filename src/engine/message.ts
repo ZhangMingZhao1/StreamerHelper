@@ -155,12 +155,12 @@ export class Recorder {
         deleteLocalFile: this.deleteLocalFile,
         isPost: false,
         isFailed: false,
-        delayTime: stream.delayTime || 2,
+        delayTime: stream.delayTime ?? 2,
         templateTitle: stream.templateTitle || '',
         desc: stream.desc || '',
         source: stream.source || '',
         dynamic: stream.dynamic || '',
-        copyright: stream.copyright || 2,
+        copyright: stream.copyright ?? 2,
         timeV: this.timeV
       }
       fs.writeFileSync(fileStatusPath, JSON.stringify(obj, null, '  '))

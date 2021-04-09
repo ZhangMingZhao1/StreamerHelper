@@ -19,7 +19,7 @@ export default new Scheduler(interval, async function () {
     logger.info(`Task recycleFile Start ...`)
 
     function _deleteLocalFile(obj: FileStatus) {
-        logger.info(`_deleteLocalFile ${obj.path}`)
+        logger.info(`Try to delete local directory: ${obj.path}`)
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
         if (!obj.deleteLocalFile) throw (`[User Config] ${obj.path} Don't Delete The File SKIP...`);
         if (!obj.endRecordTime) {
@@ -38,25 +38,24 @@ export default new Scheduler(interval, async function () {
             logger.info(`Time to delete file ${obj.path}`)
             try {
                 deleteFolder(obj.path || '')
-                logger.info(`Delete folder succeed !! ${obj.path}`)
+                logger.info(`Directory deleted successfully: ${obj.path}`)
             } catch (e) {
-                throw (`Delete folder fail !! ${obj.path} ${e}`)
+                throw (`Failed to delete directory: ${obj.path},error: ${e}`)
             }
         }
-        logger.info(`_deleteLocalFile ${obj.recorderName}`)
     }
 
     function _uploadLocalFile(obj: FileStatus) {
 
-        logger.info(`_uploadLocalFile ${obj.path}`)
+        logger.info(`Try to upload local directory: ${obj.path}`)
 
         if (!obj.uploadLocalFile) throw (`[User Config] ${obj.path} Don't Upload The File SKIP...`);
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
 
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
 
-        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传，跳过 ${obj.recorderName} ${obj.path}`)
 
         let stream: StreamInfo = {
             copyright: obj.copyright,
@@ -64,7 +63,7 @@ export default new Scheduler(interval, async function () {
             desc: obj.desc,
             dirName: obj.path,
             dynamic: obj.dynamic,
-            roomLink: obj.recorderLink || '',
+            roomLink: obj.recorderLink ?? '',
             roomName: obj.recorderName || '',
             roomTags: obj.tags || [],
             roomTid: obj.tid || 0,
@@ -87,7 +86,6 @@ export default new Scheduler(interval, async function () {
             })
 
         }, 5000);
-        logger.info(`_uploadLocalFile ${obj.recorderName}`)
 
     }
 
