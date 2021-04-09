@@ -99,6 +99,8 @@ export default new Scheduler(interval, async function (app: App) {
             }
             // 保证同一时刻一个直播间只有一个Recorder
             // TODO: complete destory the recorder object just removed
+            logger.info(`准备删除${curRecorderIndex}`)
+            logger.info(app.recorderPool[curRecorderIndex as number])
             app.recorderPool.splice(curRecorderIndex as number, 1)
 
         }
