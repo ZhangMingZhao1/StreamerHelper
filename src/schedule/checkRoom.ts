@@ -40,7 +40,7 @@ export default new Scheduler(interval, async function (app: App) {
                 curRecorder = elem
                 curRecorderIndex = index
                 curRecorderText = getTipsString(curRecorder) + curRecorderText
-                logger.trace(`curRecorder: ${JSON.stringify(curRecorder, null, 2)} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
+                logger.info(`room ${JSON.stringify(room, null, 2)} curRecorder: ${JSON.stringify(curRecorder, null, 2)} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
             }
         })
 

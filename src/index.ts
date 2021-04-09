@@ -142,23 +142,6 @@ class App {
                 }
             })
 
-            // setTimeout(() => {
-            //     getStreamUrl(curRecorder.recorderName, curRecorder.recorderLink, curRecorder.tags, curRecorder.tid)
-            //         .then((stream: StreamInfo) => {
-            //             // the stream disconnected
-            //             // but room online
-            //             // so restart the recorder
-            //             // continue downloading
-            //             logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
-            //             curRecorder.startRecord(stream)
-
-            //         })
-            //         .catch(() => {
-            //             RoomStatus.delete(curRecorder.recorderName)
-            //         })
-
-            // }, 5000);
-
         })
     }
 }
