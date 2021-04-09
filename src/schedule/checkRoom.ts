@@ -36,7 +36,7 @@ export default new Scheduler(interval, async function (app: App) {
         loggerCheck.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
         // get current Recorder
         // console.log(`app.recorderPool`, app.recorderPool);
-        logger.info(`app.recorderPool:`)
+        logger.info(`app.recorderPool: length:${app.recorderPool.length}`)
         logger.info(app.recorderPool)
         app.recorderPool.forEach((elem: RecorderType, index: number) => {
             if (elem.recorderName === room.roomName) {
@@ -76,7 +76,10 @@ export default new Scheduler(interval, async function (app: App) {
                 RoomStatus.set(room.roomName, 1)
                 const tmp = new Recorder(stream)
                 tmp.startRecord(stream)
+                logger.info(`tmp recorder: `)
+                logger.info(tmp)
                 app.recorderPool.push(tmp)
+                logger.info(app.recorderPool)
             } else if (curRecorder?.recorderStat() === false) {
                 logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
                 curRecorder.startRecord(stream)

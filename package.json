@@ -6,7 +6,7 @@
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
     "watch": "tsc -w --project tsconfig.json && tsc-alias -w -p tsconfig.json",
     "lint": "tslint -c tslint.json -p tsconfig.json",
-    "serve": "npm run build && pm2 start ./dist/app.js",
+    "serve": "npm run build && pm2 start ./dist/index.js",
     "dev": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json && node ./dist/index.js"
   },
   "repository": {
