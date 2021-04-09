@@ -1,5 +1,5 @@
 import { User } from "@/uploader/user";
-import { log4js, logger } from "@/log";
+import { log4js } from "@/log";
 import { Logger } from "log4js";
 import * as fs from "fs";
 import { join, basename } from "path";
