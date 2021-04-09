@@ -10,7 +10,6 @@ import { uploadStatus } from "@/uploader/uploadStatus";
 import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 import { App } from "..";
-import { RecorderType } from "@/type/recorderType";
 import { Recorder } from "@/engine/message";
 
 const roomCheckTime = require('../../templates/info.json').StreamerHelper.roomCheckTime
@@ -29,7 +28,7 @@ export default new Scheduler(interval, async function (app: App) {
     console.log(uploadStatus);
     loggerCheck.info(`Start checkRoom. Interval ${interval / 1000}s`)
     let curRecorderText: string = ''
-    let curRecorder: RecorderType | undefined;
+    let curRecorder: Recorder | undefined;
     let curRecorderIndex: number | undefined
     loggerCheck.debug(`Rooms ${JSON.stringify(rooms, null, 2)}`)
     for (const room of rooms) {
@@ -38,7 +37,7 @@ export default new Scheduler(interval, async function (app: App) {
         // console.log(`app.recorderPool`, app.recorderPool);
         logger.info(`app.recorderPool: length:${app.recorderPool.length}`)
         logger.info(app.recorderPool)
-        app.recorderPool.forEach((elem: RecorderType, index: number) => {
+        app.recorderPool.forEach((elem: Recorder, index: number) => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
                 curRecorderIndex = index
@@ -112,7 +111,7 @@ export default new Scheduler(interval, async function (app: App) {
     console.log("uploadStatus", uploadStatus);
     console.log("RoomStatusPath", RoomStatusPath);
 
-    function getTipsString(curRecorder: RecorderType) {
+    function getTipsString(curRecorder: Recorder) {
         return `
 直播间名称 ${chalk.red(curRecorder.recorderName)}
 直播间地址 ${curRecorder.recorderLink}

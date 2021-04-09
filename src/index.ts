@@ -4,8 +4,8 @@ import { Logger } from "log4js";
 import * as fs from "fs";
 import { join, basename } from "path";
 import { emitter } from "@/util/utils";
-import { RecorderType } from "@/type/recorderType";
 import { Scheduler } from "./type/scheduler";
+import { Recorder } from "./engine/message";
 
 interface personInfo {
     username: string;
@@ -30,7 +30,7 @@ class App {
     personInfo: personInfo
     user?: User;
     schedulers: Schedulers;
-    recorderPool: RecorderType[];
+    recorderPool: Recorder[];
 
     constructor() {
         this.personInfo = require('../templates/info.json').personInfo
@@ -122,7 +122,7 @@ class App {
                 }
             }
             emitter.removeAllListeners("streamDisconnect")
-            this.recorderPool.forEach((elem: RecorderType) => {
+            this.recorderPool.forEach((elem: Recorder) => {
                 elem.stopRecord()
             })
             setTimeout(() => {
@@ -139,8 +139,8 @@ class App {
     }
 
     initStreamDisconnect = async () => {
-        emitter.on('streamDisconnect', (curRecorder: RecorderType) => {
-            this.recorderPool.forEach((elem: RecorderType) => {
+        emitter.on('streamDisconnect', (curRecorder: Recorder) => {
+            this.recorderPool.forEach((elem: Recorder) => {
                 if (elem.recorderName === curRecorder.recorderName) {
                     curRecorder = elem
                 }
