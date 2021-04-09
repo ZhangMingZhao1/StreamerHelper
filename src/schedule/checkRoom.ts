@@ -37,6 +37,9 @@ export default new Scheduler(interval, async function (app: App) {
         // console.log(`app.recorderPool`, app.recorderPool);
         logger.info(`app.recorderPool: length:${app.recorderPool.length}`)
         logger.info(app.recorderPool)
+        global.gc()
+        logger.info(`after gc1 app.recorderPool: length:${app.recorderPool.length}`)
+        logger.info(app.recorderPool)
         app.recorderPool.forEach((elem: Recorder, index: number) => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
