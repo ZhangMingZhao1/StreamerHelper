@@ -6,9 +6,6 @@ import { join, basename } from "path";
 import { emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
-import { RoomStatus } from "./engine/roomStatus";
-import { RoomStatusPath } from "./engine/roomPathStatus";
-import { uploadStatus } from "./uploader/uploadStatus";
 
 interface personInfo {
     username: string;
@@ -87,13 +84,6 @@ class App {
     * */
     initSchedule = async () => {
         return new Promise<void>(async (resolve, reject) => {
-            setInterval(() => {
-                this.logger.info('status:')
-                this.logger.info(RoomStatus)
-                this.logger.info(RoomStatusPath)
-                this.logger.info(uploadStatus)
-                this.logger.info(this.recorderPool);
-            }, 1000 * 10)
             try {
                 fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
                     const schedulerFileName = basename(fileName, '.js')
