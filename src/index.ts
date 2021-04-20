@@ -6,9 +6,6 @@ import { join, basename } from "path";
 import { emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
-import { RoomStatus } from "./engine/roomStatus";
-import { uploadStatus } from "./uploader/uploadStatus";
-import { RoomStatusPath } from "./engine/roomPathStatus";
 
 interface personInfo {
     username: string;
@@ -40,13 +37,16 @@ class App {
         this.logger = log4js.getLogger(`APP`)
         this.schedulers = {}
         this.recorderPool = []
+
         if (!fs.existsSync(join(process.cwd(), '/download'))) {
             fs.mkdirSync(join(process.cwd(), '/download'))
         }
+
     }
 
     init = async () => {
         return new Promise<void>(async (reject) => {
+
             try {
                 this.initUnCaughtException()
                 await this.initUser()
@@ -61,6 +61,7 @@ class App {
 
     initUser = async () => {
         return new Promise<void>(async (resolve, reject) => {
+
             const {
                 username,
                 password,
@@ -72,6 +73,7 @@ class App {
                 mid
             }: personInfo = this.personInfo
             this.user = new User(username, password, access_token, refresh_token, expires_in, nickname, tokenSignDate, mid)
+
             try {
                 await this.user.login()
                 resolve()
@@ -87,25 +89,23 @@ class App {
     * */
     initSchedule = async () => {
         return new Promise<void>(async (resolve, reject) => {
+
             try {
-                setInterval(()=>{
-                    this.logger.info(`RoomStatus ${RoomStatus} UploadStatus ${uploadStatus} RoomPathStatus ${RoomStatusPath}`)
-                    this.logger.info(`RecorderPool size ${this.recorderPool.length} RecorderPool `)
-                    this.recorderPool.forEach((elem: Recorder, index: number) => {
-                        this.logger.info(`index ${index} recorder ${elem.recorderName} dir ${elem.dirName}`)
-                    })
-                },20000)
                 fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
                     const schedulerFileName = basename(fileName, '.js')
                     this.logger.info(`Load Schedule [${schedulerFileName}]`)
                     const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', fileName))).default
                     this.schedulers[schedulerFileName] = { scheduler: scheduleModule }
+
                     if (typeof (scheduleModule.interval) === 'number') {
+                        scheduleModule.task(this)
                         this.schedulers[schedulerFileName].timer = setInterval(() => {
                             scheduleModule.task(this)
                         }, scheduleModule.interval);
                     }
+
                 })
+
                 resolve()
             } catch (e) {
                 this.logger.error(e)
@@ -116,19 +116,25 @@ class App {
     }
 
     initExitSignal = async () => {
+
         this.logger.info(`initExitSignal`)
+
         process.on("SIGINT", () => {
             this.logger.info("Receive exit signal, the process will exit after 3 seconds.")
             this.logger.info("Process exited by user.")
+
             for (const key in this.schedulers) {
                 if (this.schedulers[key].timer) {
                     clearInterval(this.schedulers[key].timer as NodeJS.Timer)
                 }
             }
+
             emitter.removeAllListeners("streamDisconnect")
+
             this.recorderPool.forEach((elem: Recorder) => {
                 elem.stopRecord()
             })
+
             setTimeout(() => {
                 process.exit()
             }, 3000);
@@ -136,20 +142,24 @@ class App {
     }
 
     initUnCaughtException = () => {
+
         this.logger.info(`initUnCaughtException`)
+
         process.on("uncaughtException", (err) => {
             this.logger.error("exception caught: ", err);
         });
     }
 
     initStreamDisconnect = async () => {
+
         emitter.on('streamDisconnect', (curRecorder: Recorder) => {
             this.recorderPool.forEach((elem: Recorder) => {
+
                 if (elem.recorderName === curRecorder.recorderName) {
                     curRecorder = elem
-                    this.logger.info(`有一个Recorder退出`)
-                    this.logger.info(curRecorder)
+                    this.logger.info(`Recorder ${curRecorder.recorderName} 退出: `)
                 }
+
             })
 
         })
@@ -158,9 +168,7 @@ class App {
 
 const app = new App()
 
-
 app.init().then(r => r).catch(e => log4js.getLogger(`APP`).error(e))
-
 
 export {
     App,

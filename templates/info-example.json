@@ -3,8 +3,7 @@
     "debug": false,
     "roomCheckTime": 120,
     "recycleCheckTime": 180,
-    "videoPartLimitSize": 100,
-    "delayTime": 2
+    "videoPartLimitSize": 100
   },
   "personInfo": {
     "nickname": "",
@@ -22,6 +21,7 @@
         "uploadLocalFile": true,
         "deleteLocalFile": true,
         "templateTitle": "",
+        "delayTime": 0,
         "desc": "",
         "source": "",
         "dynamic": "",
@@ -40,6 +40,7 @@
         "uploadLocalFile": true,
         "deleteLocalFile": false,
         "templateTitle": "",
+        "delayTime": 0,
         "desc": "",
         "source": "",
         "roomUrl": "https://live.bilibili.com/22348202",

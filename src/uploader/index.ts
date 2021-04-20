@@ -15,6 +15,7 @@ import * as querystring from 'querystring'
 import * as formData from 'form-data'
 
 export class uploader {
+
     private readonly APPSECRET: string;
     private readonly videoPartLimitSizeInput: number;
     private readonly dirName: string;
@@ -48,17 +49,17 @@ export class uploader {
         this.dirName = stream.dirName || ''
         this.access_token = app.user?.access_token || 'xxx'
         this.mid = require('../../templates/info.json').personInfo.mid || 0
+        this.videoPartLimitSizeInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize ?? 100
         this.copyright = stream.copyright || 2
         this.cover = ''
-        this.desc = stream.desc || `${stream.roomName} 直播间 ${stream.roomLink}`
+        this.desc = stream.desc || `Powered By StreamerHelper. https://github.com/ZhangMingZhao1/StreamerHelper`
         this.no_reprint = 0
         this.open_elec = 1
-        this.source = stream.source || `${stream.roomName} 直播间 ${stream.roomLink}`
+        this.source = stream.source || `${stream.roomName} 直播间: ${stream.roomLink}`
         this.tags = stream.roomTags
         this.tid = stream.roomTid
-        this.title = this.getTitle(stream || '')
-        this.dynamic = stream.dynamic || `${stream.roomName} 直播间 ${stream.roomLink}`
-        this.videoPartLimitSizeInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize || 100
+        this.title = stream.templateTitle || `${stream.roomName} ${stream.timeV} 录播`
+        this.dynamic = stream.dynamic || `${stream.roomName} 直播间: ${stream.roomLink}`
         this.uploadLocalFile = stream.uploadLocalFile || true
         this.recorderName = stream.roomName || ''
         this.deadline = 0
@@ -80,17 +81,17 @@ export class uploader {
                 if (uploadStatus.get(this.dirName) === 1) return this.logger.error(`目录 ${this.dirName} 正在上传中，避免重复上传，取消此次上传任务`)
 
                 this.logger.info(`开始上传稿件 ${this.dirName}`)
-
                 this.logger.info(`锁定稿件文件目录，避免重复上传 ${this.dirName}`)
                 uploadStatus.set(this.dirName, 1)
-
                 const fileStatusPath = join(this.dirName, 'fileStatus.json')
+
                 if (fs.existsSync(fileStatusPath)) {
                     const text = fs.readFileSync(fileStatusPath)
                     const obj = JSON.parse(text.toString()) as FileStatus
                     this.logger.debug(`Read fileStatus.json ${JSON.stringify(obj, null, 2)}`)
                     this.succeedUploaded = obj?.videoParts?.succeedUploaded
                     this.isUploadFail = obj.isFailed
+
                     if (obj.isFailed) {
                         this.failUpload = obj.videoParts?.failUpload
                         this.succeedTotalLength = obj.videoParts?.failUpload?.succeedTotalLength || 0
@@ -98,6 +99,7 @@ export class uploader {
                         this.uploadStart = obj.videoParts?.failUpload?.uploadStartTime || 0
                         this.deadline = obj.videoParts?.failUpload?.deadline || 0
                     }
+
                 }
 
                 // Get video path
@@ -108,7 +110,6 @@ export class uploader {
                     return reject(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
                 }
 
-                // Upload video part
                 this.logger.info(`Start to upload videoParts ...`)
                 let remoteVideos: remoteVideoPart[] = await this.uploadVideoParts(localVideos) || []
                 this.logger.info(`Upload videoParts END, remoteVideos: ${remoteVideos}`)
@@ -122,44 +123,33 @@ export class uploader {
                     video.title = `P${index + 1}`
                     return video
                 })
-
                 this.logger.info(`videos ${JSON.stringify(remoteVideos, null, 2)}`)
-
-                // Post video
                 this.logger.info(`Try to post videos ...`)
                 await this.postVideo(remoteVideos)
-
-                // Delete Dir
-
                 uploadStatus.delete(this.dirName)
-
-                // Write status to file
                 this.logger.info(`Upload Success.`)
-
                 this.changeFileStatus({ isPost: true })
-
-                // app.schedulers.recycleFile.scheduler.task(app)
                 resolve()
             } catch (e) {
                 uploadStatus.delete(this.dirName)
-                // this.logger.error(e)
                 reject(e)
             }
         })
     }
 
     getLocalVideos(path: string): localVideoPart[] {
-        // this.logger.info(`Get Video Parts ... PATH ${path}`)
 
         const videoPartLimitSize = this.videoPartLimitSizeInput * 1024 * 1024
         this.logger.info(`videoPartLimitSize ${videoPartLimitSize}`)
         this.logger.info(`succeedUploaded ${JSON.stringify(this.succeedUploaded, null, 2)}`)
         let localVideoParts: localVideoPart[] = []
         let videoIndex = 0
+
         fs.readdirSync(path).forEach((shortPath: string) => {
             const fullPath = join(path, shortPath)
             const fileSize = fs.statSync(fullPath).size
             this.logger.debug(`fileSize ${fileSize}`)
+
             if (fileSize < videoPartLimitSize) {
                 this.logger.info(`${chalk.red('放弃该分P上传')} ${fullPath}, 文件大小 ${Math.round(fileSize / 1024 / 1024)}M, 限制${this.videoPartLimitSizeInput}M`)
             } else if (this.succeedUploaded && this.succeedUploaded.find(item => item.localFilePath === fullPath)) {
@@ -193,8 +183,8 @@ export class uploader {
 
     uploadVideoParts = async (localVideoParts: localVideoPart[]) => {
         return new Promise<remoteVideoPart[]>(async (resolve, reject) => {
-            this.logger.info(`uploadVideoPart Start ...`)
 
+            this.logger.info(`uploadVideoPart Start ...`)
             const remoteVideos: remoteVideoPart[] = []
 
             for (let i = 0; i < localVideoParts.length; i++) {
@@ -202,6 +192,7 @@ export class uploader {
 
                 try {
                     let uploadUrl = '', completeUploadUrl = '', serverFileName = '';
+                    
                     if (isFailed) {
                         uploadUrl = this.failUpload?.uploadUrl || ''
                         completeUploadUrl = this.failUpload?.completeUploadUrl || ''
@@ -221,14 +212,17 @@ export class uploader {
 
                     // Record upload succeed videos
                     const fileStatusPath = join(this.dirName, 'fileStatus.json')
+
                     if (fs.existsSync(fileStatusPath)) {
                         const text = fs.readFileSync(fileStatusPath)
                         const obj: FileStatus = JSON.parse(text.toString())
 
                         if (!obj.videoParts) obj.videoParts = {};
+
                         if (!obj.videoParts.succeedUploaded) obj.videoParts.succeedUploaded = [];
 
                         const result = obj.videoParts.succeedUploaded.find(item => item.localFilePath === localFilePath)
+
                         if (result) {
                             this.logger.info(`Found Exist Video ${localFilePath}`);
                             continue
@@ -236,15 +230,11 @@ export class uploader {
 
                         obj.videoParts.succeedUploaded.push({ ...videoOnServer, localFilePath })
                         this.logger.info(`Record Succeed video ${JSON.stringify(videoOnServer, null, 2)}`)
-
                         const stringfied = JSON.stringify(obj, null, '  ')
                         fs.writeFileSync(fileStatusPath, stringfied)
                         this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
                     }
-
-
                 } catch (e) {
-                    // this.logger.error(e)
                     uploadStatus.delete(this.dirName)
                     return reject(e)
                 }
@@ -255,6 +245,7 @@ export class uploader {
 
     getPreUploadData = async (): Promise<uploadVideoPartInfo> => {
         return new Promise((async (resolve, reject) => {
+
             this.logger.debug(`getPreUploadData Start ...`)
             const headers = {
                 'Connection': 'keep-alive',
@@ -265,6 +256,7 @@ export class uploader {
 
             try {
                 const preUrl = `http://member.bilibili.com/preupload?access_key=${this.access_token}&mid=${this.mid}&profile=ugcfr%2Fpc3`
+
                 const {
                     OK = 0,
                     url = '',
@@ -277,7 +269,6 @@ export class uploader {
                 })
 
                 if (OK !== 1) {
-                    // this.logger.error(`Get preUpload Request Fail ...`)
                     reject(`Get preUpload Request Fail ...`)
                 }
 
@@ -285,15 +276,15 @@ export class uploader {
                 this.logger.debug(`_getPreUploadData filename ${filename}`)
                 this.logger.debug(`_getPreUploadData complete ${complete}`)
                 const uploadUrl: string = url, completeUploadUrl: string = complete, serverFileName: string = filename;
-                console.log(uploadUrl)
                 const params = uploadUrl.split('?')[1]
                 const { deadline, uploadstart } = querystring.parse(params)
-                console.log(deadline, uploadstart)
-                console.log(typeof deadline, typeof uploadstart);
+
                 if (deadline)
                     this.deadline = parseInt(deadline as string)
+
                 if (this.uploadStart)
                     this.uploadStart = parseInt(uploadstart as string)
+
                 this.logger.debug(`_getPreUploadData deadline ${this.deadline} uploadStartTime ${this.uploadStart}`)
                 resolve({ uploadUrl, completeUploadUrl, serverFileName })
             } catch (e) {
@@ -303,7 +294,6 @@ export class uploader {
             }
         }))
     }
-
 
     uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any, isResume: boolean = false) => {
         return new Promise<remoteVideoPart>(async (resolve, reject) => {
@@ -317,21 +307,22 @@ export class uploader {
             let readLength = 0
             let totalReadLength = 0
             let nowChunk = 0
-
             this.logger.info(`开始上传 ${path}，文件大小：${fileSize}，分块数量：${chunkNum}， succeedUploa：${successUploadedChunks}`)
-            console.log(`file size: ${fileSize}, chunks: ${chunkNum}`)
 
             fileStream.on('data', async (chunk: any) => {
+
                 readBuffers = Buffer.concat([readBuffers, chunk], readLength + chunk.length)
                 readLength += chunk.length
                 totalReadLength += chunk.length
                 fileHash.update(chunk)
+
                 if (readLength >= chunkSize || totalReadLength === fileSize) {
                     nowChunk++
+
                     if (nowChunk >= successUploadedChunks) {
-                        console.log(`now chunk: ${nowChunk}, chunk size: ${readBuffers.length}`)
                         this.logger.info(`正在上传 第 ${nowChunk}/${chunkNum} 分块 ${path}`)
                         fileStream.pause()
+
                         try {
                             this.logger.debug(` nowChunk ${nowChunk} succeedUpload ${successUploadedChunks} uploadUrl ${uploadUrl}, serverFileName ${serverFileName}, path ${path}, chunk.length ${chunk.length}, nowChunk + 1 ${nowChunk + 1}, chunkNum ${chunkNum}`)
                             await this.uploadChunk(uploadUrl, serverFileName, path, readBuffers, readBuffers.length, nowChunk, chunkNum)
@@ -357,6 +348,7 @@ export class uploader {
                             return reject(`An error occurred when upload video part: chunk ${nowChunk}/${chunkNum} 分块 ${path} ${err}`)
                         }
                     }
+
                     fileStream.resume()
                     readLength = 0
                     readBuffers = Buffer.from('')
@@ -403,6 +395,7 @@ export class uploader {
                         uploadStatus.delete(this.dirName)
                         return reject(info)
                     }
+
                     resolve({
                         desc,
                         title,
@@ -410,12 +403,10 @@ export class uploader {
                     })
                 } catch (err) {
                     uploadStatus.delete(this.dirName)
-                    // this.logger.error(`Merge file error: ${JSON.stringify(err, null, 2)}`)
                     reject(`Merge file error: ${JSON.stringify(err, null, 2)}`)
                 }
             })
             fileStream.on('error', (error: any) => {
-                // this.logger.error(`An error occurred while listening fileStream: ${error}`)
                 uploadStatus.delete(this.dirName)
                 fileStream.destroy()
                 reject(`An error occurred while listening fileStream: ${error}`)
@@ -426,8 +417,8 @@ export class uploader {
 
 
     uploadChunk = async (uploadUrl: any, serverFileName: any, path: any, chunk_data: Buffer, chunk_size: any, chunk_id: any, chunk_total_num: any) => {
-
         return new Promise<void>(async (resolve, reject) => {
+
             try {
                 let chunkHash = crypto.createHash('md5')
                 chunkHash.update(chunk_data)
@@ -438,14 +429,11 @@ export class uploader {
                 form.append('chunks', chunk_total_num)
                 form.append('md5', chunkHash.digest('hex'))
                 form.append('file', chunk_data, 'application/octet-stream')
-
                 const formHeaders = form.getHeaders();
-
                 let headers = {
                     Cookie: `PHPSESSID=${serverFileName};`,
                     ...formHeaders
                 }
-
                 const result = await $axios.$request({
                     method: "POST",
                     url: uploadUrl,
@@ -453,12 +441,13 @@ export class uploader {
                     data: form.getBuffer()
                 })
                 this.logger.info(`chunk #${chunk_id}/${chunk_total_num} upload ended, returns: ${result.OK}\nPath: ${path}`)
+
                 if (result.info !== "Successful.") {
                     reject(`Upload Chunk #${chunk_id}/${chunk_total_num} Return Outside Of Expect: ${result.info}`)
                 }
+
                 resolve()
             } catch (e) {
-                // this.logger.error(`Upload chunk error: ${e} ...`)
                 uploadStatus.delete(this.dirName)
                 reject(`Upload chunk error: ${e} ...`)
             }
@@ -468,12 +457,12 @@ export class uploader {
 
     postVideo = async (remoteVideos: remoteVideoPart[]) => {
         return new Promise<void>(async (resolve, reject) => {
+
             const headers = {
                 'Connection': 'keep-alive',
                 'Content-Type': 'application/json',
                 'User-Agent': '',
             }
-
             const post_data: any = {
                 'build': 1054,
                 'copyright': this.copyright,
@@ -488,13 +477,10 @@ export class uploader {
                 'dynamic': this.dynamic,
                 'videos': remoteVideos
             }
-
-
             const params: any = {
                 'access_key': this.access_token
             }
             params['sign'] = crypt.make_sign(params, this.APPSECRET)
-
             this.logger.debug(`postData ${JSON.stringify(post_data, null, 2)} params${JSON.stringify(params, null, 2)}`)
 
             try {
@@ -526,10 +512,6 @@ export class uploader {
                 this.logger.error(err)
             }
         })
-    }
-
-    getTitle = (stream: StreamInfo) => {
-        return `${stream.roomName} ${stream.timeV} 录播`
     }
 
     changeFileStatus = (status: FileStatus) => {

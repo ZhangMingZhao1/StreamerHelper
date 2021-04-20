@@ -13,6 +13,7 @@ import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { uploadStatus } from "@/uploader/uploadStatus";
 
 const rootPath = process.cwd();
+const saveRootPath = join(rootPath, "/download")
 const partDuration = "3000"
 
 export class Recorder {
@@ -50,20 +51,26 @@ export class Recorder {
     stream.timeV = this.timeV
     this.logger.info(`开始下载: ${stream.roomName}, 直播流: ${stream.streamUrl}`)
     const cmd = `ffmpeg`;
-    const savePath = join(rootPath, "/download")
     let startNumber = 0
-    this.dirName = join(savePath, stream.roomName)
-    if (!fs.existsSync(this.dirName)) {
-      fs.mkdirSync(this.dirName)
+    let tmpDirName = join(saveRootPath, stream.roomName)
+
+    if (!fs.existsSync(tmpDirName)) {
+      fs.mkdirSync(tmpDirName)
     }
-    this.dirName = join(this.dirName, this.timeV)
-    this.readFileStatus(this.dirName)
-    if (!fs.existsSync(this.dirName)) {
-      fs.mkdirSync(this.dirName)
-    } else if (this.isPost || uploadStatus.get(this.dirName) === 1) {
-      const newPath = `${this.dirName} ${dayjs().format("HH-mm")}`
+
+    tmpDirName = join(tmpDirName, this.timeV)
+    this.dirName = tmpDirName
+    this.ffmpegProcessEnd = false
+    this.readFileStatus(tmpDirName)
+
+    if (!fs.existsSync(tmpDirName)) {
+      fs.mkdirSync(tmpDirName)
+    } else if (this.isPost || uploadStatus.get(tmpDirName) === 1) {
+      const curTime = dayjs().format("HH-mm")
+      const newPath = `${tmpDirName} ${curTime}`
+      RoomStatusPath.delete(this.dirName)
       this.dirName = newPath
-      this.timeV = `${this.timeV} ${dayjs().format("HH-mm")}`
+      this.timeV = `${this.timeV} ${curTime}`
       fs.mkdirSync(newPath)
     } else {
       const ps = fs.readdirSync(this.dirName);
@@ -82,9 +89,11 @@ export class Recorder {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36'
     }
     let fakeHeaders = ""
-    for (let key of Object.keys(fakeX)) {
+
+    for (const key of Object.keys(fakeX)) {
       fakeHeaders = `${fakeHeaders}${key}: ${fakeX[key]}\r\n`
     }
+
     this.App = spawn(cmd, [
       "-headers",
       fakeHeaders,
@@ -102,9 +111,11 @@ export class Recorder {
       startNumber.toString(),
       fileName,
     ]);
+
     RoomStatusPath.set(this.dirName, 1)
+    
     this.App.stdout.on("data", (data: any) => {
-      this.logger.info(data.toString("utf8"));
+      this.logger.info(`FFmpeg error: ${data.toString("utf8")}`);
     });
     this.App.stderr.on("data", () => {
 

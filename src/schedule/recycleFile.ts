@@ -13,28 +13,28 @@ import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 const logger = log4js.getLogger(`recycleFile`);
 const recycleCheckTime = require("../../templates/info.json").recycleCheckTime
-const interval = recycleCheckTime ? recycleCheckTime * 1000 : 3 * 60 * 1000
+const interval = recycleCheckTime ? recycleCheckTime * 1000 : 5 * 60 * 1000
 // const interval = 1000 * 20
 export default new Scheduler(interval, async function () {
     logger.info(`Task recycleFile Start ...`)
 
     function _deleteLocalFile(obj: FileStatus) {
         logger.info(`Try to delete local directory: ${obj.path}`)
+
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
-        if (!obj.deleteLocalFile) throw (`[User Config] ${obj.path} Don't Delete The File SKIP...`);
+        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+
+        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+
         if (!obj.endRecordTime) {
             logger.info(`Not Fount endRecordTime... Use startRecordTime ${obj.startRecordTime} to replace`)
             obj.endRecordTime = obj.startRecordTime
         }
 
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
-
-        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
-
-        const time = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
+        const curTime = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
         const delayTime = obj.delayTime ?? require('../../templates/info.json').StreamerHelper.delayTime ?? 2
 
-        if (time >= delayTime && obj.isPost) {
+        if (curTime >= delayTime && obj.isPost) {
             logger.info(`Time to delete file ${obj.path}`)
             try {
                 deleteFolder(obj.path || '')
@@ -49,8 +49,6 @@ export default new Scheduler(interval, async function () {
 
         logger.info(`Try to upload local directory: ${obj.path}`)
 
-        if (!obj.uploadLocalFile) throw (`[User Config] ${obj.path} Don't Upload The File SKIP...`);
-
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
 
         if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
@@ -63,7 +61,7 @@ export default new Scheduler(interval, async function () {
             desc: obj.desc,
             dirName: obj.path,
             dynamic: obj.dynamic,
-            roomLink: obj.recorderLink ?? '',
+            roomLink: obj.recorderLink || '',
             roomName: obj.recorderName || '',
             roomTags: obj.tags || [],
             roomTid: obj.tid || 0,
@@ -77,19 +75,16 @@ export default new Scheduler(interval, async function () {
 
         logger.info(`NEW Upload Task ${stream.roomName} ${stream.dirName}`);
         const uploadTask = new uploader(stream)
-        setTimeout(() => {
-            uploadTask.upload().then(() => {
-                uploadStatus.delete(stream.dirName as string)
-            }).catch((e) => {
-                uploadStatus.delete(stream.dirName as string)
+        uploadTask.upload()
+            .catch((e) => {
                 logger.error(e)
             })
-
-        }, 5000);
+            .finally(() =>
+                uploadStatus.delete(stream.dirName as string)
+            )
 
     }
 
-    console.log('uploadStatus', uploadStatus)
     const files: string[] = await FileHound.create()
         .paths(join(process.cwd(), "/download"))
         .match('fileStatus.json')

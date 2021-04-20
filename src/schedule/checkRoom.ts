@@ -6,42 +6,36 @@ import { StreamInfo } from "@/type/streamInfo";
 import { RoomStatus } from "@/engine/roomStatus";
 import { getRoomArrInfo } from "@/util/utils";
 import { log4js } from "@/log";
-import { uploadStatus } from "@/uploader/uploadStatus";
 import { Scheduler } from "@/type/scheduler";
 import { App } from "..";
 import { Recorder } from "@/engine/message";
 
 const roomCheckTime = require('../../templates/info.json').StreamerHelper.roomCheckTime
-const checkTime = roomCheckTime ? roomCheckTime * 1000 : 120 * 1000 * 6
+const checkTime = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
 const rooms = getRoomArrInfo(require('../../templates/info.json').streamerInfo);
 const logger = log4js.getLogger(`checkRoom`)
 const loggerCheck = log4js.getLogger(`check`)
 const interval = checkTime
 
 export default new Scheduler(interval, async function (app: App) {
-    if (app === undefined) {
-        return
-    }
-    loggerCheck.info(`RoomStatus ${JSON.stringify(RoomStatus, null, 2)} UploadStatus ${JSON.stringify(uploadStatus, null, 2)}`)
-    console.log(RoomStatus);
-    console.log(uploadStatus);
+
     loggerCheck.info(`Start checkRoom. Interval ${interval / 1000}s`)
-    let curRecorderText: string = ''
-    let curRecorder: Recorder | undefined;
-    let curRecorderIndex: number | undefined
     loggerCheck.debug(`Rooms ${JSON.stringify(rooms, null, 2)}`)
+
     for (const room of rooms) {
-        loggerCheck.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
-        // get current Recorder
-        // console.log(`app.recorderPool`, app.recorderPool);
+        let curRecorder: Recorder | undefined;
+        let curRecorderText: string = ''
+        let curRecorderIndex: number | undefined
+        logger.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
+
         app.recorderPool.forEach((elem: Recorder, index: number) => {
             if (elem.recorderName === room.roomName) {
                 curRecorder = elem
                 curRecorderIndex = index
                 curRecorderText = getTipsString(curRecorder) + curRecorderText
-                logger.info(`room ${room.roomName} ${room.dirName} curRecorder: ${curRecorder.recorderName} ${curRecorder.dirName} curRecorderIndex: ${JSON.stringify(curRecorderIndex, null, 2)}`)
             }
         })
+        
         let stream: StreamInfo = {
             roomLink: room.roomLink,
             roomName: room.roomName,
@@ -87,20 +81,19 @@ export default new Scheduler(interval, async function (app: App) {
             // 保证同一时刻一个直播间只有一个Recorder
             if (curRecorder) {
                 logger.info(`Will delete ${curRecorder.dirName} ${curRecorder.recorderName} ${curRecorderIndex}`)
-                app.recorderPool.splice(curRecorderIndex as number, 1)
+                const p = app.recorderPool.splice(curRecorderIndex as number, 1)
+                logger.info(`Deleted recorder: ${p.length}`)
             }
 
         }
-    }
-
-    if (curRecorderText)
-        curRecorderText += `
+        if (curRecorderText)
+            curRecorderText += `
 检测间隔 ${chalk.yellow(`${interval / 1000}s`)}
 系统时间 ${chalk.green(dayjs().format('YYYY-MM-DD hh:mm:ss'))}
 `
+        loggerCheck.info(curRecorderText);
 
-    loggerCheck.info(curRecorderText);
-
+    }
     function getTipsString(curRecorder: Recorder) {
         return `
 直播间名称 ${chalk.red(curRecorder.recorderName)}
