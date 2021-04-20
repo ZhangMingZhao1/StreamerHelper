@@ -1,16 +1,18 @@
-import axios from 'axios'
-import {NuxtAxiosInstance} from "../type";
+import axios, { AxiosInstance } from 'axios'
 import * as rax from 'retry-axios';
-import {log4js} from "@/log";
+import { log4js } from "@/log";
+import { AxiosResponse } from 'axios';
 const headers = {
     'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'User-Agent': '',
-        'Accept-Encoding': 'gzip,deflate',
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    'User-Agent': '',
+    'Accept-Encoding': 'gzip,deflate',
 }
 const logger = log4js.getLogger(`HTTP`)
-// @ts-ignore
-const $axios :NuxtAxiosInstance = axios.create({ headers , withCredentials: true})
+
+const $axios: AxiosInstance & {
+    [key: string]: any
+} = axios.create({ headers, withCredentials: true })
 
 $axios.defaults.raxConfig = {
     instance: $axios,
@@ -27,8 +29,7 @@ $axios.defaults.raxConfig = {
 rax.attach($axios)
 
 for (const method of ['request', 'delete', 'get', 'head', 'options', 'post', 'put', 'patch']) {
-    // @ts-ignore
-    $axios['$' + method] = function () { return this[method].apply(this, arguments).then(res => res && (res.data.resHeaders = res.headers) && res.data) }
+    $axios['$' + method] = function () { return this[method].apply(this, arguments).then((res: AxiosResponse) => res && (res.data.resHeaders = res.headers) && res.data) }
 }
 
 export {

@@ -11,39 +11,58 @@
 
 ## Introduction
 
-主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。（关于版权问题，投稿的参数默认一律设置的转载，简介处默认放的有主播房间号）
+主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。（关于版权问题，投稿的参数默认一律设置的转载，简介处默认放有直播间链接）
 
 ## Installation
 
 复制一份`templates/info-example.json`，并重命名为`templates/info.json`文件：
+`StreamerHelper`字段表示录播机运行的参数。
+| 字段            | 说明          | 可选值               |是否必填|默认值|
+| --------------- | ----------------------- | -------------------- |---|--|
+|debug|debug开关，开启后会有多余的记录|true/false|否|false|
+|recycleCheckTime|检测本地文件上传以及删除的间隔||否|300(s)|
+|roomCheckTime|检测直播间的间隔||否|600(s)|
+|videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
+streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制主播的名称。
+`personInfo`：
+| 字段            | 说明                         |是否必填|
+| --------------- | ------------------ |---|
+|nickname|B站昵称|否|
+|username|B站账号，用于登录投稿|是|
+|password|B站密码|是|
+|access_token|用于鉴权的`token`凭证|否|
+|refresh_token||否|
+|expires_in||否|
+|tokenSignDate||否|
+|mid||否|
 
-| 字段            | 备注                                                         | 可选值               |
-| --------------- | ------------------------------------------------------------ | -------------------- |
-| personInfo      | 投稿上传的b站账号和密码                                      |                      |
-| access_token    | 支持access_token验证,避免频繁登录造成出现验证码登录          |                      |
-| streamerInfo    | 需要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/ |                      |
-| tags            | 投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败 |                      |
-| tid             | 投稿分区，详见表：[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8) |                      |
-| uploadLocalFile | 是否投稿，默认上传  | false 仅下载，不上传|
-| deleteLocalFile | 是否在投稿后删除本地文件，该选项仅在uploadLocalFile设置为true时启用，不填写该字段则默认删除 | |
-| templateTitle | 稿件标题 | |
-| desc | 稿件描述 | |
-| source | 稿件来源 | |
-| dynamic | 稿件粉丝动态 | |
-| copyright | 稿件版权类型 | 1自制 2转载 |
-
-```json
+`streamerInfo`是一个数组，数组元素的`key`为直播间名称，也作为投稿的默认标题。
+|字段|说明|可选值|是否必填|默认值|
+|---|---|---|---|--|
+|uploadLocalFile|是否投稿|true/false|否|true|
+|deleteLocalFile|是否删除本地视频文件|true/false|否|true|
+|delayTime|投稿成功后延迟删除本地文件的时间(需要deleteLocalFile为true)||否|2(天)|
+|templateTile|稿件标题||否|直播间名称|
+|desc|稿件描述||否|Powered By StreamerHelper. https://github.com/ZhangMingZhao1/StreamerHelper|
+|source|稿件直播源(需要copyright为2)||否|{直播间名称} 直播间 {直播间地址}|
+|dynamic|稿件粉丝动态||否|{直播间名称} 直播间 {直播间地址}|
+|copyright|稿件来源，1为自制2为转载|1/2|否|2|
+|roomUrl|直播间地址||是||
+|tid|稿件分区|详见[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)|是|为空会导致投稿失败|
+|tags|稿件标签||是|至少一个，总数量不能超过12个，并且单个不能超过20个字，否则稿件投稿失败|
+Example：
+```javascript
 {
   "StreamerHelper": {
-    "debug": false, #Debug开关
-    "roomCheckTime": 120, #房间检测间隔，秒
-    "videoPartLimitSize": 100, #小于此大小的文件不上传，MB，解决主播断流问题出现很多小切片导致上传审核失败
-    "denyTime": 2 #延迟删除视频文件(需要deleteLocalFile为true), 天
+    "debug": false,
+    "recycleCheckTime": 1800,
+    "roomCheckTime": 600,
+    "videoPartLimitSize": 100
   },
   "personInfo": {
     "nickname": "",
-    "username": "",
-    "password": "",
+    "username": "StreamerHelper",
+    "password": "StreamerHelper",
     "access_token": "",
     "refresh_token": "",
     "expires_in": "",
@@ -54,18 +73,39 @@
     {
       "iGNing": {
         "uploadLocalFile": true,
-        "deleteLocalFile": false,
-        "templateTitle": "",#稿件标题,
-        "desc": "Powered By SteamerHelper",#稿件描述,
-        "source": "",#稿件来源,
-        "dynamic": "",#稿件粉丝动态,
-        "copyright": 2,#1自制 2转载
+        "deleteLocalFile": true,
+        "delayTime": 1,
+        "templateTitle": "",,
+        "desc": "Powered By SteamerHelper",,
+        "source": "",,
+        "dynamic": "",,
+        "copyright": 2,
         "roomUrl": "https://www.huya.com/980312",
         "tid": 121,
         "tags": [
           "英雄联盟",
           "电子竞技",
-          "iG"
+          "iG",
+          "鞋皇"
+        ]
+      }
+    },{
+      "浪子彦": {
+        "uploadLocalFile": true,
+        "deleteLocalFile": true,
+        "delayTime": 2,
+        "templateTitle": "",
+        "desc": "",
+        "source": "",
+        "dynamic": "",
+        "copyright": 2,
+        "roomUrl": "https://www.huya.com/lzy861016",
+        "tid": 171,
+        "tags": [
+          "英雄联盟",
+          "电子竞技",
+          "浪子彦",
+          "录播"
         ]
       }
     }
@@ -73,7 +113,7 @@
 }
 ```
 
-#### Docker
+### Docker
 
 配置文件: `/app/templates/info.json`
 
@@ -87,7 +127,7 @@ DNS参数可以根据地区以及实际情况进行配置。
 docker run --name stream -itd -v /path/to/config/info.json:/app/templates/info.json -v /path/to/download/:/app/download --dns 114.114.114.114 --restart always zsnmwy/streamerhelper
 ```
 
-#### 安装ffmpeg
+### 安装ffmpeg
 
 mac:
 ```bash
@@ -101,7 +141,7 @@ sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 
-部署：
+### 部署：
 ```bash
 npm i -g pm2
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
@@ -111,13 +151,11 @@ npm run serve
 
 ## Environment
 
-我们的机器在下面环境下完美运行:
-
-阿里云轻量应用服务器，内存2g，CPU 1核，Ubuntu 18.04，同时检测两个主播。
-
-| Node.js | npm | TypeScript|
-| ---- | ---- | ---- |
-| 12.18.2 | 6.14.5 |3.9.6 |
+我们的测试机器配置以及环境如下：
+|cpu|mem|bps|OS|Node.js|npm|Typescript|
+|-|-|-|-|-|-|-|
+|Intel i5-4590 @ 3.30GHz|2GB|100m|Ubuntu 18.04|12.18.3|6.14.6|4.2.3|
+可以同时下载4个主播，不会产生卡顿。
 
 
 ## Contributor
@@ -169,8 +207,9 @@ Thanks：
 - [x] 爬虫定时区间，节省服务器流量，现支持配置房间检测间隔
 - [x] 支持docker部署
 - [x] 上传文件大小监测，解决主播断流问题出现很多小切片导致上传审核失败
+- [x] 增加一个独立脚本遍历download文件夹下的视频文件重新上传(重启上传的折中解决办法，还有解决第一次账号密码配置错误失败上传的问题)
 - [ ] 支持twitch
-- [ ] 增加一个独立脚本遍历download文件夹下的视频文件重新上传(重启上传的折中解决办法，还有解决第一次账号密码配置错误失败上传的问题)
+- [ ] 规范化log，完善debug log
 
 ## Example
 <img src="https://i.loli.net/2020/11/12/MUNDe1bPR2iGfpB.jpg" alt="例子" width="500">
@@ -179,7 +218,7 @@ Thanks：
 
 ## Tips
 
-建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 restart app。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。日志文件会自动创建，在./logs/下。
+建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 stop && npm run serve。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。日志文件会自动创建，在./logs/下。
 
 
 有问题加qq群1142141023，备注streamerHelper

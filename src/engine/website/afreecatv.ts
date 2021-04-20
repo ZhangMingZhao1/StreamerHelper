@@ -83,7 +83,7 @@ function getStreamInfo(broadcast: string, quality: string, cdn: string, rmd: str
 }
 
 function getHlsStream(broadcast: string, bid: string, quality: string, cdn: string, rmd: string) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise<void | string>(async (resolve, reject) => {
         let keyjson: any
         try {
             keyjson = await getHlsKey(broadcast, bid, quality)

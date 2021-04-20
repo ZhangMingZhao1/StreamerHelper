@@ -1,28 +1,28 @@
 import * as fs from "fs"
 import { join } from 'path'
-import { StreamInfo } from "type/StreamInfo";
+import { StreamInfo } from "@/type/streamInfo";
 import { EventEmitter } from 'events'
 export const RoomTypeArr = ["huya", "bilibili", "douyu"];
 export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
   else return "error";
 };
-export const getRoomArrInfo = (roomObj: { [key: string]: { denyTime: number, copyright:number, dynamic: string, source: string, desc: string, roomUrl: string, tags: string[], tid: number, deleteLocalFile: boolean, uploadLocalFile: boolean, templateTitle: string } }[]): StreamInfo[] => {
-  let roomInfoArr = [];
-  for (let roomInfo of roomObj) {
-    for (let key in roomInfo) {
-      let roomName = key;
-      let roomLink = roomInfo[key].roomUrl;
-      let roomTags = roomInfo[key].tags
-      let roomTid = roomInfo[key].tid
-      let deleteLocalFile = roomInfo[key].deleteLocalFile
-      let uploadLocalFile = roomInfo[key].uploadLocalFile
-      let templateTitle = roomInfo[key].templateTitle
-      let desc = roomInfo[key].desc
-      let source = roomInfo[key].source
-      let dynamic = roomInfo[key].dynamic
-      let copyright = roomInfo[key].copyright
-      let denyTime = roomInfo[key].denyTime
+export const getRoomArrInfo = (roomObj: { [key: string]: { delayTime: number, copyright: number, dynamic: string, source: string, desc: string, roomUrl: string, tags: string[], tid: number, deleteLocalFile: boolean, uploadLocalFile: boolean, templateTitle: string } }[]): StreamInfo[] => {
+  const roomInfoArr = [];
+  for (const roomInfo of roomObj) {
+    for (const key in roomInfo) {
+      const roomName = key;
+      const roomLink = roomInfo[key].roomUrl;
+      const roomTags = roomInfo[key].tags
+      const roomTid = roomInfo[key].tid
+      const deleteLocalFile = roomInfo[key].deleteLocalFile
+      const uploadLocalFile = roomInfo[key].uploadLocalFile
+      const templateTitle = roomInfo[key].templateTitle
+      const desc = roomInfo[key].desc
+      const source = roomInfo[key].source
+      const dynamic = roomInfo[key].dynamic
+      const copyright = roomInfo[key].copyright
+      const delayTime = roomInfo[key].delayTime
       roomInfoArr.push({
         roomName,
         roomLink,
@@ -36,7 +36,7 @@ export const getRoomArrInfo = (roomObj: { [key: string]: { denyTime: number, cop
         source,
         dynamic,
         copyright,
-        denyTime
+        delayTime
       });
     }
   }
@@ -45,11 +45,10 @@ export const getRoomArrInfo = (roomObj: { [key: string]: { denyTime: number, cop
 
 export const deleteFolder = function (path: string) {
   try {
-    let files = [];
     if (fs.existsSync(path)) {
-      files = fs.readdirSync(path);
+      const files = fs.readdirSync(path);
       files.forEach((file) => {
-        let curPath = join(path, file)
+        const curPath = join(path, file)
         if (!fs.statSync(curPath).isDirectory()) {
           fs.unlinkSync(curPath);
         }

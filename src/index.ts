@@ -1,13 +1,11 @@
-import {User} from "@/uploader/User";
-import {log4js, logger} from "@/log";
-import {Logger} from "log4js";
+import { User } from "@/uploader/user";
+import { log4js } from "@/log";
+import { Logger } from "log4js";
 import * as fs from "fs";
-import {join, basename} from "path";
-import {emitter} from "@/util/utils";
-import {getStreamUrl} from "@/engine/getStreamUrl";
-import {StreamInfo} from "@/type/StreamInfo";
-import {RoomStatus} from "@/engine/RoomStatus";
-import {RecorderType} from "type/RecorderType";
+import { join, basename } from "path";
+import { emitter } from "@/util/utils";
+import { Scheduler } from "./type/scheduler";
+import { Recorder } from "./engine/message";
 
 interface personInfo {
     username: string;
@@ -20,47 +18,50 @@ interface personInfo {
     mid: number;
 }
 
-class APP {
-    personInfo: personInfo
-    user: User | undefined;
+type Schedulers = {
+    [key: string]: {
+        scheduler: Scheduler,
+        timer?: NodeJS.Timer
+    }
+}
+
+class App {
     private logger: Logger;
-    schedule: object;
-    recorderPool: RecorderType[];
+    personInfo: personInfo
+    user?: User;
+    schedulers: Schedulers;
+    recorderPool: Recorder[];
 
     constructor() {
         this.personInfo = require('../templates/info.json').personInfo
         this.logger = log4js.getLogger(`APP`)
-        this.schedule = {}
+        this.schedulers = {}
         this.recorderPool = []
+
+        if (!fs.existsSync(join(process.cwd(), '/download'))) {
+            fs.mkdirSync(join(process.cwd(), '/download'))
+        }
+
     }
 
     init = async () => {
-        return new Promise(async (reject) => {
+        return new Promise<void>(async (reject) => {
+
             try {
                 this.initUnCaughtException()
                 await this.initUser()
                 await this.initExitSignal()
                 await this.initStreamDisconnect()
                 await this.initSchedule()
-                // @ts-ignore
-                // console.log(this)
-                // @ts-ignore
-                this.schedule.checkRoom.task(this)
-
-                setTimeout(()=> {
-                    // @ts-ignore
-                    this.schedule.recycleFile.task(this)
-                }, 15000)
-
             } catch (e) {
-                reject(e)
-                process.exit(1)
+                return reject(e)
             }
         })
     }
 
     initUser = async () => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
+
             const {
                 username,
                 password,
@@ -72,11 +73,11 @@ class APP {
                 mid
             }: personInfo = this.personInfo
             this.user = new User(username, password, access_token, refresh_token, expires_in, nickname, tokenSignDate, mid)
+
             try {
                 await this.user.login()
                 resolve()
             } catch (e) {
-                this.logger.error(e)
                 reject(e)
             }
         })
@@ -87,22 +88,24 @@ class APP {
     *
     * */
     initSchedule = async () => {
-        return new Promise(async (resolve,reject) => {
+        return new Promise<void>(async (resolve, reject) => {
 
             try {
-                fs.readdirSync(join(__dirname, 'schedule')).forEach(path => {
-                    let name = basename(path, '.js')
-                    this.logger.info(`Load Schedule [${name}]`)
-                    let module = require(join(__dirname, 'schedule', path))
-                    // @ts-ignore
-                    this.schedule[name] = module
-                    if (module.schedule) {
-                        // @ts-ignore
-                        this.schedule[name].timer = setInterval( () => {
-                            module.task(this)
-                        }, module.schedule.interval);
+                fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
+                    const schedulerFileName = basename(fileName, '.js')
+                    this.logger.info(`Load Schedule [${schedulerFileName}]`)
+                    const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', fileName))).default
+                    this.schedulers[schedulerFileName] = { scheduler: scheduleModule }
+
+                    if (typeof (scheduleModule.interval) === 'number') {
+                        scheduleModule.task(this)
+                        this.schedulers[schedulerFileName].timer = setInterval(() => {
+                            scheduleModule.task(this)
+                        }, scheduleModule.interval);
                     }
+
                 })
+
                 resolve()
             } catch (e) {
                 this.logger.error(e)
@@ -113,16 +116,25 @@ class APP {
     }
 
     initExitSignal = async () => {
+
         this.logger.info(`initExitSignal`)
+
         process.on("SIGINT", () => {
             this.logger.info("Receive exit signal, the process will exit after 3 seconds.")
             this.logger.info("Process exited by user.")
-            // @ts-ignore
-            clearInterval(this.schedule['checkRoom'].timer)
+
+            for (const key in this.schedulers) {
+                if (this.schedulers[key].timer) {
+                    clearInterval(this.schedulers[key].timer as NodeJS.Timer)
+                }
+            }
+
             emitter.removeAllListeners("streamDisconnect")
-            this.recorderPool.forEach((elem: RecorderType) => {
+
+            this.recorderPool.forEach((elem: Recorder) => {
                 elem.stopRecord()
             })
+
             setTimeout(() => {
                 process.exit()
             }, 3000);
@@ -130,43 +142,35 @@ class APP {
     }
 
     initUnCaughtException = () => {
+
         this.logger.info(`initUnCaughtException`)
+
         process.on("uncaughtException", (err) => {
             this.logger.error("exception caught: ", err);
         });
     }
 
     initStreamDisconnect = async () => {
-        emitter.on('streamDisconnect', (curRecorder: RecorderType) => {
-            this.recorderPool.forEach((elem: RecorderType) => {
+
+        emitter.on('streamDisconnect', (curRecorder: Recorder) => {
+            this.recorderPool.forEach((elem: Recorder) => {
+
                 if (elem.recorderName === curRecorder.recorderName) {
                     curRecorder = elem
+                    this.logger.info(`Recorder ${curRecorder.recorderName} 退出: `)
                 }
+
             })
-
-            setTimeout(() => {
-                getStreamUrl(curRecorder.recorderName, curRecorder.recorderLink, curRecorder.tags, curRecorder.tid)
-                    .then((stream: StreamInfo) => {
-                        // the stream disconnected
-                        // but room online
-                        // so restart the recorder
-                        // continue downloading
-                        logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
-                        curRecorder.startRecord(stream)
-
-                    })
-                    .catch(() => {
-                        RoomStatus.delete(curRecorder.recorderName)
-                    })
-
-            }, 5000);
 
         })
     }
 }
 
-const app = new APP()
-app.init().then(r => r)
+const app = new App()
+
+app.init().then(r => r).catch(e => log4js.getLogger(`APP`).error(e))
+
 export {
+    App,
     app
 }
