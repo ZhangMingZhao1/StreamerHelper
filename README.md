@@ -157,6 +157,7 @@ npm run serve
 |cpu|mem|bps|OS|Node.js|npm|Typescript|
 |-|-|-|-|-|-|-|
 |Intel i5-4590 @ 3.30GHz|2GB|100m|Ubuntu 18.04|12.18.3|6.14.6|4.2.3|
+
 可以同时下载4个主播，不会产生卡顿。
 
 
