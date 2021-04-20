@@ -50,6 +50,7 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |roomUrl|直播间地址||是||
 |tid|稿件分区|详见[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)|是|为空会导致投稿失败|
 |tags|稿件标签||是|至少一个，总数量不能超过12个，并且单个不能超过20个字，否则稿件投稿失败|
+
 Example：
 ```javascript
 {
