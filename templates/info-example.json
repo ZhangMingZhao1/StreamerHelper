@@ -2,8 +2,8 @@
   "StreamerHelper": {
     "debug": false,
     "roomCheckTime": 120,
-    "videoPartLimitSize": 100,
-    "denyTime": 2
+    "recycleCheckTime": 180,
+    "videoPartLimitSize": 100
   },
   "personInfo": {
     "nickname": "",
@@ -21,26 +21,30 @@
         "uploadLocalFile": true,
         "deleteLocalFile": true,
         "templateTitle": "",
+        "delayTime": 0,
         "desc": "",
         "source": "",
         "dynamic": "",
         "copyright": 2,
         "roomUrl": "https://live.bilibili.com/21438739",
-        "tid": 121,
+        "tid": 171,
         "tags": [
           "王者荣耀",
           "电子竞技",
           "花花嫦娥"
         ]
-      },
+      }
+    },
+    {
       "温柔睿ya": {
         "uploadLocalFile": true,
         "deleteLocalFile": false,
         "templateTitle": "",
+        "delayTime": 0,
         "desc": "",
         "source": "",
         "roomUrl": "https://live.bilibili.com/22348202",
-        "tid": 121,
+        "tid": 171,
         "tags": [
           "王者荣耀",
           "电子竞技",

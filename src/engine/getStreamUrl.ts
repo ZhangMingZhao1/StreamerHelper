@@ -1,4 +1,4 @@
-import { StreamInfo } from "type/StreamInfo";
+import { StreamInfo } from "@/type/streamInfo";
 
 const regs: any = [
     [/www\.huya\.com/, require("./website/huya")],

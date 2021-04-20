@@ -1,13 +1,13 @@
-import {$axios} from "../http";
-import {log4js} from "../log";
-import {Logger} from "log4js";
 import * as fs from "fs";
+import * as querystring from 'querystring'
+import * as terminalImage from 'terminal-image'
+import { Logger } from "log4js";
 
+import { $axios } from "../http";
+import { log4js } from "../log";
+import * as crypt from '@/util/crypt'
 
 const md5 = require('md5-node')
-const crypt = require("../util/crypt")
-const querystring = require('querystring');
-const terminalImage = require('terminal-image');
 
 export class User {
     private readonly APPKEY: string
@@ -116,9 +116,9 @@ export class User {
     }
 
     loginAccount = async () => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
 
-            const {hash, key}: any = await this.getKey()
+            const { hash, key }: any = await this.getKey()
             const encoded_password = crypt.make_rsa(`${hash}${this._password}`, key)
             const url = "https://passport.bilibili.com/api/oauth2/login"
             const headers: any = {
@@ -148,7 +148,7 @@ export class User {
                 const {
                     code,
                     message,
-                    data: {access_token, mid, refresh_token, expires_in} = {
+                    data: { access_token, mid, refresh_token, expires_in } = {
                         access_token: '',
                         mid: 0,
                         refresh_token: '',
@@ -199,8 +199,7 @@ export class User {
             let data: { appkey: string | undefined; platform: string; ts: string; sign?: string } = {
                 'appkey': this.APPKEY,
                 'platform': "pc",
-                // @ts-ignore
-                'ts': String(parseInt(String(new Date() / 1000)))
+                'ts': (+new Date()).toString().substr(0, 10)
             };
             data.sign = md5(crypt.make_sign(data, this.APPSECRET))
 
@@ -224,7 +223,7 @@ export class User {
                 const {
                     resHeaders,
                     code,
-                    data: {hash, key}
+                    data: { hash, key }
                 }: { resHeaders: { "set-cookie": string }; code: number; data: { hash: string; key: string; } } = await $axios.$request({
                     method: "post",
                     url,
@@ -248,7 +247,7 @@ export class User {
                     this.logger.error(`Get key error ,  code ${code}`)
                     reject()
                 }
-                resolve({hash, key})
+                resolve({ hash, key })
             } catch (e) {
                 this.logger.error(`An error occurred when getKey: ${e}`)
                 reject(`An error occurred when getKey: ${e}`)
@@ -266,7 +265,7 @@ export class User {
             }
             let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
             try {
-                const {code, message, data: {mid, name}} = await $axios.$get(url)
+                const { code, message, data: { mid, name } } = await $axios.$get(url)
                 if (code !== 0) {
                     this.logger.error(`An error occurred when try to auth by access_token: ${message}`)
                     reject()
@@ -286,7 +285,7 @@ export class User {
 
     refreshToken = async () => {
 
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
             let url: string = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token'
 
             let data: any = {
@@ -328,7 +327,7 @@ export class User {
                             expires_in: 0
                         }
                     }
-                } = await $axios.$request({url, data: querystring.stringify(data), headers, method: "post"})
+                } = await $axios.$request({ url, data: querystring.stringify(data), headers, method: "post" })
 
                 // auth fail { message: 'user not login', ts: 1612252355, code: -101 }
 

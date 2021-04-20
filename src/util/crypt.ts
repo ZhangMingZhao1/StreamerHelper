@@ -1,5 +1,6 @@
-const rsa = require('node-rsa')
-function make_sign(post_data, APPSECRET) {
+import * as rsa from 'node-rsa'
+
+function make_sign(post_data: any, APPSECRET: string) {
     const keys = []
     const post_list = []
     for (let i in post_data) {
@@ -13,14 +14,15 @@ function make_sign(post_data, APPSECRET) {
     return `${post_list.join("&")}${APPSECRET}`
 }
 
-function make_rsa(text, pubkey) {
+function make_rsa(text: string, pubkey: string) {
     let key = new rsa(pubkey)
     key.setOptions({
         encryptionScheme: 'pkcs1'
     })
     return key.encrypt(text, 'base64')
 }
-module.exports = {
+
+export {
     make_sign,
     make_rsa
 }

@@ -13,5 +13,5 @@ export interface StreamInfo {
   copyright?: number;
   deleteLocalFile?: boolean;
   uploadLocalFile?: boolean;
-  denyTime?: number
+  delayTime?: number
 }
