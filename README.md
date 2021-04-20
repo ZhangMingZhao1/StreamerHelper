@@ -15,32 +15,51 @@
 
 ## Installation
 
-修改templates/info.json文件：
-- personInfo为你的要上传的b站账号和密码，
-- access_token 支持access_token验证,避免频繁登录造成出现验证码登录(已知bug:错误的token验证错误后无法触发登录的流程)
-- streamerInfo为你要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/
-- tags为投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败
-- tid为投稿分区，详见表：[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)
-- uploadLocalFile为是否投稿，填false表示仅下载，不上传，不填写该字段则默认上传
-- deleteLocalFile为是否在投稿后删除本地文件，该选项仅在uploadLocalFile设置为true时启用，不填写该字段则默认删除
+复制一份`templates/info-example.json`，并重命名为`templates/info.json`文件：
+
+| 字段            | 备注                                                         | 可选值               |
+| --------------- | ------------------------------------------------------------ | -------------------- |
+| personInfo      | 投稿上传的b站账号和密码                                      |                      |
+| access_token    | 支持access_token验证,避免频繁登录造成出现验证码登录          |                      |
+| streamerInfo    | 需要批量录制的主播，key为标题信息，value为包含主播直播地址和标签数组的对象。像移动端的直播地址，可进入APP点分享按钮，复制分享链接中的URL，如抖音的https://v.douyin.com/J2Nw8YM/ |                      |
+| tags            | 投稿标签，不能为空，总数量不能超过12个， 并且单个不能超过20个字，否则稿件投稿失败 |                      |
+| tid             | 投稿分区，详见表：[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8) |                      |
+| uploadLocalFile | 是否投稿，默认上传  | false 仅下载，不上传|
+| deleteLocalFile | 是否在投稿后删除本地文件，该选项仅在uploadLocalFile设置为true时启用，不填写该字段则默认删除 | |
+| templateTitle | 稿件标题 | |
+| desc | 稿件描述 | |
+| source | 稿件来源 | |
+| dynamic | 稿件粉丝动态 | |
+| copyright | 稿件版权类型 | 1自制 2转载 |
 
 ```json
 {
   "StreamerHelper": {
     "debug": false, #Debug开关
     "roomCheckTime": 120, #房间检测间隔，秒
-    "videoPartLimitSize": 100 #小于此大小的文件不上传，MB，解决主播断流问题出现很多小切片导致上传审核失败
+    "videoPartLimitSize": 100, #小于此大小的文件不上传，MB，解决主播断流问题出现很多小切片导致上传审核失败
+    "denyTime": 2 #延迟删除视频文件(需要deleteLocalFile为true), 天
   },
   "personInfo": {
+    "nickname": "",
     "username": "",
     "password": "",
-    "access_token": ""
+    "access_token": "",
+    "refresh_token": "",
+    "expires_in": "",
+    "tokenSignDate": "",
+    "mid": 0
   },
   "streamerInfo": [
     {
       "iGNing": {
         "uploadLocalFile": true,
         "deleteLocalFile": false,
+        "templateTitle": "",#稿件标题,
+        "desc": "Powered By SteamerHelper",#稿件描述,
+        "source": "",#稿件来源,
+        "dynamic": "",#稿件粉丝动态,
+        "copyright": 2,#1自制 2转载
         "roomUrl": "https://www.huya.com/980312",
         "tid": 121,
         "tags": [

@@ -5,7 +5,10 @@
     "module": "commonjs" /* 编译目标模块系统*/,
     "baseUrl": "src",
     "paths": {
-      "@/*": ["/*"],
+      "@/*": [
+        "*",
+        "/*"
+      ],
       "type/*": ["type/*"],
       "utils/*": ["utils/*"]
     },
