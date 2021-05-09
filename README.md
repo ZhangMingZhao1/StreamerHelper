@@ -11,12 +11,68 @@
 
 ## Introduction
 
-主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。（关于版权问题，投稿的参数默认一律设置的转载，简介处默认放有直播间链接）
+主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。
+
+（关于版权问题，投稿的参数默认一律设置的转载，简介处默认放有直播间链接）
 
 ## Installation
 
-复制一份`templates/info-example.json`，并重命名为`templates/info.json`文件：
-`StreamerHelper`字段表示录播机运行的参数。
+StreamerHelper可以通过两种方式安装，推荐使用Docker
+
+首先`git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper`
+
+部署之前复制一份templates/info-example.json，并重命名为templates/info.json，并根据所需配置。
+
+### Docker 部署
+
+配置文件: `/app/templates/info.json`
+
+视频目录: `/app/download`
+
+容器的保活使用docker提供的`restart`参数，不再使用PM2。
+
+DNS参数可以根据地区以及实际情况进行配置。
+
+```shell
+# 本地编译
+docker build -t streamerhelper .
+# /your_project_path/info.json 指你配置好的info.json文件的绝对路径，后面的同理。
+docker run --name stream -itd -v /your_project_path/info.json:/app/templates/info.json -v /your_project_path/download/:/app/download --dns 114.114.114.114 --restart always streamerhelper
+```
+
+<br></br>
+### 直接部署到本机环境上
+#### 安装 Node.js
+
+```bash
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+#### 安装 ffmpeg
+
+mac:
+```bash
+brew update
+brew install ffmpeg
+```
+linux:
+```
+sudo add-apt-repository ppa:djcj/hybrid
+sudo apt-get update
+sudo apt-get install ffmpeg
+```
+
+#### 运行：
+```bash
+npm i -g pm2
+# 如果装不动，添加 --registry=https://registry.npm.taobao.org 参数，npm i 同理
+git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
+npm i
+npm run serve
+```
+## Configuration
+`info.json`中字段的含义
+### StreamerHelper
 | 字段            | 说明          | 可选值               |是否必填|默认值|
 | --------------- | ----------------------- | -------------------- |---|--|
 |debug|debug开关，开启后会有多余的记录|true/false|否|false|
@@ -25,7 +81,7 @@
 |videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
 streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制主播的名称。
 
-`personInfo`：
+### personInfo
 | 字段            | 说明                         |是否必填|
 | --------------- | ------------------ |---|
 |nickname|B站昵称|否|
@@ -37,7 +93,8 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |tokenSignDate||否|
 |mid||否|
 
-`streamerInfo`是一个数组，数组元素的`key`为直播间名称，也作为投稿的默认标题。
+### streamerInfo
+是一个数组，数组元素的`key`为直播间名称，也作为投稿的默认标题。
 |字段|说明|可选值|是否必填|默认值|
 |---|---|---|---|--|
 |uploadLocalFile|是否投稿|true/false|否|true|
@@ -52,7 +109,7 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |tid|稿件分区|详见[tid表](https://github.com/FortuneDayssss/BilibiliUploader/wiki/Bilibili%E5%88%86%E5%8C%BA%E5%88%97%E8%A1%A8)|是|为空会导致投稿失败|
 |tags|稿件标签||是|至少一个，总数量不能超过12个，并且单个不能超过20个字，否则稿件投稿失败|
 
-Example：
+### Example：
 ```javascript
 {
   "StreamerHelper": {
@@ -113,50 +170,16 @@ Example：
     }
   ]
 }
+
 ```
 
-### Docker
-
-配置文件: `/app/templates/info.json`
-
-视频目录: `/app/download`
-
-容器的保活使用docker提供的`restart`参数，不再使用PM2。
-
-DNS参数可以根据地区以及实际情况进行配置。
-
-```shell
-docker run --name stream -itd -v /path/to/config/info.json:/app/templates/info.json -v /path/to/download/:/app/download --dns 114.114.114.114 --restart always zsnmwy/streamerhelper
-```
-
-### 安装ffmpeg
-
-mac:
-```bash
-brew update
-brew install ffmpeg
-```
-linux:
-```
-sudo add-apt-repository ppa:djcj/hybrid
-sudo apt-get update
-sudo apt-get install ffmpeg
-```
-
-### 部署：
-```bash
-npm i -g pm2
-git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
-npm i
-npm run serve
-```
 
 ## Environment
 
 我们的测试机器配置以及环境如下：
-|cpu|mem|bps|OS|Node.js|npm|Typescript|
-|-|-|-|-|-|-|-|
-|Intel i5-4590 @ 3.30GHz|2GB|100m|Ubuntu 18.04|12.18.3|6.14.6|4.2.3|
+|cpu|mem|bps|OS|Node.js|
+|-|-|-|-|-|
+|Intel i5-4590 @ 3.30GHz|2GB|100m|Ubuntu 18.04|12.18.3|
 
 可以同时下载4个主播，不会产生卡顿。
 
@@ -221,7 +244,7 @@ Thanks：
 
 ## Tips
 
-建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时git pull重新pm2 stop && npm run serve。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。日志文件会自动创建，在./logs/下。
+建议使用管口大的vps，否则上传下载速度可能会受影响。更新后请及时拉取像或git pull重新pm2 stop && npm run serve。vps比较低配的话配置的主播数量不要太多，也要注意vps的磁盘大小。日志文件会自动创建，在./logs/下。
 
 
 有问题加qq群1142141023，备注streamerHelper
