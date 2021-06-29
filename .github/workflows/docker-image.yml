@@ -31,4 +31,4 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: zsnmwy/streamerhelper:latest
+          tags: umuoy1/streamerhelper:latest
