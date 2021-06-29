@@ -1,8 +1,8 @@
 {
   "StreamerHelper": {
     "debug": false,
-    "roomCheckTime": 120,
-    "recycleCheckTime": 180,
+    "roomCheckTime": 600,
+    "recycleCheckTime": 1800,
     "videoPartLimitSize": 100
   },
   "personInfo": {
@@ -17,7 +17,7 @@
   },
   "streamerInfo": [
     {
-      "花花嫦娥": {
+      "主播1": {
         "uploadLocalFile": true,
         "deleteLocalFile": true,
         "templateTitle": "",
@@ -26,29 +26,31 @@
         "source": "",
         "dynamic": "",
         "copyright": 2,
-        "roomUrl": "https://live.bilibili.com/21438739",
-        "tid": 171,
+        "roomUrl": "https://live.xxx.com/111",
+        "tid": 121,
         "tags": [
-          "王者荣耀",
-          "电子竞技",
-          "花花嫦娥"
+          "tag1",
+          "tag2",
+          "tag3"
         ]
       }
     },
     {
-      "温柔睿ya": {
+      "主播2": {
         "uploadLocalFile": true,
         "deleteLocalFile": false,
         "templateTitle": "",
-        "delayTime": 0,
+        "delayTime": 1,
         "desc": "",
         "source": "",
-        "roomUrl": "https://live.bilibili.com/22348202",
+        "dynamic": "",
+        "copyright": 2,
+        "roomUrl": "https://live.xxx.com/222",
         "tid": 171,
         "tags": [
-          "王者荣耀",
-          "电子竞技",
-          "温柔睿ya"
+          "tag1",
+          "tag2",
+          "tag3"
         ]
       }
     }

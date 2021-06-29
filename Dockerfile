@@ -11,7 +11,6 @@ RUN apk update && \
     apk del tzdata
 # install node packages
 RUN npm set progress=false && npm config set depth 0 && npm config set legacy-peer-deps true
-# RUN npm i --registry=https://registry.npm.taobao.org
 RUN npm i
 # compile
 COPY . /app
