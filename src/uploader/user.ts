@@ -261,7 +261,7 @@ export class User {
             this.logger.info(`Check token ${this._access_token}`)
             if (this._access_token === "") {
                 this.logger.error(`Access Token not define`)
-                reject()
+                return reject()
             }
             let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
             try {
