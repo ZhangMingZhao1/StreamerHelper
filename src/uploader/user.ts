@@ -8,6 +8,7 @@ import { log4js } from "../log";
 import * as crypt from '@/util/crypt'
 
 const md5 = require('md5-node')
+const qrcode = require('qrcode-terminal')
 
 export class User {
     private readonly APPKEY: string
@@ -97,8 +98,8 @@ export class User {
      * 登陆 Check username && password => checkToken => getKey => auth(Username) => auth(captcha)
      */
     login = async () => {
-        if (!this._username) return this.logger.error(`Check your username !!`)
-        if (!this._password) return this.logger.error(`Check your password !!`)
+        // if (!this._username) return this.logger.error(`Check your username !!`)
+        // if (!this._password) return this.logger.error(`Check your password !!`)
 
         try {
             await this.checkToken()
@@ -109,8 +110,15 @@ export class User {
 
 
         } catch (e) {
-            await this.loginAccount()
-            this.logger.error(e)
+            // await this.loginAccount()
+            try {
+                const qrData: any = await this.getQRCode()
+                qrcode.generate(qrData["data"]["url"], { small: true })
+                await this.loginByQRCode(qrData)
+                this.sync()
+            } catch (error) {
+                throw (error)
+            }
         }
 
     }
@@ -401,6 +409,65 @@ export class User {
                     this.logger.info(`JSESSIONID ${this.JSESSIONID}`)
                 }
             }
+        })
+    }
+
+    loginByQRCode = async (QRData: any) => {
+        return new Promise<void>(async (resolve) => {
+
+
+            const params: any = {
+                "appkey": "4409e2ce8ffd12b8",
+                "local_id": "0",
+                "auth_code": QRData["data"]["auth_code"],
+                'ts': (+new Date()).toString().substr(0, 10)
+            }
+            params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
+            while (true) {
+                await new Promise((resolve) => {
+                    setTimeout(resolve, 2 * 1000);
+                })
+                const res: any = await $axios.request({
+                    url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/poll",
+                    method: "post",
+                    params
+                })
+                const resData = res.data
+                this.logger.debug(res)
+                if (resData.code === 0) {
+                    this.logger.info("LOGIN BY QRCODE SUCCESS")
+                    this._access_token = resData.data.access_token
+                    this._refresh_token = resData.data.refresh_token
+                    this._mid = resData.data.mid
+                    this._expires_in = resData.data.expires_in
+                    return resolve()
+                } else {
+                    this.logger.debug(resData.message)
+                }
+            }
+
+        })
+    }
+
+    getQRCode = async () => {
+        return new Promise(async (resolve) => {
+            const params: any = {
+                "appkey": "4409e2ce8ffd12b8",
+                "local_id": "0",
+                'ts': (+new Date()).toString().substr(0, 10)
+            }
+            params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
+            const res = await $axios.request({
+                url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code",
+                method: "post",
+                params
+            })
+            const { code, message, data } = res as any
+            if (code !== 0) {
+                this.logger.info(message)
+            }
+            return resolve(data)
+
         })
     }
 }
