@@ -13,3 +13,4 @@ yarn.lock
 templates/info.json
 download/*
 .cache
+*.png

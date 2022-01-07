@@ -1,4 +1,5 @@
 import * as fs from "fs";
+
 import * as querystring from 'querystring'
 import * as terminalImage from 'terminal-image'
 import { Logger } from "log4js";
@@ -10,6 +11,7 @@ import { biliAPIResponse, loginByQRCodeDataType, getQRCodeDataType, getUserInfoD
 
 const md5 = require('md5-node')
 const qrcode = require('qrcode-terminal')
+const qr2image = require('qr-image')
 
 export class User {
     private readonly APPKEY: string
@@ -107,16 +109,22 @@ export class User {
 
             // Judge Refresh Token
             const time = Math.floor((new Date().valueOf() - new Date(this._tokenSignDate).valueOf()) / 1000)
-            if (this._tokenSignDate && this._expires_in && time >= this._expires_in / 2) await this.refreshToken()
+            if (this._tokenSignDate && this._expires_in && time >= this._expires_in / 2) {
+                await this.refreshToken()
+                await this.sync()
+            }
 
 
         } catch (e) {
             // await this.loginAccount()
             try {
-                const qrData: any = await this.getQRCode()
-                qrcode.generate(qrData["data"]["url"], { small: true })
-                await this.loginByQRCode(qrData)
+                const QRData = await this.getQRCode()
+                qrcode.generate(QRData.url, { small: true })
+                qr2image.image(QRData.url).pipe(fs.createWriteStream("./qrcode.png"))
+                await this.loginByQRCode(QRData)
                 await this.checkToken()
+                await fs.promises.unlink('./qrcode.png')
+                await this.sync()
             } catch (error) {
                 throw (error)
             }
@@ -266,7 +274,7 @@ export class User {
     }
 
     checkToken = async () => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
             this.logger.info(`Check token ${this._access_token}`)
             if (this._access_token === "") {
                 this.logger.error(`Access Token not define`)
@@ -278,7 +286,7 @@ export class User {
                     url
                 })
 
-                this.logger.debug('get user info res: ')
+                this.logger.debug('Get user info response: ')
                 this.logger.debug(data)
 
                 if (data.code !== 0) {
@@ -288,8 +296,7 @@ export class User {
                 this.logger.info(`Token is valid. ${data.data.mid} ${data.data.name}`)
                 this._mid = data.data.mid
                 this._nickname = data.data.name
-                await this.sync()
-                resolve(true)
+                resolve()
             } catch (err) {
                 this.logger.error(`An error occurred when try to check token: ${err}`)
                 reject(err)
@@ -357,8 +364,6 @@ export class User {
                     this.logger.info(`access_token ${access_token}`)
                     this.logger.info(`refresh_token ${refresh_token}`)
                     this.logger.info(`expires_in ${expires_in}`)
-
-                    await this.sync()
                     resolve()
                 } else if (code === -101) {
                     this.logger.error(`Access Token expire ...`)
@@ -419,14 +424,14 @@ export class User {
         })
     }
 
-    loginByQRCode = async (QRData: any) => {
+    loginByQRCode = async (QRData: getQRCodeDataType) => {
         return new Promise<void>(async (resolve) => {
 
 
             const params: any = {
                 "appkey": "4409e2ce8ffd12b8",
                 "local_id": "0",
-                "auth_code": QRData["data"]["auth_code"],
+                "auth_code": QRData.auth_code,
                 'ts': (+new Date()).toString().substr(0, 10)
             }
             params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
@@ -458,7 +463,7 @@ export class User {
     }
 
     getQRCode = async () => {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<getQRCodeDataType>(async (resolve, reject) => {
             const params: any = {
                 "appkey": "4409e2ce8ffd12b8",
                 "local_id": "0",
@@ -470,13 +475,12 @@ export class User {
                 method: "post",
                 params
             })
-            this.logger.debug('get qrcode res: ')
+            this.logger.debug('Get QRCode response: ')
             this.logger.debug(data)
             if (data.code !== 0) {
                 return reject(data.message)
-
             }
-            resolve(data)
+            resolve(data.data)
         })
     }
 }
