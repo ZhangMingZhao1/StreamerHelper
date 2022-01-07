@@ -45,7 +45,7 @@ class App {
     }
 
     init = async () => {
-        return new Promise<void>(async (reject) => {
+        return new Promise<void>(async (_, reject) => {
 
             try {
                 this.initUnCaughtException()

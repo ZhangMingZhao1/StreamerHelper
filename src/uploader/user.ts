@@ -6,6 +6,7 @@ import { Logger } from "log4js";
 import { $axios } from "../http";
 import { log4js } from "../log";
 import * as crypt from '@/util/crypt'
+import { biliAPIResponse, loginByQRCodeDataType, getQRCodeDataType, getUserInfoDataType } from "@/type/biliAPIResponse";
 
 const md5 = require('md5-node')
 const qrcode = require('qrcode-terminal')
@@ -115,7 +116,7 @@ export class User {
                 const qrData: any = await this.getQRCode()
                 qrcode.generate(qrData["data"]["url"], { small: true })
                 await this.loginByQRCode(qrData)
-                this.sync()
+                await this.checkToken()
             } catch (error) {
                 throw (error)
             }
@@ -273,14 +274,20 @@ export class User {
             }
             let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
             try {
-                const { code, message, data: { mid, name } } = await $axios.$get(url)
-                if (code !== 0) {
-                    this.logger.error(`An error occurred when try to auth by access_token: ${message}`)
+                const { data } = await $axios.request<biliAPIResponse<getUserInfoDataType>>({
+                    url
+                })
+
+                this.logger.debug('get user info res: ')
+                this.logger.debug(data)
+
+                if (data.code !== 0) {
+                    this.logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
                     reject()
                 }
-                this.logger.info(`Token is valid. ${mid} ${name}`)
-                this._mid = mid
-                this._nickname = name
+                this.logger.info(`Token is valid. ${data.data.mid} ${data.data.name}`)
+                this._mid = data.data.mid
+                this._nickname = data.data.name
                 await this.sync()
                 resolve(true)
             } catch (err) {
@@ -423,26 +430,27 @@ export class User {
                 'ts': (+new Date()).toString().substr(0, 10)
             }
             params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
+
             while (true) {
                 await new Promise((resolve) => {
                     setTimeout(resolve, 2 * 1000);
                 })
-                const res: any = await $axios.request({
+                const { data } = await $axios.request<biliAPIResponse<loginByQRCodeDataType>>({
                     url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/poll",
                     method: "post",
                     params
                 })
-                const resData = res.data
-                this.logger.debug(res)
-                if (resData.code === 0) {
+                this.logger.debug('login by qrcode res: ')
+                this.logger.debug(data)
+                if (data.code === 0) {
                     this.logger.info("LOGIN BY QRCODE SUCCESS")
-                    this._access_token = resData.data.access_token
-                    this._refresh_token = resData.data.refresh_token
-                    this._mid = resData.data.mid
-                    this._expires_in = resData.data.expires_in
+                    this._access_token = data.data.access_token
+                    this._refresh_token = data.data.refresh_token
+                    this._mid = data.data.mid
+                    this._expires_in = data.data.expires_in
                     return resolve()
                 } else {
-                    this.logger.debug(resData.message)
+                    this.logger.debug(data.message)
                 }
             }
 
@@ -450,24 +458,25 @@ export class User {
     }
 
     getQRCode = async () => {
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             const params: any = {
                 "appkey": "4409e2ce8ffd12b8",
                 "local_id": "0",
                 'ts': (+new Date()).toString().substr(0, 10)
             }
             params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
-            const res = await $axios.request({
+            const { data } = await $axios.request<biliAPIResponse<getQRCodeDataType>>({
                 url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code",
                 method: "post",
                 params
             })
-            const { code, message, data } = res as any
-            if (code !== 0) {
-                this.logger.info(message)
-            }
-            return resolve(data)
+            this.logger.debug('get qrcode res: ')
+            this.logger.debug(data)
+            if (data.code !== 0) {
+                return reject(data.message)
 
+            }
+            resolve(data)
         })
     }
 }
