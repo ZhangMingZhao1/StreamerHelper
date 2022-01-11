@@ -11,19 +11,18 @@
 
 ## Introduction
 
-主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。
+StreamerHelper 部署后，会在后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。
 
 （关于版权问题，投稿的参数默认一律设置的转载，简介处默认放有直播间链接）
 
 ## Installation
+### 录播配置
 
-StreamerHelper可以通过两种方式安装，推荐使用Docker
+```shell
+cp templates/info-example.json templates/info.json
+```
 
-首先`git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper`
-
-部署之前复制一份templates/info-example.json，并重命名为templates/info.json，并根据所需配置。
-
-### Docker 部署
+### Docker 部署（推荐）
 
 配置文件: `/app/templates/info.json`
 
@@ -44,26 +43,27 @@ docker run --name stream -itd -v /your_project_path/info.json:/app/templates/inf
 ### 直接部署到本机环境上
 #### 安装 Node.js
 
-```bash
+```shell
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 #### 安装 ffmpeg
 
-mac:
-```bash
+```shell
+# Mac
 brew update
 brew install ffmpeg
 ```
-linux:
-```
+
+```shell
+# Linux
 sudo add-apt-repository ppa:djcj/hybrid
 sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 
 #### 运行：
-```bash
+```shell
 npm i -g pm2
 # 如果装不动，添加 --registry=https://registry.npm.taobao.org 参数，npm i 同理
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
