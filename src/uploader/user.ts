@@ -7,7 +7,7 @@ import { Logger } from "log4js";
 import { $axios } from "../http";
 import { log4js } from "../log";
 import * as crypt from '@/util/crypt'
-import { biliAPIResponse, loginByQRCodeDataType, getQRCodeDataType, getUserInfoDataType } from "@/type/biliAPIResponse";
+import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse } from "@/type/biliAPIResponse";
 import { PersonInfo } from "@/type/config";
 
 const md5 = require('md5-node')
@@ -25,10 +25,10 @@ export class User {
     private logger: Logger;
     private sessionID: string | undefined;
     private JSESSIONID: string | undefined;
-    private _refresh_token: string | undefined;
-    private _expires_in: number | undefined;
-    private _nickname: string | '';
-    private _tokenSignDate: Date | string;
+    private _refresh_token: string;
+    private _expires_in: number;
+    private _nickname: string | undefined;
+    private _tokenSignDate: number;
 
 
     constructor(personInfo: PersonInfo) {
@@ -36,11 +36,11 @@ export class User {
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this._username = personInfo.username;
         this._password = personInfo.password;
-        this._access_token = personInfo.access_token || '';
-        this._refresh_token = personInfo.refresh_token || '';
-        this._expires_in = personInfo.expires_in || undefined;
-        this._nickname = personInfo.nickname || '';
-        this._tokenSignDate = personInfo.tokenSignDate || '';
+        this._access_token = personInfo.access_token;
+        this._refresh_token = personInfo.refresh_token;
+        this._expires_in = personInfo.expires_in;
+        this._nickname = personInfo.nickname;
+        this._tokenSignDate = personInfo.tokenSignDate;
         this.logger = log4js.getLogger('User')
         this._mid = personInfo.mid || 0;
     }
@@ -76,9 +76,9 @@ export class User {
         this.logger.info(`Sync User info ...`)
 
         try {
-            const text = fs.readFileSync('./templates/info.json')
-            const obj = JSON.parse(text.toString())
-            obj.personInfo = {
+            const text = await fs.promises.readFile('./templates/info.json')
+            const infoObj = JSON.parse(text.toString())
+            infoObj.personInfo = {
                 nickname: this._nickname,
                 username: this._username,
                 password: this._password,
@@ -88,8 +88,8 @@ export class User {
                 tokenSignDate: this._tokenSignDate,
                 mid: this._mid
             }
-            const stringifies = JSON.stringify(obj, null, '  ')
-            fs.writeFileSync('./templates/info.json', stringifies)
+            const stringified = JSON.stringify(infoObj, null, '  ')
+            fs.promises.writeFile('./templates/info.json', stringified)
             this.logger.info(`Sync User info ... DONE`)
         } catch (e) {
             this.logger.error(e)
@@ -106,14 +106,16 @@ export class User {
         // if (!this._password) return this.logger.error(`Check your password !!`)
 
         try {
-            await this.checkToken()
-
             // Judge Refresh Token
-            const time = Math.floor((new Date().valueOf() - new Date(this._tokenSignDate).valueOf()) / 1000)
-            if (this._tokenSignDate && this._expires_in && time >= this._expires_in / 2) {
+            const time = Math.floor((Date.now() - (this._tokenSignDate || 0)) / 1000)
+            console.debug(`${time}`)
+
+            if (time >= (this._expires_in || 0) / 2) {
                 await this.refreshToken()
                 await this.sync()
             }
+
+            await this.checkToken()
 
 
         } catch (e) {
@@ -170,9 +172,9 @@ export class User {
                         access_token: '',
                         mid: 0,
                         refresh_token: '',
-                        expires_in: undefined
+                        expires_in: 15552000
                     }
-                }: { code: number, message: string, data: { access_token: string; mid: number; refresh_token: string; expires_in: number | undefined } } = await $axios.$request({
+                }: { code: number, message: string, data: { access_token: string; mid: number; refresh_token: string; expires_in: number } } = await $axios.$request({
                     method: "POST",
                     url,
                     data: querystring.stringify(data),
@@ -194,7 +196,7 @@ export class User {
                 this._mid = mid
                 this._refresh_token = refresh_token
                 this._expires_in = expires_in
-                this._tokenSignDate = new Date()
+                this._tokenSignDate = Date.now()
                 this.logger.info(`mid ${mid}`)
                 this.logger.info(`access-token ${access_token}`)
                 this.logger.info(`token expires_in ${expires_in}s`)
@@ -283,7 +285,7 @@ export class User {
             }
             let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
             try {
-                const { data } = await $axios.request<biliAPIResponse<getUserInfoDataType>>({
+                const { data } = await $axios.request<BiliAPIResponse<GetUserInfoResponse>>({
                     url
                 })
 
@@ -309,22 +311,22 @@ export class User {
     refreshToken = async () => {
 
         return new Promise<void>(async (resolve, reject) => {
-            let url: string = 'https://passport.bilibili.com/api/v2/oauth2/refresh_token'
+            const url: string = 'https://passport.bilibili.com/x/passport-login/oauth2/refresh_token'
 
-            let data: any = {
+            const params: any = {
                 access_token: this._access_token,
                 refresh_token: this._refresh_token,
                 access_key: this._access_token,
                 actionKey: 'appkey',
                 platform: 'android',
-                appkey: this.APPKEY,
+                appkey: "4409e2ce8ffd12b8",
                 build: 5511400,
                 devices: 'android',
                 mobi_app: 'android',
                 ts: parseInt(String(new Date().valueOf() / 1000))
             }
 
-            data.sign = md5(crypt.make_sign(data, this.APPSECRET))
+            params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
 
             const headers: any = {}
 
@@ -336,38 +338,22 @@ export class User {
             }
 
             try {
-                const {
-                    code,
+                const { data: {
                     data: {
-                        "token_info": {
-                            mid, access_token, refresh_token, expires_in
-                        }
-                    } = {
-                        token_info: {
-                            mid: 0,
-                            access_token: '',
-                            refresh_token: '',
-                            expires_in: 0
-                        }
-                    }
-                } = await $axios.$request({ url, data: querystring.stringify(data), headers, method: "post" })
-
-                // auth fail { message: 'user not login', ts: 1612252355, code: -101 }
-
+                        token_info
+                    }, code, message
+                } } = await $axios.request<BiliAPIResponse<LoginResponse>>({ url, data: querystring.stringify(params), headers, method: "post" })
                 if (code === 0) {
-                    this._mid = mid
-                    this._access_token = access_token
-                    this._refresh_token = refresh_token
-                    this._expires_in = expires_in
-                    this._tokenSignDate = new Date()
+                    this._mid = token_info.mid
+                    this._access_token = token_info.access_token
+                    this._refresh_token = token_info.refresh_token
+                    this._expires_in = token_info.expires_in
+                    this._tokenSignDate = Date.now()
 
                     this.logger.info(`Token refresh succeed !!`)
-                    this.logger.info(`access_token ${access_token}`)
-                    this.logger.info(`refresh_token ${refresh_token}`)
-                    this.logger.info(`expires_in ${expires_in}`)
                     resolve()
-                } else if (code === -101) {
-                    this.logger.error(`Access Token expire ...`)
+                } else {
+                    this.logger.error(`An error occurred when RefreshToken: ${message}`)
                     reject()
                 }
             } catch (e) {
@@ -425,7 +411,7 @@ export class User {
         })
     }
 
-    loginByQRCode = async (QRData: getQRCodeDataType) => {
+    loginByQRCode = async (QRData: GetQRCodeResponse) => {
         return new Promise<void>(async (resolve) => {
 
 
@@ -441,22 +427,27 @@ export class User {
                 await new Promise((resolve) => {
                     setTimeout(resolve, 2 * 1000);
                 })
-                const { data } = await $axios.request<biliAPIResponse<loginByQRCodeDataType>>({
+                const { data: {
+                    code,
+                    message,
+                    data: {
+                        token_info
+                    }
+                } } = await $axios.request<BiliAPIResponse<LoginResponse>>({
                     url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/poll",
                     method: "post",
                     params
                 })
                 this.logger.debug('login by qrcode res: ')
-                this.logger.debug(data)
-                if (data.code === 0) {
+                if (code === 0) {
                     this.logger.info("LOGIN BY QRCODE SUCCESS")
-                    this._access_token = data.data.access_token
-                    this._refresh_token = data.data.refresh_token
-                    this._mid = data.data.mid
-                    this._expires_in = data.data.expires_in
+                    this._access_token = token_info.access_token
+                    this._refresh_token = token_info.refresh_token
+                    this._mid = token_info.mid
+                    this._expires_in = token_info.expires_in
                     return resolve()
                 } else {
-                    this.logger.debug(data.message)
+                    this.logger.debug(message)
                 }
             }
 
@@ -464,24 +455,25 @@ export class User {
     }
 
     getQRCode = async () => {
-        return new Promise<getQRCodeDataType>(async (resolve, reject) => {
+        return new Promise<GetQRCodeResponse>(async (resolve, reject) => {
             const params: any = {
                 "appkey": "4409e2ce8ffd12b8",
                 "local_id": "0",
                 'ts': (+new Date()).toString().substr(0, 10)
             }
             params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
-            const { data } = await $axios.request<biliAPIResponse<getQRCodeDataType>>({
+            const { data: {
+                code, message, data
+            } } = await $axios.request<BiliAPIResponse<GetQRCodeResponse>>({
                 url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/auth_code",
                 method: "post",
                 params
             })
             this.logger.debug('Get QRCode response: ')
-            this.logger.debug(data)
-            if (data.code !== 0) {
-                return reject(data.message)
+            if (code !== 0) {
+                return reject(message)
             }
-            resolve(data.data)
+            resolve(data)
         })
     }
 }
