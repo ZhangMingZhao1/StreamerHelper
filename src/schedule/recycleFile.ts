@@ -32,7 +32,7 @@ export default new Scheduler(interval, async function () {
         }
 
         const curTime = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
-        const delayTime = obj.delayTime ?? require('../../templates/info.json').StreamerHelper.delayTime ?? 2
+        const delayTime = obj.delayTime ?? 2
 
         if (curTime >= delayTime && obj.isPost) {
             logger.info(`Time to delete file ${obj.path}`)

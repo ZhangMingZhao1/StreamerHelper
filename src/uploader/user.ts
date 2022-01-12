@@ -8,6 +8,7 @@ import { $axios } from "../http";
 import { log4js } from "../log";
 import * as crypt from '@/util/crypt'
 import { biliAPIResponse, loginByQRCodeDataType, getQRCodeDataType, getUserInfoDataType } from "@/type/biliAPIResponse";
+import { PersonInfo } from "@/type/config";
 
 const md5 = require('md5-node')
 const qrcode = require('qrcode-terminal')
@@ -30,18 +31,18 @@ export class User {
     private _tokenSignDate: Date | string;
 
 
-    constructor(username: string, password: string, access_token: string = '', refresh_token: string = '', expires_in: number = 0, nickname: string = '', tokenSignDate: string, mid: number) {
+    constructor(personInfo: PersonInfo) {
         this.APPKEY = "aae92bc66f3edfab";
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
-        this._username = username;
-        this._password = password;
-        this._access_token = access_token || '';
-        this._refresh_token = refresh_token || '';
-        this._expires_in = expires_in || undefined;
-        this._nickname = nickname || '';
-        this._tokenSignDate = tokenSignDate || '';
+        this._username = personInfo.username;
+        this._password = personInfo.password;
+        this._access_token = personInfo.access_token || '';
+        this._refresh_token = personInfo.refresh_token || '';
+        this._expires_in = personInfo.expires_in || undefined;
+        this._nickname = personInfo.nickname || '';
+        this._tokenSignDate = personInfo.tokenSignDate || '';
         this.logger = log4js.getLogger('User')
-        this._mid = mid || 0;
+        this._mid = personInfo.mid || 0;
     }
 
     get access_token(): string {

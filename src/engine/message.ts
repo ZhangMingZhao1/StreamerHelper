@@ -1,6 +1,6 @@
 import * as dayjs from "dayjs";
 import * as fs from "fs"
-import { spawn } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 import { join } from 'path'
 import * as chalk from "chalk";
 import { Logger } from "log4js";
@@ -23,7 +23,7 @@ export class Recorder {
   timeV!: string;
   tags!: string[];
   tid!: number
-  App!: any;
+  App!: ChildProcess;
   deleteLocalFile: boolean;
   uploadLocalFile: boolean;
   ffmpegProcessEnd: boolean = false;

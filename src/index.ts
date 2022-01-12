@@ -6,17 +6,7 @@ import { join, basename } from "path";
 import { emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
-
-interface personInfo {
-    username: string;
-    password: string;
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-    nickname: string;
-    tokenSignDate: string;
-    mid: number;
-}
+import { Config } from "./type/config";
 
 type Schedulers = {
     [key: string]: {
@@ -25,23 +15,52 @@ type Schedulers = {
     }
 }
 
-class App {
-    private logger: Logger;
-    personInfo: personInfo
-    user?: User;
-    schedulers: Schedulers;
-    recorderPool: Recorder[];
+export class App {
+    private _logger: Logger;
+    private _user?: User;
+    private _schedulers: Schedulers;
+    private _recorderPool: Recorder[];
+    private _config: Config;
+    static _i: any;
+
+    get logger(): Logger {
+        return this._logger
+    }
+
+    get user(): User | undefined {
+        return this._user;
+    }
+
+    get schedulers(): Schedulers {
+        return this._schedulers
+    }
+
+    get recorderPool(): Recorder[] {
+        return this._recorderPool
+    }
+
+    get config(): Config {
+        return this._config
+    }
 
     constructor() {
-        this.personInfo = require('../templates/info.json').personInfo
-        this.logger = log4js.getLogger(`APP`)
-        this.schedulers = {}
-        this.recorderPool = []
+        global.config = this._config = require('../templates/info.json')
+
+        this._logger = log4js.getLogger(`APP`)
+        this._schedulers = {}
+        this._recorderPool = []
 
         if (!fs.existsSync(join(process.cwd(), '/download'))) {
             fs.mkdirSync(join(process.cwd(), '/download'))
         }
 
+    }
+
+    static getInstance() {
+        if (!App._i) {
+            App._i = new App()
+        }
+        return App._i
     }
 
     init = async () => {
@@ -62,20 +81,10 @@ class App {
     initUser = async () => {
         return new Promise<void>(async (resolve, reject) => {
 
-            const {
-                username,
-                password,
-                access_token,
-                refresh_token,
-                expires_in,
-                tokenSignDate,
-                nickname,
-                mid
-            }: personInfo = this.personInfo
-            this.user = new User(username, password, access_token, refresh_token, expires_in, nickname, tokenSignDate, mid)
+            this._user = new User(global.config.personInfo)
 
             try {
-                await this.user.login()
+                await this._user.login()
                 resolve()
             } catch (e) {
                 reject(e)
@@ -93,14 +102,17 @@ class App {
             try {
                 fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
                     const schedulerFileName = basename(fileName, '.js')
-                    this.logger.info(`Load Schedule [${schedulerFileName}]`)
                     const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', fileName))).default
-                    this.schedulers[schedulerFileName] = { scheduler: scheduleModule }
+
+                    this._logger.info(`Load Schedule [${schedulerFileName}]`)
+
+                    this._schedulers[schedulerFileName] = { scheduler: scheduleModule }
 
                     if (typeof (scheduleModule.interval) === 'number') {
-                        scheduleModule.task(this)
-                        this.schedulers[schedulerFileName].timer = setInterval(() => {
-                            scheduleModule.task(this)
+                        scheduleModule.task()
+
+                        this._schedulers[schedulerFileName].timer = setInterval(() => {
+                            scheduleModule.task()
                         }, scheduleModule.interval);
                     }
 
@@ -108,7 +120,7 @@ class App {
 
                 resolve()
             } catch (e) {
-                this.logger.error(e)
+                this._logger.error(e)
                 reject(e)
             }
 
@@ -117,21 +129,21 @@ class App {
 
     initExitSignal = async () => {
 
-        this.logger.info(`initExitSignal`)
+        this._logger.info(`initExitSignal`)
 
         process.on("SIGINT", () => {
-            this.logger.info("Receive exit signal, the process will exit after 3 seconds.")
-            this.logger.info("Process exited by user.")
+            this._logger.info("Receive exit signal, the process will exit after 3 seconds.")
+            this._logger.info("Process exited by user.")
 
-            for (const key in this.schedulers) {
-                if (this.schedulers[key].timer) {
-                    clearInterval(this.schedulers[key].timer as NodeJS.Timer)
+            for (const key in this._schedulers) {
+                if (this._schedulers[key].timer) {
+                    clearInterval(this._schedulers[key].timer as NodeJS.Timer)
                 }
             }
 
             emitter.removeAllListeners("streamDisconnect")
 
-            this.recorderPool.forEach((elem: Recorder) => {
+            this._recorderPool.forEach((elem: Recorder) => {
                 elem.stopRecord()
             })
 
@@ -143,21 +155,21 @@ class App {
 
     initUnCaughtException = () => {
 
-        this.logger.info(`initUnCaughtException`)
+        this._logger.info(`initUnCaughtException`)
 
         process.on("uncaughtException", (err) => {
-            this.logger.error("exception caught: ", err);
+            this._logger.error("exception caught: ", err);
         });
     }
 
     initStreamDisconnect = async () => {
 
         emitter.on('streamDisconnect', (curRecorder: Recorder) => {
-            this.recorderPool.forEach((elem: Recorder) => {
+            this._recorderPool.forEach((elem: Recorder) => {
 
                 if (elem.recorderName === curRecorder.recorderName) {
                     curRecorder = elem
-                    this.logger.info(`Recorder ${curRecorder.recorderName} 退出: `)
+                    this._logger.info(`Recorder ${curRecorder.recorderName} 退出: `)
                 }
 
             })
@@ -166,11 +178,5 @@ class App {
     }
 }
 
-const app = new App()
-
-app.init().then(r => r).catch(e => log4js.getLogger(`APP`).error(e))
-
-export {
-    App,
-    app
-}
+global.app = App.getInstance()
+global.app.init().catch(global.app.logger.error)

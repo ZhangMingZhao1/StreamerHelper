@@ -6,7 +6,6 @@ import { join } from "path";
 import { $axios } from "@/http";
 import { uploadStatus } from "@/uploader/uploadStatus";
 import { StreamInfo } from "@/type/streamInfo";
-import { app } from "@/index";
 import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
 import * as crypt from '@/util/crypt'
 import * as chalk from 'chalk'
@@ -47,7 +46,7 @@ export class uploader {
         this.logger.debug(`Upload Stream Info ${JSON.stringify(stream, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this.dirName = stream.dirName || ''
-        this.access_token = app.user?.access_token || 'xxx'
+        this.access_token = global.app.user?.access_token || 'xxx'
         this.mid = require('../../templates/info.json').personInfo.mid || 0
         this.videoPartLimitSizeInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize ?? 100
         this.copyright = stream.copyright || 2
