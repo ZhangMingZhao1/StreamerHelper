@@ -106,18 +106,14 @@ export class User {
         // if (!this._password) return this.logger.error(`Check your password !!`)
 
         try {
+            await this.checkToken()
             // Judge Refresh Token
             const time = Math.floor((Date.now() - (this._tokenSignDate || 0)) / 1000)
-            console.debug(`${time}`)
 
             if (time >= (this._expires_in || 0) / 2) {
                 await this.refreshToken()
                 await this.sync()
             }
-
-            await this.checkToken()
-
-
         } catch (e) {
             // await this.loginAccount()
             try {
@@ -283,22 +279,22 @@ export class User {
                 this.logger.error(`Access Token not define`)
                 return reject()
             }
-            let url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
+            const url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
             try {
-                const { data } = await $axios.request<BiliAPIResponse<GetUserInfoResponse>>({
+                const { data: { data, code, message } } = await $axios.request<BiliAPIResponse<GetUserInfoResponse>>({
                     url
                 })
 
                 this.logger.debug('Get user info response: ')
                 this.logger.debug(data)
 
-                if (data.code !== 0) {
-                    this.logger.error(`An error occurred when try to auth by access_token: ${data.message}`)
-                    reject()
+                if (code !== 0) {
+                    this.logger.error(`An error occurred when try to auth by access_token: ${message}`)
+                    return reject()
                 }
-                this.logger.info(`Token is valid. ${data.data.mid} ${data.data.name}`)
-                this._mid = data.data.mid
-                this._nickname = data.data.name
+                this.logger.info(`Token is valid. ${data.mid} ${data.name}`)
+                this._mid = data.mid
+                this._nickname = data.name
                 resolve()
             } catch (err) {
                 this.logger.error(`An error occurred when try to check token: ${err}`)
@@ -430,9 +426,7 @@ export class User {
                 const { data: {
                     code,
                     message,
-                    data: {
-                        token_info
-                    }
+                    data
                 } } = await $axios.request<BiliAPIResponse<LoginResponse>>({
                     url: "http://passport.bilibili.com/x/passport-tv-login/qrcode/poll",
                     method: "post",
@@ -441,10 +435,10 @@ export class User {
                 this.logger.debug('login by qrcode res: ')
                 if (code === 0) {
                     this.logger.info("LOGIN BY QRCODE SUCCESS")
-                    this._access_token = token_info.access_token
-                    this._refresh_token = token_info.refresh_token
-                    this._mid = token_info.mid
-                    this._expires_in = token_info.expires_in
+                    this._access_token = data.token_info.access_token
+                    this._refresh_token = data.token_info.refresh_token
+                    this._mid = data.token_info.mid
+                    this._expires_in = data.token_info.expires_in
                     return resolve()
                 } else {
                     this.logger.debug(message)

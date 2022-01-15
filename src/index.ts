@@ -17,7 +17,7 @@ type Schedulers = {
 
 export class App {
     private _logger: Logger;
-    private _user?: User;
+    private _user!: User; // will init in initUser()
     private _schedulers: Schedulers;
     private _recorderPool: Recorder[];
     private _config: Config;
@@ -27,7 +27,7 @@ export class App {
         return this._logger
     }
 
-    get user(): User | undefined {
+    get user(): User {
         return this._user;
     }
 
@@ -79,6 +79,7 @@ export class App {
     }
 
     initUser = async () => {
+        this._logger.info(`initUser`)
         return new Promise<void>(async (resolve, reject) => {
 
             this._user = new User(global.config.personInfo)
@@ -100,7 +101,8 @@ export class App {
         return new Promise<void>(async (resolve, reject) => {
 
             try {
-                fs.readdirSync(join(__dirname, 'schedule')).forEach(async (fileName) => {
+                const schedulerFiles = await fs.promises.readdir(join(__dirname, 'schedule'));
+                schedulerFiles.forEach(async (fileName) => {
                     const schedulerFileName = basename(fileName, '.js')
                     const scheduleModule: Scheduler = (await import(join(__dirname, 'schedule', fileName))).default
 

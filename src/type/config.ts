@@ -3,12 +3,11 @@ export interface Config {
         debug: boolean,
         roomCheckTime: number,
         recycleCheckTime: number,
-        videoPartLimitSize: number
+        videoPartLimitSize: number,
+        enableUpload: boolean
     },
     personInfo: PersonInfo,
-    streamerInfo: {
-        [key: string]: StreamerInfo
-    }[]
+    streamerInfo: StreamerInfo[]
 }
 
 export interface PersonInfo {
@@ -18,11 +17,12 @@ export interface PersonInfo {
     access_token: string,
     refresh_token: string,
     expires_in: number,
-    tokenSignDate: string,
+    tokenSignDate: number,
     mid: number
 }
 
 export interface StreamerInfo {
+    name: string,
     uploadLocalFile: boolean,
     deleteLocalFile: boolean,
     templateTitle: string,
@@ -30,7 +30,7 @@ export interface StreamerInfo {
     desc: string,
     source: string,
     dynamic: string,
-    copyright: 2,
+    copyright: number,
     roomUrl: string,
     tid: number,
     tags: string[]

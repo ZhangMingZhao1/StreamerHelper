@@ -6,11 +6,11 @@ import * as chalk from "chalk";
 import { Logger } from "log4js";
 
 import { emitter } from "@/util/utils";
-import { StreamInfo } from "@/type/streamInfo";
 import { log4js } from "../log";
 import { FileStatus } from "@/type/fileStatus";
 import { RoomStatusPath } from "@/engine/roomPathStatus";
 import { uploadStatus } from "@/uploader/uploadStatus";
+import { RecorderTask } from "@/type/recorderTask";
 
 const rootPath = process.cwd();
 const saveRootPath = join(rootPath, "/download")
@@ -29,30 +29,30 @@ export class Recorder {
   ffmpegProcessEnd: boolean = false;
   ffmpegProcessEndByUser: boolean = false
   private logger: Logger;
-  private readonly stream: StreamInfo;
+  private readonly recorderTask: RecorderTask;
   private isPost: boolean
-  constructor(stream: StreamInfo) {
-    this.recorderName = stream.roomName
-    this.recorderLink = stream.roomLink
-    this.deleteLocalFile = stream.deleteLocalFile === undefined ? true : stream.deleteLocalFile
-    this.uploadLocalFile = stream.uploadLocalFile === undefined ? true : stream.uploadLocalFile
-    this.tid = stream.roomTid
+
+  constructor(recorderTask: RecorderTask) {
+    this.recorderName = recorderTask.recorderName
+    this.recorderLink = recorderTask.streamerInfo.roomUrl
+    this.deleteLocalFile = recorderTask.streamerInfo.deleteLocalFile === undefined ? true : recorderTask.streamerInfo.deleteLocalFile
+    this.uploadLocalFile = recorderTask.streamerInfo.uploadLocalFile === undefined ? true : recorderTask.streamerInfo.uploadLocalFile
+    this.tid = recorderTask.streamerInfo.tid
     this.timeV = `${dayjs().format("YYYY-MM-DD")} ${this.getTitlePostfix()}`;
     this.ffmpegProcessEnd = false
     this.ffmpegProcessEndByUser = false
-    this.tags = stream.roomTags
+    this.tags = recorderTask.streamerInfo.tags
     this.logger = log4js.getLogger(`Recorder ${this.recorderName}`)
-    this.stream = stream
+    this.recorderTask = recorderTask
     this.isPost = false
   }
 
-  startRecord(stream: StreamInfo) {
-    if (!this.recorderName) return
-    stream.timeV = this.timeV
-    this.logger.info(`开始下载: ${stream.roomName}, 直播流: ${stream.streamUrl}`)
+  startRecord(recorderTask: RecorderTask) {
+    recorderTask.timeV = this.timeV
+    this.logger.info(`开始下载: ${recorderTask.recorderName}, 直播流: ${recorderTask.streamUrl}`)
     const cmd = `ffmpeg`;
     let startNumber = 0
-    let tmpDirName = join(saveRootPath, stream.roomName)
+    let tmpDirName = join(saveRootPath, recorderTask.recorderName)
 
     if (!fs.existsSync(tmpDirName)) {
       fs.mkdirSync(tmpDirName)
@@ -78,9 +78,9 @@ export class Recorder {
     }
 
     this.logger.info(`记录相关信息到文件 ${chalk.red(this.recorderName)}，目录：${this.dirName}`)
-    this.writeInfoToFileStatus(this.dirName, stream)
+    this.writeInfoToFileStatus(this.dirName, recorderTask)
 
-    const fileName: string = join(this.dirName, `${stream.roomName}-${this.timeV}-part-%03d.mp4`);
+    const fileName: string = join(this.dirName, `${recorderTask.recorderName}-${this.timeV}-part-%03d.mp4`);
     const fakeX: any = {
       'Accept': '*/*',
       'Accept-Encoding': 'gzip, deflate, br',
@@ -98,7 +98,7 @@ export class Recorder {
       "-headers",
       fakeHeaders,
       "-i",
-      stream.streamUrl,
+      recorderTask.streamUrl,
       "-c:v",
       "copy",
       "-c:a",
@@ -124,9 +124,9 @@ export class Recorder {
     });
     this.App.on("exit", (code: number) => {
       this.ffmpegProcessEnd = true
-      this.logger.info(`下载流 ${chalk.red(stream.roomName)} 退出，退出码: ${code}，目录：${this.dirName}`);
+      this.logger.info(`下载流 ${chalk.red(recorderTask.recorderName)} 退出，退出码: ${code}，目录：${this.dirName}`);
       this.logger.info(`记录退出时间 ${chalk.red(this.recorderName)}`)
-      this.writeInfoToFileStatus(this.dirName, stream)
+      this.writeInfoToFileStatus(this.dirName, recorderTask)
       if (!this.ffmpegProcessEndByUser) {
         emitter.emit('streamDisconnect', this)
       }
@@ -140,7 +140,7 @@ export class Recorder {
       this.App.stdin.end('q')
       this.logger.info(`停止录制 ${chalk.red(this.recorderName)}`)
       this.logger.info(`记录退出时间 ${chalk.red(this.recorderName)}`)
-      this.writeInfoToFileStatus(this.dirName, this.stream)
+      this.writeInfoToFileStatus(this.dirName, this.recorderTask)
       RoomStatusPath.delete(this.dirName)
     }
   }
@@ -150,7 +150,7 @@ export class Recorder {
     return !this.ffmpegProcessEnd
   }
 
-  private writeInfoToFileStatus(dirName: string, stream: StreamInfo) {
+  private writeInfoToFileStatus(dirName: string, recorderTask: RecorderTask) {
     const fileStatusPath = join(dirName, 'fileStatus.json')
 
     if (!fs.existsSync(fileStatusPath)) {
@@ -166,12 +166,12 @@ export class Recorder {
         deleteLocalFile: this.deleteLocalFile,
         isPost: false,
         isFailed: false,
-        delayTime: stream.delayTime ?? 2,
-        templateTitle: stream.templateTitle || '',
-        desc: stream.desc || '',
-        source: stream.source || '',
-        dynamic: stream.dynamic || '',
-        copyright: stream.copyright ?? 2,
+        delayTime: recorderTask.streamerInfo.delayTime ?? 2,
+        templateTitle: recorderTask.streamerInfo.templateTitle || '',
+        desc: recorderTask.streamerInfo.desc || '',
+        source: recorderTask.streamerInfo.source || '',
+        dynamic: recorderTask.streamerInfo.dynamic || '',
+        copyright: recorderTask.streamerInfo.copyright ?? 2,
         timeV: this.timeV
       }
       fs.writeFileSync(fileStatusPath, JSON.stringify(obj, null, '  '))

@@ -2,16 +2,15 @@ import * as dayjs from "dayjs";
 import * as chalk from 'chalk'
 
 import { getStreamUrl } from "@/engine/getStreamUrl";
-import { StreamInfo } from "@/type/streamInfo";
 import { RoomStatus } from "@/engine/roomStatus";
-import { getRoomArrInfo } from "@/util/utils";
 import { log4js } from "@/log";
 import { Scheduler } from "@/type/scheduler";
 import { Recorder } from "@/engine/message";
+import { RecorderTask } from "@/type/recorderTask";
 
 const roomCheckTime = global.config.StreamerHelper.roomCheckTime
 const checkTime = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
-const rooms = getRoomArrInfo(global.config.streamerInfo);
+const rooms = global.config.streamerInfo;
 const logger = log4js.getLogger(`checkRoom`)
 const loggerCheck = log4js.getLogger(`check`)
 const interval = checkTime
@@ -25,53 +24,42 @@ export default new Scheduler(interval, async function () {
         let curRecorder: Recorder | undefined;
         let curRecorderText: string = ''
         let curRecorderIndex: number | undefined
-        logger.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
+        logger.info(`正在检查直播 ${chalk.red(room.name)} ${room.roomUrl}`)
 
-        global.app.recorderPool.forEach((elem: Recorder, index: number) => {
-            if (elem.recorderName === room.roomName) {
-                curRecorder = elem
+        global.app.recorderPool.forEach((recorder: Recorder, index: number) => {
+            if (recorder.recorderName === room.name) {
+                curRecorder = recorder
                 curRecorderIndex = index
                 curRecorderText = getTipsString(curRecorder) + curRecorderText
             }
         })
 
-        let stream: StreamInfo = {
-            roomLink: room.roomLink,
-            roomName: room.roomName,
-            roomTags: room.roomTags,
-            roomTid: room.roomTid,
+        const recorderTask: RecorderTask = {
+            streamerInfo: room,
+            timeV: "",
+            dirName: "",
+            recorderName: room.name,
             streamUrl: "",
-            deleteLocalFile: room.deleteLocalFile,
-            uploadLocalFile: room.uploadLocalFile,
-            templateTitle: room.templateTitle,
-            desc: room.desc,
-            source: room.source,
-            dynamic: room.dynamic,
-            copyright: room.copyright,
-            delayTime: room.delayTime
         };
 
         try {
-            const tmpStream = await getStreamUrl(room.roomName, room.roomLink, room.roomTags, room.roomTid)
+            recorderTask.streamUrl = await getStreamUrl(room.roomUrl)
 
-            // Merge streamUrl
-            stream = Object.assign(stream, tmpStream)
-
-            logger.debug(`stream ${JSON.stringify(stream, null, 2)}`)
+            logger.debug(`stream ${JSON.stringify(recorderTask, null, 2)}`)
             // start a recorder
-            if (RoomStatus.get(room.roomName) !== 1 && !curRecorder) {
-                RoomStatus.set(room.roomName, 1)
-                const tmp = new Recorder(stream)
-                tmp.startRecord(stream)
+            if (RoomStatus.get(room.name) !== 1 && !curRecorder) {
+                RoomStatus.set(room.name, 1)
+                const tmp = new Recorder(recorderTask)
+                tmp.startRecord(recorderTask)
                 global.app.recorderPool.push(tmp)
             } else if (curRecorder?.recorderStat() === false) {
                 logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
-                curRecorder.startRecord(stream)
+                curRecorder.startRecord(recorderTask)
             }
         } catch (e) {
             // room offline
             // it is time to submit
-            RoomStatus.delete(room.roomName)
+            RoomStatus.delete(room.name)
             // but the stream isn't disconnected
             // so stop the recorder before submit
             if (curRecorder?.recorderStat()) {

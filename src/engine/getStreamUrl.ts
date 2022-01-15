@@ -1,5 +1,3 @@
-import { StreamInfo } from "@/type/streamInfo";
-
 const regs: any = [
     [/www\.huya\.com/, require("./website/huya")],
     [/fanxing\.kugou\.com/, require("./website/kugou")],
@@ -17,7 +15,7 @@ const regs: any = [
     [/www\.douyu\.com/, require("./website/douyu")]
 ];
 
-export function getStreamUrl(title: string, url: string, tags: string[], tid: number): Promise<StreamInfo> {
+export function getStreamUrl(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
         //循环正则判断直播站点类型
         let website: any = null;
@@ -30,7 +28,7 @@ export function getStreamUrl(title: string, url: string, tags: string[], tid: nu
             const result: any = website.main(url);
             result.then(
                 (value: any) => {
-                    resolve({ streamUrl: value, roomName: title, roomLink: url, roomTags: tags, roomTid: tid });
+                    resolve(value);
                 }
             ).catch((e: any) => {
                 reject(e);

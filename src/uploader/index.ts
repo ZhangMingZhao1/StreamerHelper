@@ -5,13 +5,13 @@ import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/vid
 import { join } from "path";
 import { $axios } from "@/http";
 import { uploadStatus } from "@/uploader/uploadStatus";
-import { StreamInfo } from "@/type/streamInfo";
 import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
 import * as crypt from '@/util/crypt'
 import * as chalk from 'chalk'
 import * as crypto from 'crypto';
 import * as querystring from 'querystring'
 import * as formData from 'form-data'
+import { RecorderTask } from '@/type/recorderTask';
 
 export class uploader {
 
@@ -41,26 +41,27 @@ export class uploader {
     private succeedUploadChunk: number;
     private succeedTotalLength: number;
 
-    constructor(stream: StreamInfo) {
-        this.logger = log4js.getLogger(`Upload ${stream.roomName}`)
-        this.logger.debug(`Upload Stream Info ${JSON.stringify(stream, null, 2)}`)
+    constructor(recorderTask: RecorderTask) {
+        this.logger = log4js.getLogger(`Upload ${recorderTask.recorderName}`)
+        this.logger.debug(`Upload Stream Info ${JSON.stringify(recorderTask, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
-        this.dirName = stream.dirName || ''
+        this.dirName = recorderTask.dirName || ''
         this.access_token = global.app.user?.access_token || 'xxx'
-        this.mid = require('../../templates/info.json').personInfo.mid || 0
-        this.videoPartLimitSizeInput = require('../../templates/info.json').StreamerHelper.videoPartLimitSize ?? 100
-        this.copyright = stream.copyright || 2
+        this.mid = global.config.personInfo.mid || 0
+        this.videoPartLimitSizeInput = global.config.StreamerHelper.videoPartLimitSize ?? 100
+        this.copyright = recorderTask.streamerInfo.copyright || 2
         this.cover = ''
-        this.desc = stream.desc || `Powered By StreamerHelper. https://github.com/ZhangMingZhao1/StreamerHelper`
+        this.desc = recorderTask.streamerInfo.desc || `Powered By StreamerHelper. https://github.com/ZhangMingZhao1/StreamerHelper`
         this.no_reprint = 0
         this.open_elec = 1
-        this.source = stream.source || `${stream.roomName} 直播间: ${stream.roomLink}`
-        this.tags = stream.roomTags
-        this.tid = stream.roomTid
-        this.title = stream.templateTitle || `${stream.roomName} ${stream.timeV} 录播`
-        this.dynamic = stream.dynamic || `${stream.roomName} 直播间: ${stream.roomLink}`
-        this.uploadLocalFile = stream.uploadLocalFile || true
-        this.recorderName = stream.roomName || ''
+        this.source = recorderTask.streamerInfo.source || `${recorderTask.recorderName} 直播间: ${recorderTask.streamerInfo.roomUrl}`
+        this.tags = recorderTask.streamerInfo.tags
+        this.tid = recorderTask.streamerInfo.tid
+        this.title = `${recorderTask.recorderName} ${recorderTask.timeV} 录播`
+            || this.renderTitle(recorderTask.streamerInfo.templateTitle || "", { time: recorderTask.timeV, name: recorderTask.recorderName })
+        this.dynamic = recorderTask.streamerInfo.dynamic || `${recorderTask.recorderName} 直播间: ${recorderTask.streamerInfo.roomUrl}`
+        this.uploadLocalFile = recorderTask.streamerInfo.uploadLocalFile || true
+        this.recorderName = recorderTask.recorderName || ''
         this.deadline = 0
         this.uploadStart = 0
         this.succeedTotalLength = 0
@@ -191,7 +192,7 @@ export class uploader {
 
                 try {
                     let uploadUrl = '', completeUploadUrl = '', serverFileName = '';
-                    
+
                     if (isFailed) {
                         uploadUrl = this.failUpload?.uploadUrl || ''
                         completeUploadUrl = this.failUpload?.completeUploadUrl || ''
@@ -518,12 +519,12 @@ export class uploader {
         const merge = (target: any, source: any) => {
             // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
             //Add checkpoints 增加校验
-            if(target){
+            if (target) {
                 for (const key of Object.keys(source)) {
                     if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
                 }
             }
-            
+
             // Join `target` and modified `source`
             Object.assign(target || {}, source)
             return target
@@ -539,5 +540,9 @@ export class uploader {
             fs.writeFileSync(fileStatusPath, stringifies)
             this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
         }
+    }
+
+    renderTitle = (template: string, context: any) => {
+        return template.replace(/\{\{(.*?)\}\}/g, (_, key) => context[key] || "")
     }
 }

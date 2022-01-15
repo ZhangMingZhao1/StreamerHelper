@@ -1,25 +1,29 @@
-export interface biliAPIResponse<T extends dataType | any> {
+export interface BiliAPIResponse<T extends DataType | any> {
     code: number,
     message: string,
     data: T
 }
 
-type dataType = getQRCodeDataType | loginByQRCodeDataType
+type DataType = GetQRCodeResponse | LoginResponse
 
-export type getQRCodeDataType = {
+export type GetQRCodeResponse = {
     url: string,
     auth_code: string
 }
 
-export type loginByQRCodeDataType = {
+export type LoginResponse = {
     is_new: boolean,
+    token_info: TokenInfo
+}
+
+export type GetUserInfoResponse = {
+    name: string
+    mid: number
+}
+
+export type TokenInfo = {
     mid: number,
     access_token: string,
     refresh_token: string,
     expires_in: number
-}
-
-export type getUserInfoDataType = {
-    name: string
-    mid: number
 }
