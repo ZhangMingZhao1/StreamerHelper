@@ -80,7 +80,6 @@ npm run serve
 |recycleCheckTime|检测本地文件上传以及删除的间隔||否|300(s)|
 |roomCheckTime|检测直播间的间隔||否|600(s)|
 |videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
-streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制主播的名称。
 
 ### personInfo
 | 字段            | 说明                         |是否必填|
@@ -95,9 +94,10 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |mid||否|
 
 ### streamerInfo
-是一个数组，数组元素的`key`为直播间名称，也作为投稿的默认标题。
+是一个数组，描述需要录制的主播信息。
 |字段|说明|可选值|是否必填|默认值|
 |---|---|---|---|--|
+|name|主播名||是||
 |uploadLocalFile|是否投稿|true/false|否|true|
 |deleteLocalFile|是否删除本地视频文件|true/false|否|true|
 |delayTime|投稿成功后延迟删除本地文件的时间(需要deleteLocalFile为true)||否|2(天)|
