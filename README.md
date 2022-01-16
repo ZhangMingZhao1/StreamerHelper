@@ -62,7 +62,8 @@ sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 #### 登录：
-现在只支持扫码登录，程序启动后会在控制台打印二维码，如果无法正常显示，请打开`./qrcode.png`
+现在只支持扫码登录和`access_token`登录，程序启动后会在控制台打印二维码，如果无法正常显示，请打开`./qrcode.png`
+如果选择`access_token`登录，需要手动填写`personInfo`中`access_token`的值
 #### 运行：
 ```shell
 npm i -g pm2
@@ -80,14 +81,12 @@ npm run serve
 |recycleCheckTime|检测本地文件上传以及删除的间隔||否|300(s)|
 |roomCheckTime|检测直播间的间隔||否|600(s)|
 |videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
-streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制主播的名称。
 
 ### personInfo
+以下各字段的值会在登录后自动填写，如果选择`access_token`登录，需要手动填写`personInfo`中`access_token`的值。
 | 字段            | 说明                         |是否必填|
 | --------------- | ------------------ |---|
 |nickname|B站昵称|否|
-|username|B站账号，用于登录投稿|否（已弃用）|
-|password|B站密码|否（已弃用）|
 |access_token|用于鉴权的`token`凭证|否|
 |refresh_token||否|
 |expires_in||否|
@@ -95,9 +94,10 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |mid||否|
 
 ### streamerInfo
-是一个数组，数组元素的`key`为直播间名称，也作为投稿的默认标题。
+是一个数组，描述需要录制的主播信息。
 |字段|说明|可选值|是否必填|默认值|
 |---|---|---|---|--|
+|name|主播名||是||
 |uploadLocalFile|是否投稿|true/false|否|true|
 |deleteLocalFile|是否删除本地视频文件|true/false|否|true|
 |delayTime|投稿成功后延迟删除本地文件的时间(需要deleteLocalFile为true)||否|2(天)|
@@ -121,8 +121,6 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
   },
   "personInfo": {
     "nickname": "",
-    "username": "",
-    "password": "",
     "access_token": "",
     "refresh_token": "",
     "expires_in": 0,

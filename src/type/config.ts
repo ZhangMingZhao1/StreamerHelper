@@ -12,8 +12,6 @@ export interface Config {
 
 export interface PersonInfo {
     nickname: string,
-    username: string,
-    password: string,
     access_token: string,
     refresh_token: string,
     expires_in: number,
