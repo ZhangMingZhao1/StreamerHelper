@@ -2,87 +2,91 @@ import * as dayjs from "dayjs";
 import * as chalk from 'chalk'
 
 import { getStreamUrl } from "@/engine/getStreamUrl";
-import { StreamInfo } from "@/type/streamInfo";
 import { RoomStatus } from "@/engine/roomStatus";
-import { getRoomArrInfo } from "@/util/utils";
 import { log4js } from "@/log";
 import { Scheduler } from "@/type/scheduler";
-import { App } from "..";
 import { Recorder } from "@/engine/message";
+import { RecorderTask } from "@/type/recorderTask";
 
-const roomCheckTime = require('../../templates/info.json').StreamerHelper.roomCheckTime
+const roomCheckTime = global.config.StreamerHelper.roomCheckTime
 const checkTime = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
-const rooms = getRoomArrInfo(require('../../templates/info.json').streamerInfo);
+const rooms = global.config.streamerInfo;
 const logger = log4js.getLogger(`checkRoom`)
 const loggerCheck = log4js.getLogger(`check`)
 const interval = checkTime
 
-export default new Scheduler(interval, async function (app: App) {
+export default new Scheduler(interval, async function () {
 
     loggerCheck.info(`Start checkRoom. Interval ${interval / 1000}s`)
     loggerCheck.debug(`Rooms ${JSON.stringify(rooms, null, 2)}`)
+    loggerCheck.debug(`recorderPool: ${JSON.stringify(global.app.recorderPool)}`)
 
     for (const room of rooms) {
         let curRecorder: Recorder | undefined;
         let curRecorderText: string = ''
-        let curRecorderIndex: number | undefined
-        logger.info(`正在检查直播 ${chalk.red(room.roomName)} ${room.roomLink}`)
+        logger.info(`正在检查直播 ${chalk.red(room.name)} ${room.roomUrl}`)
 
-        app.recorderPool.forEach((elem: Recorder, index: number) => {
-            if (elem.recorderName === room.roomName) {
-                curRecorder = elem
-                curRecorderIndex = index
-                curRecorderText = getTipsString(curRecorder) + curRecorderText
-            }
-        })
-        
-        let stream: StreamInfo = {
-            roomLink: room.roomLink,
-            roomName: room.roomName,
-            roomTags: room.roomTags,
-            roomTid: room.roomTid,
+        if (global.app.recorderPool.has(room.name)) {
+            logger.debug(`global.app.recorderPool.has ${room.name}`)
+            curRecorder = global.app.recorderPool.get(room.name)
+            curRecorderText = getTipsString(curRecorder!) + curRecorderText
+        }
+
+        const recorderTask: RecorderTask = {
+            streamerInfo: room,
+            timeV: "",
+            dirName: "",
+            recorderName: room.name,
             streamUrl: "",
-            deleteLocalFile: room.deleteLocalFile,
-            uploadLocalFile: room.uploadLocalFile,
-            templateTitle: room.templateTitle,
-            desc: room.desc,
-            source: room.source,
-            dynamic: room.dynamic,
-            copyright: room.copyright,
-            delayTime: room.delayTime
         };
 
         try {
-            const tmpStream = await getStreamUrl(room.roomName, room.roomLink, room.roomTags, room.roomTid)
+            recorderTask.streamUrl = await getStreamUrl(room.roomUrl)
+            // with no-error, the room online
+            logger.debug(`stream ${JSON.stringify(recorderTask, null, 2)}`)
+            if (RoomStatus.has(room.name)) {
+                // 上次检测后认为房间在线
+                if (curRecorder) {
+                    if (curRecorder.recorderStat() === false) {
+                        // 房间在线但是直播流断开，重启
+                        logger.info(`下载流 ${curRecorder.recorderTask.dirName} 断开，但直播间在线，重启`)
+                        curRecorder.startRecord(recorderTask.streamUrl)
 
-            // Merge streamUrl
-            stream = Object.assign(stream, tmpStream)
-
-            logger.debug(`stream ${JSON.stringify(stream, null, 2)}`)
-            // start a recorder
-            if (RoomStatus.get(room.roomName) !== 1 && !curRecorder) {
-                RoomStatus.set(room.roomName, 1)
-                const tmp = new Recorder(stream)
-                tmp.startRecord(stream)
-                app.recorderPool.push(tmp)
-            } else if (curRecorder?.recorderStat() === false) {
-                logger.info(`下载流 ${curRecorder.dirName} 断开，但直播间在线，重启`)
-                curRecorder.startRecord(stream)
+                    } else if (curRecorder.recorderStat() === true) {
+                        logger.debug(`${curRecorder.recorderTask.recorderName} 正在录制中...`)
+                        // 正在录制中...
+                    }
+                } else {
+                    // 之前认为在线，但不存在 Recorder，这种情况不应该出现
+                    const tmp = new Recorder(recorderTask)
+                    tmp.startRecord()
+                    global.app.recorderPool.set(room.name, tmp)
+                }
+            } else {
+                // 上次检测后认为房间不在线
+                RoomStatus.set(room.name, 1)
+                if (curRecorder) {
+                    // 之前认为不在线，但存在 Recorder，这种情况不应该出现
+                    // Recorder 可能未退出
+                    curRecorder.kill()
+                } else {
+                    // start a new recorder
+                    const tmp = new Recorder(recorderTask)
+                    tmp.startRecord()
+                    global.app.recorderPool.set(room.name, tmp)
+                }
             }
         } catch (e) {
-            // room offline
-            // it is time to submit
-            RoomStatus.delete(room.roomName)
-            // but the stream isn't disconnected
-            // so stop the recorder before submit
-            if (curRecorder?.recorderStat()) {
-                curRecorder.stopRecord()
-            }
-            // 保证同一时刻一个直播间只有一个Recorder
+            // 房间不在线，进入投稿流程
+            RoomStatus.delete(room.name)
             if (curRecorder) {
-                logger.info(`Will delete ${curRecorder.dirName} ${curRecorder.recorderName} ${curRecorderIndex}`)
-                const p = app.recorderPool.splice(curRecorderIndex as number, 1)
-                logger.info(`Deleted recorder: ${p.length}`)
+                if (curRecorder.recorderStat()) {
+                    // 房间不在线，但仍在录制，先停止录制
+                    curRecorder.stopRecord()
+                }
+                logger.info(`Will delete Recorder ${curRecorder.recorderTask.recorderName} ${curRecorder.recorderTask.recorderName}`)
+                global.app.recorderPool.delete(curRecorder.recorderTask.recorderName)
+                logger.info(`Deleted recorder: ${curRecorder.recorderTask.recorderName}`)
             }
 
         }
@@ -96,11 +100,11 @@ export default new Scheduler(interval, async function (app: App) {
     }
     function getTipsString(curRecorder: Recorder) {
         return `
-直播间名称 ${chalk.red(curRecorder.recorderName)}
-直播间地址 ${curRecorder.recorderLink}
-时间 ${chalk.cyan(curRecorder.timeV)}
-是否删除本地文件 ${curRecorder.deleteLocalFile ? chalk.yellow('是') : chalk.red('否')}
-是否上传本地文件 ${curRecorder.uploadLocalFile ? chalk.yellow('是') : chalk.red('否')} 
+直播间名称 ${chalk.red(curRecorder.recorderTask.recorderName)}
+直播间地址 ${curRecorder.recorderTask.streamerInfo.roomUrl}
+时间 ${chalk.cyan(curRecorder.recorderTask.timeV)}
+是否删除本地文件 ${curRecorder.recorderTask.streamerInfo.deleteLocalFile ? chalk.yellow('是') : chalk.red('否')}
+是否上传本地文件 ${curRecorder.recorderTask.streamerInfo.uploadLocalFile ? chalk.yellow('是') : chalk.red('否')} 
 `
     }
 })

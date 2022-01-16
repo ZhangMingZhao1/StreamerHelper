@@ -8,9 +8,9 @@ import { FileStatus } from "@/type/fileStatus";
 import { deleteFolder } from "@/util/utils";
 import { uploadStatus } from "@/uploader/uploadStatus";
 import { uploader } from "@/uploader";
-import { StreamInfo } from "@/type/streamInfo";
-import { RoomStatusPath } from "@/engine/roomPathStatus";
+import { roomPathStatus } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
+import { RecorderTask } from "@/type/recorderTask";
 const logger = log4js.getLogger(`recycleFile`);
 const recycleCheckTime = require("../../templates/info.json").recycleCheckTime
 const interval = recycleCheckTime ? recycleCheckTime * 1000 : 5 * 60 * 1000
@@ -22,7 +22,7 @@ export default new Scheduler(interval, async function () {
         logger.info(`Try to delete local directory: ${obj.path}`)
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
 
         if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
@@ -31,10 +31,10 @@ export default new Scheduler(interval, async function () {
             obj.endRecordTime = obj.startRecordTime
         }
 
-        const curTime = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
-        const delayTime = obj.delayTime ?? require('../../templates/info.json').StreamerHelper.delayTime ?? 2
+        const daysDif = Math.floor((new Date().valueOf() - new Date(obj.endRecordTime as Date).valueOf()) / (1000 * 60 * 60 * 24))
+        const delayTime = obj.delayTime ?? 2
 
-        if (curTime >= delayTime && obj.isPost) {
+        if (daysDif >= delayTime && obj.isPost) {
             logger.info(`Time to delete file ${obj.path}`)
             try {
                 deleteFolder(obj.path || '')
@@ -51,36 +51,42 @@ export default new Scheduler(interval, async function () {
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
 
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
 
         if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传，跳过 ${obj.recorderName} ${obj.path}`)
 
-        let stream: StreamInfo = {
-            copyright: obj.copyright,
-            deleteLocalFile: obj.deleteLocalFile,
-            desc: obj.desc,
+        const recorderTask: RecorderTask = {
+            streamerInfo: {
+                name: obj.recorderName || "",
+                uploadLocalFile: obj.uploadLocalFile || true,
+                deleteLocalFile: obj.deleteLocalFile || true,
+                templateTitle: obj.templateTitle || "",
+                delayTime: obj.delayTime || 2,
+                desc: obj.desc || "",
+                source: obj.source || "",
+                dynamic: obj.dynamic || "",
+                copyright: obj.copyright || 2,
+                roomUrl: obj.recorderLink || '',
+                tid: obj.tid || 0,
+                tags: obj.tags || [],
+
+            },
             dirName: obj.path,
-            dynamic: obj.dynamic,
-            roomLink: obj.recorderLink || '',
-            roomName: obj.recorderName || '',
-            roomTags: obj.tags || [],
-            roomTid: obj.tid || 0,
-            source: obj.source,
+            recorderName: obj.recorderName || '',
             streamUrl: '',
-            templateTitle: obj.templateTitle,
-            uploadLocalFile: obj.uploadLocalFile,
-            timeV: obj.timeV
+            timeV: obj.timeV as string
         }
 
 
-        logger.info(`NEW Upload Task ${stream.roomName} ${stream.dirName}`);
-        const uploadTask = new uploader(stream)
+        logger.info(`NEW Upload Task ${recorderTask.recorderName} ${recorderTask.dirName}`);
+        logger.debug(`upload recorderTask: ${JSON.stringify(recorderTask, null, 2)}`)
+        const uploadTask = new uploader(recorderTask)
         uploadTask.upload()
             .catch((e) => {
                 logger.error(e)
             })
             .finally(() =>
-                uploadStatus.delete(stream.dirName as string)
+                uploadStatus.delete(recorderTask.dirName)
             )
 
     }

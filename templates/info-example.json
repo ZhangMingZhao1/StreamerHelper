@@ -11,48 +11,46 @@
     "password": "",
     "access_token": "",
     "refresh_token": "",
-    "expires_in": "",
-    "tokenSignDate": "",
+    "expires_in": 0,
+    "tokenSignDate": 0,
     "mid": 0
   },
   "streamerInfo": [
     {
-      "主播1": {
-        "uploadLocalFile": true,
-        "deleteLocalFile": true,
-        "templateTitle": "",
-        "delayTime": 0,
-        "desc": "",
-        "source": "",
-        "dynamic": "",
-        "copyright": 2,
-        "roomUrl": "https://live.xxx.com/111",
-        "tid": 121,
-        "tags": [
-          "tag1",
-          "tag2",
-          "tag3"
-        ]
-      }
+      "name": "主播1",
+      "uploadLocalFile": true,
+      "deleteLocalFile": true,
+      "templateTitle": "{{name}}{{time}} 直播",
+      "delayTime": 0,
+      "desc": "",
+      "source": "",
+      "dynamic": "",
+      "copyright": 2,
+      "roomUrl": "https://live.xxx.com/111",
+      "tid": 121,
+      "tags": [
+        "tag1",
+        "tag2",
+        "tag3"
+      ]
     },
     {
-      "主播2": {
-        "uploadLocalFile": true,
-        "deleteLocalFile": false,
-        "templateTitle": "",
-        "delayTime": 1,
-        "desc": "",
-        "source": "",
-        "dynamic": "",
-        "copyright": 2,
-        "roomUrl": "https://live.xxx.com/222",
-        "tid": 171,
-        "tags": [
-          "tag1",
-          "tag2",
-          "tag3"
-        ]
-      }
+      "name": "主播1",
+      "uploadLocalFile": true,
+      "deleteLocalFile": false,
+      "templateTitle": "{{name}}{{time}} 直播",
+      "delayTime": 1,
+      "desc": "",
+      "source": "",
+      "dynamic": "",
+      "copyright": 2,
+      "roomUrl": "https://live.xxx.com/222",
+      "tid": 171,
+      "tags": [
+        "tag1",
+        "tag2",
+        "tag3"
+      ]
     }
   ]
 }

@@ -11,19 +11,18 @@
 
 ## Introduction
 
-主播直播助手，部署后，后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。
+StreamerHelper 部署后，会在后台批量监测各个平台主播是否在线，并实时录制直播保存为视频文件，停播后投稿到b站。
 
 （关于版权问题，投稿的参数默认一律设置的转载，简介处默认放有直播间链接）
 
 ## Installation
+### 录播配置
 
-StreamerHelper可以通过两种方式安装，推荐使用Docker
+```shell
+cp templates/info-example.json templates/info.json
+```
 
-首先`git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper`
-
-部署之前复制一份templates/info-example.json，并重命名为templates/info.json，并根据所需配置。
-
-### Docker 部署
+### Docker 部署（推荐）
 
 配置文件: `/app/templates/info.json`
 
@@ -44,26 +43,28 @@ docker run --name stream -itd -v /your_project_path/info.json:/app/templates/inf
 ### 直接部署到本机环境上
 #### 安装 Node.js
 
-```bash
+```shell
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 #### 安装 ffmpeg
 
-mac:
-```bash
+```shell
+# Mac
 brew update
 brew install ffmpeg
 ```
-linux:
-```
+
+```shell
+# Linux
 sudo add-apt-repository ppa:djcj/hybrid
 sudo apt-get update
 sudo apt-get install ffmpeg
 ```
-
+#### 登录：
+现在只支持扫码登录，程序启动后会在控制台打印二维码，如果无法正常显示，请打开`./qrcode.png`
 #### 运行：
-```bash
+```shell
 npm i -g pm2
 # 如果装不动，添加 --registry=https://registry.npm.taobao.org 参数，npm i 同理
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
@@ -85,8 +86,8 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 | 字段            | 说明                         |是否必填|
 | --------------- | ------------------ |---|
 |nickname|B站昵称|否|
-|username|B站账号，用于登录投稿|是|
-|password|B站密码|是|
+|username|B站账号，用于登录投稿|否（已弃用）|
+|password|B站密码|否（已弃用）|
 |access_token|用于鉴权的`token`凭证|否|
 |refresh_token||否|
 |expires_in||否|
@@ -100,7 +101,7 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 |uploadLocalFile|是否投稿|true/false|否|true|
 |deleteLocalFile|是否删除本地视频文件|true/false|否|true|
 |delayTime|投稿成功后延迟删除本地文件的时间(需要deleteLocalFile为true)||否|2(天)|
-|templateTile|稿件标题||否|直播间名称|
+|templateTile|稿件标题，支持占位符`{{name}} {{time}}`||否|直播间名称|
 |desc|稿件描述||否|Powered By StreamerHelper. https://github.com/ZhangMingZhao1/StreamerHelper|
 |source|稿件直播源(需要copyright为2)||否|{直播间名称} 直播间 {直播间地址}|
 |dynamic|稿件粉丝动态||否|{直播间名称} 直播间 {直播间地址}|
@@ -114,59 +115,56 @@ streamerInfo是一个数组，包括多个对象，每个对象的`key`为录制
 {
   "StreamerHelper": {
     "debug": false,
-    "recycleCheckTime": 1800,
     "roomCheckTime": 600,
+    "recycleCheckTime": 1800,
     "videoPartLimitSize": 100
   },
   "personInfo": {
     "nickname": "",
-    "username": "StreamerHelper",
-    "password": "StreamerHelper",
+    "username": "",
+    "password": "",
     "access_token": "",
     "refresh_token": "",
-    "expires_in": "",
-    "tokenSignDate": "",
+    "expires_in": 0,
+    "tokenSignDate": 0,
     "mid": 0
   },
   "streamerInfo": [
     {
-      "iGNing": {
-        "uploadLocalFile": true,
-        "deleteLocalFile": true,
-        "delayTime": 1,
-        "templateTitle": "",
-        "desc": "Powered By SteamerHelper",
-        "source": "",
-        "dynamic": "",
-        "copyright": 2,
-        "roomUrl": "https://www.huya.com/980312",
-        "tid": 121,
-        "tags": [
-          "英雄联盟",
-          "电子竞技",
-          "iG",
-          "鞋皇"
-        ]
-      }
-    },{
-      "浪子彦": {
-        "uploadLocalFile": true,
-        "deleteLocalFile": true,
-        "delayTime": 2,
-        "templateTitle": "",
-        "desc": "",
-        "source": "",
-        "dynamic": "",
-        "copyright": 2,
-        "roomUrl": "https://www.huya.com/lzy861016",
-        "tid": 171,
-        "tags": [
-          "英雄联盟",
-          "电子竞技",
-          "浪子彦",
-          "录播"
-        ]
-      }
+      "name": "主播1",
+      "uploadLocalFile": true,
+      "deleteLocalFile": true,
+      "templateTitle": "{{name}}{{time}} 直播",
+      "delayTime": 0,
+      "desc": "",
+      "source": "",
+      "dynamic": "",
+      "copyright": 2,
+      "roomUrl": "https://live.xxx.com/111",
+      "tid": 121,
+      "tags": [
+        "tag1",
+        "tag2",
+        "tag3"
+      ]
+    },
+    {
+      "name": "主播1",
+      "uploadLocalFile": true,
+      "deleteLocalFile": false,
+      "templateTitle": "{{name}}{{time}} 直播",
+      "delayTime": 1,
+      "desc": "",
+      "source": "",
+      "dynamic": "",
+      "copyright": 2,
+      "roomUrl": "https://live.xxx.com/222",
+      "tid": 171,
+      "tags": [
+        "tag1",
+        "tag2",
+        "tag3"
+      ]
     }
   ]
 }
