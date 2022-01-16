@@ -8,7 +8,7 @@ import { FileStatus } from "@/type/fileStatus";
 import { deleteFolder } from "@/util/utils";
 import { uploadStatus } from "@/uploader/uploadStatus";
 import { uploader } from "@/uploader";
-import { RoomStatusPath } from "@/engine/roomPathStatus";
+import { roomPathStatus } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 import { RecorderTask } from "@/type/recorderTask";
 const logger = log4js.getLogger(`recycleFile`);
@@ -22,7 +22,7 @@ export default new Scheduler(interval, async function () {
         logger.info(`Try to delete local directory: ${obj.path}`)
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
 
         if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
 
@@ -51,7 +51,7 @@ export default new Scheduler(interval, async function () {
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
 
-        if (RoomStatusPath.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
 
         if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传，跳过 ${obj.recorderName} ${obj.path}`)
 
@@ -79,6 +79,7 @@ export default new Scheduler(interval, async function () {
 
 
         logger.info(`NEW Upload Task ${recorderTask.recorderName} ${recorderTask.dirName}`);
+        logger.debug(`upload recorderTask: ${JSON.stringify(recorderTask, null, 2)}`)
         const uploadTask = new uploader(recorderTask)
         uploadTask.upload()
             .catch((e) => {

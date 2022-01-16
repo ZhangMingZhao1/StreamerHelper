@@ -19,7 +19,7 @@ export class App {
     private _logger: Logger;
     private _user!: User; // will init in initUser()
     private _schedulers: Schedulers;
-    private _recorderPool: Recorder[];
+    private _recorderPool: Map<string, Recorder>;
     private _config: Config;
     static _i: any;
 
@@ -35,7 +35,7 @@ export class App {
         return this._schedulers
     }
 
-    get recorderPool(): Recorder[] {
+    get recorderPool(): Map<string, Recorder> {
         return this._recorderPool
     }
 
@@ -48,7 +48,7 @@ export class App {
 
         this._logger = log4js.getLogger(`APP`)
         this._schedulers = {}
-        this._recorderPool = []
+        this._recorderPool = new Map<string, Recorder>()
 
         if (!fs.existsSync(join(process.cwd(), '/download'))) {
             fs.mkdirSync(join(process.cwd(), '/download'))
@@ -167,14 +167,7 @@ export class App {
     initStreamDisconnect = async () => {
 
         emitter.on('streamDisconnect', (curRecorder: Recorder) => {
-            this._recorderPool.forEach((elem: Recorder) => {
-
-                if (elem.recorderName === curRecorder.recorderName) {
-                    curRecorder = elem
-                    this._logger.info(`Recorder ${curRecorder.recorderName} 退出: `)
-                }
-
-            })
+            this._logger.info(`Recorder ${curRecorder.recorderTask.recorderName} 退出: `)
 
         })
     }
