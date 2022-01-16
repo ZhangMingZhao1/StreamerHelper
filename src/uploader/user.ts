@@ -20,8 +20,6 @@ export class User {
 
     private _access_token: string;
     private _mid: number;
-    private _password: string;
-    private _username: string;
     private logger: Logger;
     private sessionID: string | undefined;
     private JSESSIONID: string | undefined;
@@ -34,8 +32,6 @@ export class User {
     constructor(personInfo: PersonInfo) {
         this.APPKEY = "aae92bc66f3edfab";
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
-        this._username = personInfo.username;
-        this._password = personInfo.password;
         this._access_token = personInfo.access_token;
         this._refresh_token = personInfo.refresh_token;
         this._expires_in = personInfo.expires_in;
@@ -53,22 +49,6 @@ export class User {
         this._access_token = value;
     }
 
-    get password(): string {
-        return this._password;
-    }
-
-    set password(value: string) {
-        this._password = value;
-    }
-
-    get username(): string {
-        return this._username;
-    }
-
-    set username(value: string) {
-        this._username = value;
-    }
-
     /**
      * 同步个人数据到配置文件
      */
@@ -80,8 +60,6 @@ export class User {
             const infoObj = JSON.parse(text.toString())
             infoObj.personInfo = {
                 nickname: this._nickname,
-                username: this._username,
-                password: this._password,
                 access_token: this._access_token,
                 refresh_token: this._refresh_token,
                 expires_in: this._expires_in,
@@ -97,13 +75,7 @@ export class User {
 
     }
 
-    //
-    /**
-     * 登陆 Check username && password => checkToken => getKey => auth(Username) => auth(captcha)
-     */
     login = async () => {
-        // if (!this._username) return this.logger.error(`Check your username !!`)
-        // if (!this._password) return this.logger.error(`Check your password !!`)
 
         try {
             await this.checkToken()
@@ -128,83 +100,6 @@ export class User {
                 throw (error)
             }
         }
-
-    }
-
-    loginAccount = async () => {
-        return new Promise<void>(async (resolve, reject) => {
-
-            const { hash, key }: any = await this.getKey()
-            const encoded_password = crypt.make_rsa(`${hash}${this._password}`, key)
-            const url = "https://passport.bilibili.com/api/oauth2/login"
-            const headers: any = {
-                'Connection': 'keep-alive',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'User-Agent': '',
-                'Accept-Encoding': 'gzip,deflate',
-                'cookie': ''
-            }
-            if (this.sessionID) {
-                headers.cookie += `sid:${this.sessionID}; `
-            }
-            if (this.JSESSIONID) {
-                headers.cookie += `JSESSIONID:${this.JSESSIONID}; `
-            }
-            let data: { appkey: string | undefined; password: string; platform: string; ts: number; username: string; sign?: string | undefined } = {
-                'appkey': this.APPKEY,
-                'password': encoded_password,
-                'platform': "pc",
-                'ts': parseInt(String(new Date().valueOf() / 1000)),
-                'username': this._username
-            }
-            data.sign = md5(crypt.make_sign(data, this.APPSECRET))
-            try {
-                this.logger.debug(`Login Post Data: ${JSON.stringify(data, null, 2)}`)
-
-                const {
-                    code,
-                    message,
-                    data: { access_token, mid, refresh_token, expires_in } = {
-                        access_token: '',
-                        mid: 0,
-                        refresh_token: '',
-                        expires_in: 15552000
-                    }
-                }: { code: number, message: string, data: { access_token: string; mid: number; refresh_token: string; expires_in: number } } = await $axios.$request({
-                    method: "POST",
-                    url,
-                    data: querystring.stringify(data),
-                    headers
-                })
-
-                this.logger.debug(`code ${code} message ${message} access-token ${access_token} mid ${mid} refresh_token ${refresh_token} expires_in ${expires_in}`)
-
-                // captcha error
-                if (code === -105) {
-                    await this.getCapcha()
-                }
-
-                if (code !== 0) {
-                    this.logger.error(`An error occurred when login: ${message}`)
-                    return
-                }
-                this._access_token = access_token
-                this._mid = mid
-                this._refresh_token = refresh_token
-                this._expires_in = expires_in
-                this._tokenSignDate = Date.now()
-                this.logger.info(`mid ${mid}`)
-                this.logger.info(`access-token ${access_token}`)
-                this.logger.info(`token expires_in ${expires_in}s`)
-                this.logger.info(`refresh_token ${refresh_token}`)
-                this.logger.info(`Login succeed !!`)
-                await this.sync()
-                resolve()
-            } catch (err) {
-                this.logger.error(err)
-                reject(err)
-            }
-        })
 
     }
 
@@ -471,22 +366,3 @@ export class User {
         })
     }
 }
-
-// const {
-//     username,
-//     password,
-//     access_token,
-//     refresh_token,
-//     expires_in,
-//     tokenSignDate,
-//     nickname
-// } = require('../../templates/info.json').personInfo
-// const user = new User(username, password, access_token, refresh_token, expires_in, nickname, tokenSignDate)
-//
-// // user.getKey().then(r => console.log(r))
-//
-// user.login().then(r => console.log(r))
-//
-// // user.refreshToken().then(r => console.log(r))
-//
-// // user.getCapcha().then(r => console.log(r))

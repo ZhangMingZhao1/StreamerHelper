@@ -7,8 +7,6 @@
   },
   "personInfo": {
     "nickname": "",
-    "username": "",
-    "password": "",
     "access_token": "",
     "refresh_token": "",
     "expires_in": 0,

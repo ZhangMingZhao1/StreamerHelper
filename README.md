@@ -62,7 +62,8 @@ sudo apt-get update
 sudo apt-get install ffmpeg
 ```
 #### 登录：
-现在只支持扫码登录，程序启动后会在控制台打印二维码，如果无法正常显示，请打开`./qrcode.png`
+现在只支持扫码登录和`access_token`登录，程序启动后会在控制台打印二维码，如果无法正常显示，请打开`./qrcode.png`
+如果选择`access_token`登录，需要手动填写`personInfo`中`access_token`的值
 #### 运行：
 ```shell
 npm i -g pm2
@@ -82,11 +83,10 @@ npm run serve
 |videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
 
 ### personInfo
+以下各字段的值会在登录后自动填写，如果选择`access_token`登录，需要手动填写`personInfo`中`access_token`的值。
 | 字段            | 说明                         |是否必填|
 | --------------- | ------------------ |---|
 |nickname|B站昵称|否|
-|username|B站账号，用于登录投稿|否（已弃用）|
-|password|B站密码|否（已弃用）|
 |access_token|用于鉴权的`token`凭证|否|
 |refresh_token||否|
 |expires_in||否|
@@ -121,8 +121,6 @@ npm run serve
   },
   "personInfo": {
     "nickname": "",
-    "username": "",
-    "password": "",
     "access_token": "",
     "refresh_token": "",
     "expires_in": 0,
