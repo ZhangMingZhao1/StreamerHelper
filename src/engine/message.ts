@@ -119,10 +119,10 @@ export class Recorder {
 
     roomPathStatus.set(this.savePath, 1)
 
-    this.App.stdout.on("data", (data: any) => {
+    this.App.stdout?.on("data", (data: any) => {
       this.logger.info(`FFmpeg error: ${data.toString("utf8")}`);
     });
-    this.App.stderr.on("data", () => {
+    this.App.stderr?.on("data", () => {
 
       // ffmpeg by default the program logs to stderr ,正常流日志不记录
       // logger.error(data.toString("utf8"));
@@ -146,7 +146,7 @@ export class Recorder {
   stopRecord() {
     this.ffmpegProcessEndByUser = true
     if (!this.ffmpegProcessEnd) {
-      this.App.stdin.end('q')
+      this.App.stdin?.end('q')
 
       this.logger.info(`停止录制 ${chalk.red(this._recorderTask.recorderName)}`)
       this.logger.info(`记录退出时间 ${chalk.red(this._recorderTask.recorderName)}`)
