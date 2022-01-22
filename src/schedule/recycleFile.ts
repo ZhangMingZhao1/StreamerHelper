@@ -23,9 +23,9 @@ export default new Scheduler(interval, async function () {
         logger.info(`Try to delete local directory: ${obj.path}`)
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
-        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件 跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) return;
 
-        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传 跳过 ${obj.recorderName} ${obj.path}`)
+        if (uploadStatus.get(obj.path) === 1) return
 
         if (!obj.endRecordTime) {
             logger.info(`Not Fount endRecordTime... Use startRecordTime ${obj.startRecordTime} to replace`)
@@ -52,9 +52,9 @@ export default new Scheduler(interval, async function () {
 
         if (!obj.path) throw (`NOT FOUND THE FILE PATH`);
 
-        if (roomPathStatus.get(obj.path) === 1) throw (`该目录正在存放录制文件，跳过 ${obj.recorderName} ${obj.path}`);
+        if (roomPathStatus.get(obj.path) === 1) return;
 
-        if (uploadStatus.get(obj.path) === 1) throw (`该目录正在上传，跳过 ${obj.recorderName} ${obj.path}`)
+        if (uploadStatus.get(obj.path) === 1) return
 
         const recorderTask: RecorderTask = {
             streamerInfo: {

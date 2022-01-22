@@ -292,7 +292,6 @@ export class uploader {
                 resolve({ uploadUrl, completeUploadUrl, serverFileName })
             } catch (e) {
                 uploadStatus.delete(this.dirName)
-                // this.logger.error(`_getPreUploadData ${JSON.stringify(e, null, 2)}`)
                 reject(`_getPreUploadData: ${e}`)
             }
         }))
@@ -392,7 +391,7 @@ export class uploader {
                                 obj.videoParts.failUpload = {}
                                 const stringifies = JSON.stringify(obj, null, 2)
                                 fs.writeFileSync(fileStatusPath, stringifies)
-                                this.logger.error(`DELETE failUpload Record`)
+                                this.logger.info(`DELETE failUpload Record`)
                             }
                         }
                         uploadStatus.delete(this.dirName)
@@ -512,7 +511,7 @@ export class uploader {
 
             } catch (err) {
                 uploadStatus.delete(this.dirName)
-                this.logger.error(err)
+                reject(err)
             }
         })
     }

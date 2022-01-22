@@ -23,7 +23,7 @@ $axios.defaults.raxConfig = {
     noResponseRetries: 5,
     onRetryAttempt: err => {
         const cfg = rax.getConfig(err);
-        logger.error(`Retry attempt #${cfg && cfg.currentRetryAttempt}`);
+        logger.warn(`Retry attempt #${cfg && cfg.currentRetryAttempt}`);
     }
 }
 
