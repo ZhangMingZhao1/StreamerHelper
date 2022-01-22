@@ -9,11 +9,10 @@ import { Recorder } from "@/engine/message";
 import { RecorderTask } from "@/type/recorderTask";
 
 const roomCheckTime = global.config.StreamerHelper.roomCheckTime
-const checkTime = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
+const interval = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
 const rooms = global.config.streamerInfo;
 const logger = getExtendedLogger(`checkRoom`)
 const loggerCheck = getExtendedLogger(`check`)
-const interval = checkTime
 
 export default new Scheduler(interval, async function () {
 

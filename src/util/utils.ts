@@ -1,13 +1,17 @@
 import * as fs from "fs"
-import { log4js } from "@/log/config";
 import { join } from 'path'
 import { EventEmitter } from 'events'
+
+import { log4js } from "@/log/config";
 import { FileStatus } from "@/type/fileStatus";
+
 export const RoomTypeArr = ["huya", "bilibili", "douyu"];
+
 export const testRoomTypeArr = (roomType: string) => {
   if (RoomTypeArr.some((type) => type === roomType)) return roomType;
   else return "error";
 };
+
 export const FileHound = require("filehound")
 
 export const deleteFolder = function (path: string) {
@@ -42,7 +46,6 @@ export const changeFileStatus = (status: FileStatus, fileStatusPath: string) => 
         Object.assign(target || {}, source)
         return target
     }
-
 
     if (fs.existsSync(fileStatusPath)) {
         const text = fs.readFileSync(fileStatusPath)

@@ -1,18 +1,16 @@
 import * as fs from "fs";
 
 import * as querystring from 'querystring'
-import * as terminalImage from 'terminal-image'
 import { Logger } from "log4js";
-
-import { $axios } from "../http";
-import { getExtendedLogger } from "../log";
-import * as crypt from '@/util/crypt'
-import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse } from "@/type/biliAPIResponse";
-import { PersonInfo } from "@/type/config";
-
 const md5 = require('md5-node')
 const qrcode = require('qrcode-terminal')
 const qr2image = require('qr-image')
+
+import { $axios } from "@/http";
+import { getExtendedLogger } from "@/log";
+import * as crypt from '@/util/crypt'
+import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse } from "@/type/biliAPIResponse";
+import { PersonInfo } from "@/type/config";
 
 export class User {
     private readonly APPKEY: string
@@ -106,8 +104,8 @@ export class User {
     getKey = async () => {
         return new Promise(async (resolve, reject) => {
             this.logger.debug(`start getKey`)
-            let url = "https://passport.bilibili.com/api/oauth2/getKey"
-            let data: { appkey: string | undefined; platform: string; ts: string; sign?: string } = {
+            const url = "https://passport.bilibili.com/api/oauth2/getKey"
+            const data: { appkey: string | undefined; platform: string; ts: string; sign?: string } = {
                 'appkey': this.APPKEY,
                 'platform': "pc",
                 'ts': (+new Date()).toString().substr(0, 10)
@@ -147,7 +145,7 @@ export class User {
                 const regex = /^sid=([\w]*)/g;
 
                 for (const resHeader of resHeaders["set-cookie"]) {
-                    let tmp = resHeader.match(regex)
+                    const tmp = resHeader.match(regex)
                     if (tmp) {
                         this.sessionID = tmp[0].split("=")[1]
                         this.logger.info(`sessionID ${this.sessionID}`)
@@ -253,55 +251,7 @@ export class User {
             }
         })
     }
-
-    // loginCaptcha = async () => {}
-
-    // DEV
-    getCapcha = async () => {
-
-        return new Promise(async () => {
-            const headers: any = {
-                'User-Agent': '',
-                'Accept-Encoding': 'gzip,deflate',
-                cookie: ''
-            }
-            if (this.sessionID) {
-                headers.cookie = headers.cookie + `sid:${this.sessionID}; `
-            }
-            if (this.JSESSIONID) {
-                headers.cookie = headers.cookie + `JSESSIONID:${this.JSESSIONID}; `
-            }
-            const data: any = {
-                'appkey': this.APPKEY,
-                'platform': 'pc',
-                'ts': parseInt(String(new Date().valueOf() / 1000)),
-            }
-            data['sign'] = md5(crypt.make_sign(data, this.APPSECRET))
-
-            let url = 'https://passport.bilibili.com/captcha'
-
-            console.log(JSON.stringify(headers, null, 2));
-            const dataImg = await $axios.request({
-                url,
-                method: "get",
-                headers,
-                responseType: "arraybuffer",
-                params: querystring.stringify(data)
-            })
-            console.log(dataImg);
-            console.log(await terminalImage.buffer(dataImg.data));
-            const regex = /^JSESSIONID=([\w]*)/g;
-
-            for (const headerElement of dataImg.headers["set-cookie"]) {
-                let tmp = headerElement.match(regex)
-                if (tmp) {
-                    this.JSESSIONID = tmp[0].split("=")[1]
-                    this.logger.info(`JSESSIONID ${this.JSESSIONID}`)
-                }
-            }
-        })
-    }
-
+    
     loginByQRCode = async (QRData: GetQRCodeResponse) => {
         return new Promise<void>(async (resolve) => {
 

@@ -1,16 +1,18 @@
 import * as fs from 'fs'
-import { getExtendedLogger } from "../log";
-import { Logger } from "log4js";
-import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/video";
 import { join } from "path";
-import { $axios } from "@/http";
-import { uploadStatus } from "@/uploader/uploadStatus";
-import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
-import * as crypt from '@/util/crypt'
+
 import * as chalk from 'chalk'
 import * as crypto from 'crypto';
 import * as querystring from 'querystring'
 import * as formData from 'form-data'
+import { Logger } from "log4js";
+
+import * as crypt from '@/util/crypt'
+import { getExtendedLogger } from "@/log";
+import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/video";
+import { $axios } from "@/http";
+import { uploadStatus } from "@/uploader/uploadStatus";
+import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
 import { RecorderTask } from '@/type/recorderTask';
 import { changeFileStatus } from '@/util/utils';
 
@@ -143,7 +145,7 @@ export class uploader {
         const videoPartLimitSize = this.videoPartLimitSizeInput * 1024 * 1024
         this.logger.info(`videoPartLimitSize ${videoPartLimitSize}`)
         this.logger.info(`succeedUploaded ${JSON.stringify(this.succeedUploaded, null, 2)}`)
-        let localVideoParts: localVideoPart[] = []
+        const localVideoParts: localVideoPart[] = []
         let videoIndex = 0
 
         fs.readdirSync(path).forEach((shortPath: string) => {
@@ -299,11 +301,11 @@ export class uploader {
     uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any, isResume: boolean = false) => {
         return new Promise<remoteVideoPart>(async (resolve, reject) => {
 
-            let fileHash = crypto.createHash('md5')
+            const fileHash = crypto.createHash('md5')
             const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
             const chunkNum = Math.ceil(fileSize / chunkSize)
             const successUploadedChunks = isResume ? this.succeedUploadChunk : -1
-            let fileStream = fs.createReadStream(path)
+            const fileStream = fs.createReadStream(path)
             let readBuffers: Buffer = Buffer.from('')
             let readLength = 0
             let totalReadLength = 0
@@ -356,7 +358,7 @@ export class uploader {
                 }
             })
             fileStream.on('end', async () => {
-                let post_data = {
+                const post_data = {
                     'chunks': chunkNum,
                     'filesize': fileSize,
                     'md5': fileHash.digest('hex'),
@@ -421,9 +423,9 @@ export class uploader {
         return new Promise<void>(async (resolve, reject) => {
 
             try {
-                let chunkHash = crypto.createHash('md5')
+                const chunkHash = crypto.createHash('md5')
                 chunkHash.update(chunk_data)
-                let form = new formData()
+                const form = new formData()
                 form.append('version', '2.0.0.1054')
                 form.append('filesize', chunk_size)
                 form.append('chunk', chunk_id)

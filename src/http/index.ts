@@ -1,7 +1,8 @@
-import axios, { AxiosInstance } from 'axios'
+import axios, { AxiosInstance ,AxiosResponse} from 'axios'
 import * as rax from 'retry-axios';
+
 import { getExtendedLogger } from "@/log";
-import { AxiosResponse } from 'axios';
+
 const headers = {
     'Connection': 'keep-alive',
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',

@@ -1,14 +1,15 @@
 import * as fs from "fs";
+import { join, basename } from "path";
+
+import { Logger } from "log4js";
 
 import { User } from "@/uploader/user";
 import { getExtendedLogger } from "@/log";
-import { Logger } from "log4js";
-import { join, basename } from "path";
 import { changeFileStatus, emitter } from "@/util/utils";
-import { Scheduler } from "./type/scheduler";
-import { Recorder } from "./engine/message";
-import { Config } from "./type/config";
-import { FileStatus } from "./type/fileStatus";
+import { Scheduler } from "@/type/scheduler";
+import { Recorder } from "@/engine/message";
+import { Config } from "@/type/config";
+import { FileStatus } from "@/type/fileStatus";
 import { FileHound } from "@/util/utils"
 
 type Schedulers = {

@@ -5,10 +5,9 @@ import { spawn, ChildProcess } from "child_process";
 import * as dayjs from "dayjs";
 import * as chalk from "chalk";
 import { Logger } from "log4js";
-import { FileHound } from "@/util/utils";
 
-import { emitter } from "@/util/utils";
-import { getExtendedLogger } from "../log";
+import { emitter, FileHound } from "@/util/utils";
+import { getExtendedLogger } from "@/log";
 import { FileStatus } from "@/type/fileStatus";
 import { roomPathStatus } from "@/engine/roomPathStatus";
 import { uploadStatus } from "@/uploader/uploadStatus";

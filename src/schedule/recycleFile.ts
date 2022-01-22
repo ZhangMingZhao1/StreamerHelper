@@ -1,20 +1,21 @@
 // 定时回收文件以及处理上传失败的文件夹
-import { getExtendedLogger } from "@/log";
+
 import * as fs from "fs";
-const FileHound = require("filehound")
 import { join } from 'path'
 
 import { FileStatus } from "@/type/fileStatus";
-import { deleteFolder } from "@/util/utils";
+import { deleteFolder,FileHound } from "@/util/utils";
 import { uploadStatus } from "@/uploader/uploadStatus";
 import { uploader } from "@/uploader";
 import { roomPathStatus } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 import { RecorderTask } from "@/type/recorderTask";
+import { getExtendedLogger } from "@/log";
+
 const logger = getExtendedLogger(`recycleFile`);
-const recycleCheckTime = require("../../templates/info.json").recycleCheckTime
+const recycleCheckTime = global.config.StreamerHelper.recycleCheckTime
 const interval = recycleCheckTime ? recycleCheckTime * 1000 : 5 * 60 * 1000
-// const interval = 1000 * 20
+
 export default new Scheduler(interval, async function () {
     logger.info(`Task recycleFile Start ...`)
 

@@ -1,4 +1,4 @@
-import { log4js } from "./config";
+import { log4js } from "@/log/config";
 
 export function getExtendedLogger(category?: string | undefined): log4js.Logger {
     return extend(log4js.getLogger(category))
@@ -26,8 +26,6 @@ const levels: any = {
     MARK: { value: MARK, colour: 'grey' }, // 2^53
     OFF: { value: OFF, colour: 'grey' }
 }
-
-
 
 const extendHandler: ProxyHandler<log4js.Logger> = {
     get: (obj: any, prop) => {
