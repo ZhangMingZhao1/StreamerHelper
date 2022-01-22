@@ -13,8 +13,6 @@ import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse 
 import { PersonInfo } from "@/type/config";
 
 export class User {
-    private readonly APPKEY: string
-    private readonly APPSECRET: string
 
     private _access_token: string;
     private _mid: number;
@@ -28,8 +26,6 @@ export class User {
 
 
     constructor(personInfo: PersonInfo) {
-        this.APPKEY = "aae92bc66f3edfab";
-        this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this._access_token = personInfo.access_token;
         this._refresh_token = personInfo.refresh_token;
         this._expires_in = personInfo.expires_in;
@@ -66,9 +62,9 @@ export class User {
             }
             const stringified = JSON.stringify(infoObj, null, '  ')
             fs.promises.writeFile('./templates/info.json', stringified)
-            this.logger.info(`Sync User info ... DONE`)
+            this.logger.info(`Sync User info ... DONE: ${JSON.stringify(infoObj.personInfo, null, 2)}`)
         } catch (e) {
-            this.logger.error(e)
+            this.logger.error("An error occurred when sync user info:", e)
         }
 
     }
@@ -98,70 +94,6 @@ export class User {
                 throw (error)
             }
         }
-
-    }
-
-    getKey = async () => {
-        return new Promise(async (resolve, reject) => {
-            this.logger.debug(`start getKey`)
-            const url = "https://passport.bilibili.com/api/oauth2/getKey"
-            const data: { appkey: string | undefined; platform: string; ts: string; sign?: string } = {
-                'appkey': this.APPKEY,
-                'platform': "pc",
-                'ts': (+new Date()).toString().substr(0, 10)
-            };
-            data.sign = md5(crypt.make_sign(data, this.APPSECRET))
-
-            this.logger.debug(`getKey data ${JSON.stringify(data)} APPSECRET ${this.APPSECRET}`)
-
-            const headers: any = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': "application/json, text/javascript, */*; q=0.01",
-                'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36"
-            }
-
-
-            try {
-                if (this.sessionID) {
-                    headers.cookie += `sid:${this.sessionID}; `
-                }
-                if (this.JSESSIONID) {
-                    headers.cookie += `JSESSIONID:${this.JSESSIONID}; `
-                }
-
-                const {
-                    resHeaders,
-                    code,
-                    data: { hash, key }
-                }: { resHeaders: { "set-cookie": string }; code: number; data: { hash: string; key: string; } } = await $axios.$request({
-                    method: "post",
-                    url,
-                    data: querystring.stringify(data),
-                    headers
-                })
-
-                this.logger.debug(`Get key \n ${key} hash ${hash} code ${code} \n resHeaders ${JSON.stringify(resHeaders, null, 2)} ${this.sessionID}`)
-                this.logger.debug(`${resHeaders["set-cookie"]}`)
-                const regex = /^sid=([\w]*)/g;
-
-                for (const resHeader of resHeaders["set-cookie"]) {
-                    const tmp = resHeader.match(regex)
-                    if (tmp) {
-                        this.sessionID = tmp[0].split("=")[1]
-                        this.logger.info(`sessionID ${this.sessionID}`)
-                    }
-                }
-
-                if (code !== 0) {
-                    this.logger.error(`Get key error ,  code ${code}`)
-                    reject()
-                }
-                resolve({ hash, key })
-            } catch (e) {
-                this.logger.error(`An error occurred when getKey: ${e}`)
-                reject(`An error occurred when getKey: ${e}`)
-            }
-        })
 
     }
 
@@ -246,12 +178,12 @@ export class User {
                     reject()
                 }
             } catch (e) {
-                this.logger.error(e)
+                this.logger.error(`An error occurred when RefreshToken:`, e)
                 reject()
             }
         })
     }
-    
+
     loginByQRCode = async (QRData: GetQRCodeResponse) => {
         return new Promise<void>(async (resolve) => {
 
