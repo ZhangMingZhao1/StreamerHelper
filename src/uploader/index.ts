@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import * as querystring from 'querystring'
 import * as formData from 'form-data'
 import { RecorderTask } from '@/type/recorderTask';
+import { changeFileStatus } from '@/util/utils';
 
 export class uploader {
 
@@ -128,7 +129,7 @@ export class uploader {
                 await this.postVideo(remoteVideos)
                 uploadStatus.delete(this.dirName)
                 this.logger.info(`Upload Success.`)
-                this.changeFileStatus({ isPost: true })
+                changeFileStatus({ isPost: true }, fileStatusPath)
                 resolve()
             } catch (e) {
                 uploadStatus.delete(this.dirName)
@@ -329,7 +330,7 @@ export class uploader {
                         } catch (err) {
                             fileStream.destroy()
                             uploadStatus.delete(this.dirName)
-                            this.changeFileStatus({
+                            changeFileStatus({
                                 isFailed: true,
                                 videoParts: {
                                     failUpload: {
@@ -343,7 +344,7 @@ export class uploader {
                                         succeedTotalLength: this.succeedTotalLength
                                     }
                                 }
-                            })
+                            }, join(this.dirName, 'fileStatus.json'))
 
                             return reject(`An error occurred when upload video part: chunk ${nowChunk}/${chunkNum} 分块 ${path} ${err}`)
                         }
@@ -512,34 +513,6 @@ export class uploader {
                 this.logger.error(err)
             }
         })
-    }
-
-    changeFileStatus = (status: FileStatus) => {
-        // Merge a `source` object to a `target` recursively
-        const merge = (target: any, source: any) => {
-            // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
-            //Add checkpoints 增加校验
-            if (target) {
-                for (const key of Object.keys(source)) {
-                    if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
-                }
-            }
-
-            // Join `target` and modified `source`
-            Object.assign(target || {}, source)
-            return target
-        }
-
-        const fileStatusPath = join(this.dirName, 'fileStatus.json')
-
-        if (fs.existsSync(fileStatusPath)) {
-            const text = fs.readFileSync(fileStatusPath)
-            const obj: FileStatus = JSON.parse(text.toString())
-            merge(obj, status)
-            const stringifies = JSON.stringify(obj, null, 2)
-            fs.writeFileSync(fileStatusPath, stringifies)
-            this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
-        }
     }
 
     renderTitle = (template: string, context: any) => {

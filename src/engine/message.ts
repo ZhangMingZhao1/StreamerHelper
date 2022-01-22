@@ -5,7 +5,7 @@ import { spawn, ChildProcess } from "child_process";
 import * as dayjs from "dayjs";
 import * as chalk from "chalk";
 import { Logger } from "log4js";
-const FileHound = require("filehound")
+import { FileHound } from "@/util/utils";
 
 import { emitter } from "@/util/utils";
 import { getExtendedLogger } from "../log";

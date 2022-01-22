@@ -1,12 +1,15 @@
+import * as fs from "fs";
+
 import { User } from "@/uploader/user";
 import { getExtendedLogger } from "@/log";
 import { Logger } from "log4js";
-import * as fs from "fs";
 import { join, basename } from "path";
-import { emitter } from "@/util/utils";
+import { changeFileStatus, emitter } from "@/util/utils";
 import { Scheduler } from "./type/scheduler";
 import { Recorder } from "./engine/message";
 import { Config } from "./type/config";
+import { FileStatus } from "./type/fileStatus";
+import { FileHound } from "@/util/utils"
 
 type Schedulers = {
     [key: string]: {
@@ -71,6 +74,7 @@ export class App {
                 await this.initUser()
                 await this.initExitSignal()
                 await this.initStreamDisconnect()
+                await this.initSyncFileStatus()
                 await this.initSchedule()
             } catch (e) {
                 return reject(e)
@@ -170,6 +174,42 @@ export class App {
             this._logger.info(`Recorder ${curRecorder.recorderTask.recorderName} 退出: `)
 
         })
+    }
+
+    initSyncFileStatus = async () => {
+        const files: string[] = await FileHound.create()
+            .paths(join(process.cwd(), "/download"))
+            .match('fileStatus.json')
+            .ext('json')
+            .find();
+
+
+
+        for (const file of files) {
+            const text = fs.readFileSync(file)
+            const obj: FileStatus = JSON.parse(text.toString())
+
+            this.logger.debug(`Sync fileStatus: ${file} ${JSON.stringify(obj, null, 2)}`)
+
+            const streamer = this.config.streamerInfo.find(elem => elem.name === obj.recorderName)
+            if (!streamer)
+                continue
+
+            changeFileStatus({
+                uploadLocalFile: streamer.uploadLocalFile,
+                deleteLocalFile: streamer.deleteLocalFile,
+                templateTitle: streamer.templateTitle,
+                delayTime: streamer.delayTime,
+                desc: streamer.desc,
+                source: streamer.source,
+                dynamic: streamer.dynamic,
+                copyright: streamer.copyright,
+                recorderLink: streamer.roomUrl,
+                tid: streamer.tid,
+                tags: streamer.tags
+            }, file)
+
+        }
     }
 }
 

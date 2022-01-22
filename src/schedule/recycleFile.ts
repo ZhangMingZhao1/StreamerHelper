@@ -1,7 +1,7 @@
 // 定时回收文件以及处理上传失败的文件夹
 import { getExtendedLogger } from "@/log";
 import * as fs from "fs";
-const FileHound = require('filehound')
+const FileHound = require("filehound")
 import { join } from 'path'
 
 import { FileStatus } from "@/type/fileStatus";
