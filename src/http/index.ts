@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import * as rax from 'retry-axios';
-import { log4js } from "@/log";
+import { getExtendedLogger } from "@/log";
 import { AxiosResponse } from 'axios';
 const headers = {
     'Connection': 'keep-alive',
@@ -8,7 +8,7 @@ const headers = {
     'User-Agent': '',
     'Accept-Encoding': 'gzip,deflate',
 }
-const logger = log4js.getLogger(`HTTP`)
+const logger = getExtendedLogger(`HTTP`)
 
 const $axios: AxiosInstance & {
     [key: string]: any

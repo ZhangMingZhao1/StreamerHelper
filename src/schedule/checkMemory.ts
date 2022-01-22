@@ -1,6 +1,6 @@
-import { log4js } from "../log";
+import { getExtendedLogger } from "../log";
 import { Scheduler } from '@/type/scheduler'
-const logger = log4js.getLogger(`memory`)
+const logger = getExtendedLogger(`memory`)
 import * as os from 'os';
 // node进程占用的内存总量 实际堆内存的使用量 表示堆内存的总量。
 const { rss, heapUsed, heapTotal } = process.memoryUsage();

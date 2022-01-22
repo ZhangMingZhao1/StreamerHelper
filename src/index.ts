@@ -1,5 +1,5 @@
 import { User } from "@/uploader/user";
-import { log4js } from "@/log";
+import { getExtendedLogger } from "@/log";
 import { Logger } from "log4js";
 import * as fs from "fs";
 import { join, basename } from "path";
@@ -46,7 +46,7 @@ export class App {
     constructor() {
         global.config = this._config = require('../templates/info.json')
 
-        this._logger = log4js.getLogger(`APP`)
+        this._logger = getExtendedLogger(`APP`)
         this._schedulers = {}
         this._recorderPool = new Map<string, Recorder>()
 

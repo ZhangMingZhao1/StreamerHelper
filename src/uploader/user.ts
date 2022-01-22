@@ -5,7 +5,7 @@ import * as terminalImage from 'terminal-image'
 import { Logger } from "log4js";
 
 import { $axios } from "../http";
-import { log4js } from "../log";
+import { getExtendedLogger } from "../log";
 import * as crypt from '@/util/crypt'
 import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse } from "@/type/biliAPIResponse";
 import { PersonInfo } from "@/type/config";
@@ -37,7 +37,7 @@ export class User {
         this._expires_in = personInfo.expires_in;
         this._nickname = personInfo.nickname;
         this._tokenSignDate = personInfo.tokenSignDate;
-        this.logger = log4js.getLogger('User')
+        this.logger = getExtendedLogger('User')
         this._mid = personInfo.mid || 0;
     }
 

@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { log4js } from "../log";
+import { getExtendedLogger } from "../log";
 import { Logger } from "log4js";
 import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/video";
 import { join } from "path";
@@ -42,7 +42,7 @@ export class uploader {
     private succeedTotalLength: number;
 
     constructor(recorderTask: RecorderTask) {
-        this.logger = log4js.getLogger(`Upload ${recorderTask.recorderName}`)
+        this.logger = getExtendedLogger(`Upload ${recorderTask.recorderName}`)
         this.logger.debug(`Upload Stream Info ${JSON.stringify(recorderTask, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this.dirName = recorderTask.dirName || ''

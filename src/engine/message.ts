@@ -8,7 +8,7 @@ import { Logger } from "log4js";
 const FileHound = require("filehound")
 
 import { emitter } from "@/util/utils";
-import { log4js } from "../log";
+import { getExtendedLogger } from "../log";
 import { FileStatus } from "@/type/fileStatus";
 import { roomPathStatus } from "@/engine/roomPathStatus";
 import { uploadStatus } from "@/uploader/uploadStatus";
@@ -41,7 +41,7 @@ export class Recorder {
     this.isPost = false
     this._recorderTask.timeV = `${dayjs().format("YYYY-MM-DD")} ${this.getTitlePostfix()}`;
 
-    this.logger = log4js.getLogger(`Recorder ${this._recorderTask.recorderName}`)
+    this.logger = getExtendedLogger(`Recorder ${this._recorderTask.recorderName}`)
   }
 
   startRecord(_streamUrl: string | undefined = undefined) {

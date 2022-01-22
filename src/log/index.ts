@@ -1,47 +1,48 @@
-import * as log4js from "log4js";
-const logStatus :string = require('../../templates/info.json').StreamerHelper.debug ? "debug" : "info"
+import { log4js } from "./config";
 
-log4js.configure({
-    appenders: {
-        cheese: {
-            type: "file",
-            filename: process.cwd() + "/logs/artanis.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        memory: {
-            type: "file",
-            filename: process.cwd() + "/logs/memory.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        console: {
-            type: "console"
+export function getExtendedLogger(category?: string | undefined): log4js.Logger {
+    return extend(log4js.getLogger(category))
+}
+
+const ALL_VALUE = Number.MIN_VALUE,
+    TRACE = 5000,
+    DEBUG = 10000,
+    INFO = 20000,
+    WARN = 30000,
+    ERROR = 40000,
+    FATAL = 50000,
+    MARK = 9007199254740992,
+    OFF = Number.MAX_VALUE
+
+
+const levels: any = {
+    ALL: { value: ALL_VALUE, colour: 'grey' },
+    TRACE: { value: TRACE, colour: 'blue' },
+    DEBUG: { value: DEBUG, colour: 'cyan' },
+    INFO: { value: INFO, colour: 'green' },
+    WARN: { value: WARN, colour: 'yellow' },
+    ERROR: { value: ERROR, colour: 'red' },
+    FATAL: { value: FATAL, colour: 'magenta' },
+    MARK: { value: MARK, colour: 'grey' }, // 2^53
+    OFF: { value: OFF, colour: 'grey' }
+}
+
+
+
+const extendHandler: ProxyHandler<log4js.Logger> = {
+    get: (obj: any, prop) => {
+        const propName = prop.toString().toUpperCase()
+        const level = levels[propName]
+        if (level && level.value >= WARN) {
+            // 推送至用户
+            console.log("should push tu user")
         }
-    },
-    categories: {
-        cheese: {
-            appenders: ["cheese", "console"], level: logStatus
-        },
-        memory: {
-            appenders: ["memory"], level: "info"
-        },
-        check: {
-            appenders: ["console"], level: "debug"
-        },
-        default: {
-            appenders: ["cheese", "console"], level: logStatus
-        },
-    },
-});
 
-const logger = log4js.getLogger("cheese");
-const memoryLogger = log4js.getLogger("memory");
+        return obj[prop]
 
-export {
-    logger,
-    memoryLogger,
-    log4js
+    }
+}
+
+function extend(logger: log4js.Logger) {
+    return new Proxy<log4js.Logger>(logger, extendHandler)
 }

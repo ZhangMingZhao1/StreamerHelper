@@ -1,5 +1,5 @@
 // 定时回收文件以及处理上传失败的文件夹
-import { log4js } from "@/log";
+import { getExtendedLogger } from "@/log";
 import * as fs from "fs";
 const FileHound = require('filehound')
 import { join } from 'path'
@@ -11,7 +11,7 @@ import { uploader } from "@/uploader";
 import { roomPathStatus } from "@/engine/roomPathStatus";
 import { Scheduler } from "@/type/scheduler";
 import { RecorderTask } from "@/type/recorderTask";
-const logger = log4js.getLogger(`recycleFile`);
+const logger = getExtendedLogger(`recycleFile`);
 const recycleCheckTime = require("../../templates/info.json").recycleCheckTime
 const interval = recycleCheckTime ? recycleCheckTime * 1000 : 5 * 60 * 1000
 // const interval = 1000 * 20
