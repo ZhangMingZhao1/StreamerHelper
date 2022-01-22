@@ -14,3 +14,4 @@ templates/info.json
 download/*
 .cache
 *.png
+package-lock.json
