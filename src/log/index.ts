@@ -1,7 +1,7 @@
 import { log4js } from "@/log/config";
 
 export function getExtendedLogger(category?: string | undefined): log4js.Logger {
-    return extend(log4js.getLogger(category))
+    return extend(log4js.getLogger(category), extendHandler)
 }
 
 const ALL_VALUE = Number.MIN_VALUE,
@@ -41,6 +41,6 @@ const extendHandler: ProxyHandler<log4js.Logger> = {
     }
 }
 
-function extend(logger: log4js.Logger) {
-    return new Proxy<log4js.Logger>(logger, extendHandler)
+function extend<T extends object>(logger: T, extendHandler: ProxyHandler<T>) {
+    return new Proxy<T>(logger, extendHandler)
 }
