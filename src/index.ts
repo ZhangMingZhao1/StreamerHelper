@@ -73,8 +73,6 @@ export class App {
                 await this.initStreamDisconnect()
                 await this.initSyncFileStatus()
                 await this.initSchedule()
-
-                this.logger.error("啊？", "发生了错误", "怎么会是呢")
             } catch (e) {
                 return reject(e)
             }
