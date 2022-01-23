@@ -110,7 +110,8 @@ export class uploader {
                 const localVideos = this.getLocalVideos(this.dirName)
 
                 if (localVideos.length === 0 && !this.succeedUploaded) {
-                    return reject(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
+                    this.logger.warn(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
+                    return resolve()
                 }
 
                 this.logger.info(`Start to upload videoParts ...`)
@@ -382,7 +383,7 @@ export class uploader {
                     this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
 
                     if (parseInt(OK) !== 1 || info.match('error')) {
-                        this.logger.error(`Filesize error`)
+                        this.logger.error(`FileSize error`)
                         const fileStatusPath = join(this.dirName, 'fileStatus.json')
                         if (fs.existsSync(fileStatusPath)) {
                             const text = fs.readFileSync(fileStatusPath)
