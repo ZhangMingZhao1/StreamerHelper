@@ -1,9 +1,8 @@
 import { log4js } from "@/log/config";
+import { pushMsg } from "@/push";
+import { LogLevel } from "@/type/config";
 
-export function getExtendedLogger(category?: string | undefined): log4js.Logger {
-    return extend(log4js.getLogger(category), extendHandler)
-}
-
+// log4js/lib/levels.js
 const ALL_VALUE = Number.MIN_VALUE,
     TRACE = 5000,
     DEBUG = 10000,
@@ -15,7 +14,7 @@ const ALL_VALUE = Number.MIN_VALUE,
     OFF = Number.MAX_VALUE
 
 
-const levels: any = {
+const levels: { [key in LogLevel]: any } = {
     ALL: { value: ALL_VALUE, colour: 'grey' },
     TRACE: { value: TRACE, colour: 'blue' },
     DEBUG: { value: DEBUG, colour: 'cyan' },
@@ -27,16 +26,35 @@ const levels: any = {
     OFF: { value: OFF, colour: 'grey' }
 }
 
+const levelStrs = Object.keys(levels)
+
+export function getExtendedLogger(category?: string | undefined): log4js.Logger {
+    return extend(log4js.getLogger(category), extendHandler)
+}
+
+
 const extendHandler: ProxyHandler<log4js.Logger> = {
-    get: (obj: any, prop) => {
-        const propName = prop.toString().toUpperCase()
-        const level = levels[propName]
-        if (level && level.value >= WARN) {
-            // 推送至用户
-            console.log("should push tu user")
+    get: function (obj: any, prop) {
+        const propStr = prop.toString().toUpperCase()
+
+        // Methods other than logger.<level>
+        if (levelStrs.indexOf(propStr) == -1) {
+            return obj[prop]
         }
 
-        return obj[prop]
+        const level = levels[propStr as LogLevel]
+        const ori = obj[prop]
+
+        return async (...args: string[]) => {
+            const levelStr = global.config.StreamerHelper.logLevel.toUpperCase() as LogLevel
+
+            if (level && level.value >= levels[levelStr].value) {
+                process.nextTick(() => pushMsg(propStr as LogLevel, ...args))
+            }
+
+            return ori.apply(obj, args)
+
+        }
 
     }
 }

@@ -4,7 +4,23 @@ export interface Config {
         roomCheckTime: number,
         recycleCheckTime: number,
         videoPartLimitSize: number,
-        enableUpload: boolean
+        logLevel: LogLevel,
+        push: {
+            mail: {
+                enable: boolean,
+                host: string,
+                port: number,
+                from: string,
+                pwd: string,
+                to: string,
+                secure: boolean
+
+            },
+            wechat: {
+                enable: boolean,
+                sendKey: string
+            }
+        }
     },
     personInfo: PersonInfo,
     streamerInfo: StreamerInfo[]
@@ -34,3 +50,5 @@ export interface StreamerInfo {
     tags: string[]
 
 }
+
+export type LogLevel = "ALL" | "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL" | "MARK" | "OFF"

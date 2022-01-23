@@ -1,3 +1,5 @@
+import "@/config"
+
 import * as fs from "fs";
 import { join, basename } from "path";
 
@@ -8,9 +10,9 @@ import { getExtendedLogger } from "@/log";
 import { changeFileStatus, emitter } from "@/util/utils";
 import { Scheduler } from "@/type/scheduler";
 import { Recorder } from "@/engine/message";
-import { Config } from "@/type/config";
 import { FileStatus } from "@/type/fileStatus";
 import { FileHound } from "@/util/utils"
+
 
 type Schedulers = {
     [key: string]: {
@@ -19,12 +21,12 @@ type Schedulers = {
     }
 }
 
+
 export class App {
     private _logger: Logger;
     private _user!: User; // will init in initUser()
     private _schedulers: Schedulers;
     private _recorderPool: Map<string, Recorder>;
-    private _config: Config;
     static _i: any;
 
     get logger(): Logger {
@@ -43,13 +45,7 @@ export class App {
         return this._recorderPool
     }
 
-    get config(): Config {
-        return this._config
-    }
-
     constructor() {
-        global.config = this._config = require('../templates/info.json')
-
         this._logger = getExtendedLogger(`APP`)
         this._schedulers = {}
         this._recorderPool = new Map<string, Recorder>()
@@ -77,6 +73,8 @@ export class App {
                 await this.initStreamDisconnect()
                 await this.initSyncFileStatus()
                 await this.initSchedule()
+
+                this.logger.error("啊？", "发生了错误", "怎么会是呢")
             } catch (e) {
                 return reject(e)
             }
@@ -192,7 +190,7 @@ export class App {
 
             this.logger.debug(`Sync fileStatus: ${file} ${JSON.stringify(obj, null, 2)}`)
 
-            const streamer = this.config.streamerInfo.find(elem => elem.name === obj.recorderName)
+            const streamer = global.config.streamerInfo.find(elem => elem.name === obj.recorderName)
             if (!streamer)
                 continue
 
