@@ -1,6 +1,5 @@
-declare namespace NodeJS {
-    export interface Global {
-        config: import("./type/config").Config,
-        app: import("index").App
-    }
+export interface global {}
+declare global {
+  var config: import("./type/config").Config
+  var app: import("index").App
 }

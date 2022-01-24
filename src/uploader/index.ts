@@ -1,17 +1,20 @@
 import * as fs from 'fs'
-import { log4js } from "../log";
-import { Logger } from "log4js";
-import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/video";
 import { join } from "path";
-import { $axios } from "@/http";
-import { uploadStatus } from "@/uploader/uploadStatus";
-import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
-import * as crypt from '@/util/crypt'
+
 import * as chalk from 'chalk'
 import * as crypto from 'crypto';
 import * as querystring from 'querystring'
 import * as formData from 'form-data'
+import { Logger } from "log4js";
+
+import * as crypt from '@/util/crypt'
+import { getExtendedLogger } from "@/log";
+import { localVideoPart, remoteVideoPart, uploadVideoPartInfo } from "@/type/video";
+import { $axios } from "@/http";
+import { uploadStatus } from "@/uploader/uploadStatus";
+import { failUpload, FileStatus, succeedUploaded } from "@/type/fileStatus";
 import { RecorderTask } from '@/type/recorderTask';
+import { changeFileStatus } from '@/util/utils';
 
 export class uploader {
 
@@ -42,7 +45,7 @@ export class uploader {
     private succeedTotalLength: number;
 
     constructor(recorderTask: RecorderTask) {
-        this.logger = log4js.getLogger(`Upload ${recorderTask.recorderName}`)
+        this.logger = getExtendedLogger(`Upload ${recorderTask.recorderName}`)
         this.logger.debug(`Upload Stream Info ${JSON.stringify(recorderTask, null, 2)}`)
         this.APPSECRET = "af125a0d5279fd576c1b4418a3e8276d"
         this.dirName = recorderTask.dirName || ''
@@ -107,12 +110,13 @@ export class uploader {
                 const localVideos = this.getLocalVideos(this.dirName)
 
                 if (localVideos.length === 0 && !this.succeedUploaded) {
-                    return reject(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
+                    this.logger.warn(`${this.dirName} 上传目录为空，或视频文件均不满足上传大小限制`)
+                    return resolve()
                 }
 
                 this.logger.info(`Start to upload videoParts ...`)
                 let remoteVideos: remoteVideoPart[] = await this.uploadVideoParts(localVideos) || []
-                this.logger.info(`Upload videoParts END, remoteVideos: ${remoteVideos}`)
+                this.logger.info(`Upload videoParts END, remoteVideos: ${JSON.stringify(remoteVideos, null, 2)}`)
 
                 if (this.succeedUploaded) {
                     this.logger.info(`Found succeed uploaded videos ... Concat ...`)
@@ -123,12 +127,12 @@ export class uploader {
                     video.title = `P${index + 1}`
                     return video
                 })
-                this.logger.info(`videos ${JSON.stringify(remoteVideos, null, 2)}`)
+                this.logger.info(`Will Post Videos: ${JSON.stringify(remoteVideos, null, 2)}`)
                 this.logger.info(`Try to post videos ...`)
                 await this.postVideo(remoteVideos)
                 uploadStatus.delete(this.dirName)
                 this.logger.info(`Upload Success.`)
-                this.changeFileStatus({ isPost: true })
+                changeFileStatus({ isPost: true }, fileStatusPath)
                 resolve()
             } catch (e) {
                 uploadStatus.delete(this.dirName)
@@ -142,7 +146,7 @@ export class uploader {
         const videoPartLimitSize = this.videoPartLimitSizeInput * 1024 * 1024
         this.logger.info(`videoPartLimitSize ${videoPartLimitSize}`)
         this.logger.info(`succeedUploaded ${JSON.stringify(this.succeedUploaded, null, 2)}`)
-        let localVideoParts: localVideoPart[] = []
+        const localVideoParts: localVideoPart[] = []
         let videoIndex = 0
 
         fs.readdirSync(path).forEach((shortPath: string) => {
@@ -289,7 +293,6 @@ export class uploader {
                 resolve({ uploadUrl, completeUploadUrl, serverFileName })
             } catch (e) {
                 uploadStatus.delete(this.dirName)
-                // this.logger.error(`_getPreUploadData ${JSON.stringify(e, null, 2)}`)
                 reject(`_getPreUploadData: ${e}`)
             }
         }))
@@ -298,11 +301,11 @@ export class uploader {
     uploadVideoPart = async (fileSize: number, path: string, title: string, desc: string, uploadUrl: any, completeUploadUrl: any, serverFileName: any, isResume: boolean = false) => {
         return new Promise<remoteVideoPart>(async (resolve, reject) => {
 
-            let fileHash = crypto.createHash('md5')
+            const fileHash = crypto.createHash('md5')
             const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
             const chunkNum = Math.ceil(fileSize / chunkSize)
             const successUploadedChunks = isResume ? this.succeedUploadChunk : -1
-            let fileStream = fs.createReadStream(path)
+            const fileStream = fs.createReadStream(path)
             let readBuffers: Buffer = Buffer.from('')
             let readLength = 0
             let totalReadLength = 0
@@ -329,7 +332,7 @@ export class uploader {
                         } catch (err) {
                             fileStream.destroy()
                             uploadStatus.delete(this.dirName)
-                            this.changeFileStatus({
+                            changeFileStatus({
                                 isFailed: true,
                                 videoParts: {
                                     failUpload: {
@@ -343,7 +346,7 @@ export class uploader {
                                         succeedTotalLength: this.succeedTotalLength
                                     }
                                 }
-                            })
+                            }, join(this.dirName, 'fileStatus.json'))
 
                             return reject(`An error occurred when upload video part: chunk ${nowChunk}/${chunkNum} 分块 ${path} ${err}`)
                         }
@@ -355,7 +358,7 @@ export class uploader {
                 }
             })
             fileStream.on('end', async () => {
-                let post_data = {
+                const post_data = {
                     'chunks': chunkNum,
                     'filesize': fileSize,
                     'md5': fileHash.digest('hex'),
@@ -380,7 +383,7 @@ export class uploader {
                     this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
 
                     if (parseInt(OK) !== 1 || info.match('error')) {
-                        this.logger.error(`Filesize error`)
+                        this.logger.error(`FileSize error`)
                         const fileStatusPath = join(this.dirName, 'fileStatus.json')
                         if (fs.existsSync(fileStatusPath)) {
                             const text = fs.readFileSync(fileStatusPath)
@@ -389,7 +392,7 @@ export class uploader {
                                 obj.videoParts.failUpload = {}
                                 const stringifies = JSON.stringify(obj, null, 2)
                                 fs.writeFileSync(fileStatusPath, stringifies)
-                                this.logger.error(`DELETE failUpload Record`)
+                                this.logger.info(`DELETE failUpload Record`)
                             }
                         }
                         uploadStatus.delete(this.dirName)
@@ -420,9 +423,9 @@ export class uploader {
         return new Promise<void>(async (resolve, reject) => {
 
             try {
-                let chunkHash = crypto.createHash('md5')
+                const chunkHash = crypto.createHash('md5')
                 chunkHash.update(chunk_data)
-                let form = new formData()
+                const form = new formData()
                 form.append('version', '2.0.0.1054')
                 form.append('filesize', chunk_size)
                 form.append('chunk', chunk_id)
@@ -509,37 +512,9 @@ export class uploader {
 
             } catch (err) {
                 uploadStatus.delete(this.dirName)
-                this.logger.error(err)
+                reject(err)
             }
         })
-    }
-
-    changeFileStatus = (status: FileStatus) => {
-        // Merge a `source` object to a `target` recursively
-        const merge = (target: any, source: any) => {
-            // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
-            //Add checkpoints 增加校验
-            if (target) {
-                for (const key of Object.keys(source)) {
-                    if (source[key] instanceof Object) Object.assign(source[key], merge(target[key], source[key]))
-                }
-            }
-
-            // Join `target` and modified `source`
-            Object.assign(target || {}, source)
-            return target
-        }
-
-        const fileStatusPath = join(this.dirName, 'fileStatus.json')
-
-        if (fs.existsSync(fileStatusPath)) {
-            const text = fs.readFileSync(fileStatusPath)
-            const obj: FileStatus = JSON.parse(text.toString())
-            merge(obj, status)
-            const stringifies = JSON.stringify(obj, null, 2)
-            fs.writeFileSync(fileStatusPath, stringifies)
-            this.logger.info(`Write Content ${JSON.stringify(obj, null, 2)}`)
-        }
     }
 
     renderTitle = (template: string, context: any) => {

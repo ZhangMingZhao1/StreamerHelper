@@ -3,7 +3,23 @@
     "debug": false,
     "roomCheckTime": 600,
     "recycleCheckTime": 1800,
-    "videoPartLimitSize": 100
+    "videoPartLimitSize": 100,
+    "logLevel": "error",
+    "push": {
+      "email": {
+        "enable": true,
+        "host": "",
+        "port": 465,
+        "from": "",
+        "pwd": "",
+        "to": "",
+        "secure": true
+      },
+      "wechat": {
+        "enable": false,
+        "sendkey": ""
+      }
+    }
   },
   "personInfo": {
     "nickname": "",

@@ -1,4 +1,4 @@
-import {logger} from "../../log";
+import { getExtendedLogger } from "../../log";
 
 const axios = require("axios");
 
@@ -11,7 +11,7 @@ export function main(url: string) {
             )
             .then(function (response: any) {
                 const data: any = response.data;
-		if (data["code"] != 0 || data["data"]["live_time"] < 0) {
+                if (data["code"] != 0 || data["data"]["live_time"] < 0) {
                     reject(
                         "BILIBILI=>No match results:Maybe the roomid is error,or this room is not open!"
                     );
@@ -27,7 +27,7 @@ export function main(url: string) {
 
                 axios(config).then(function (response: any) {
                     const html: any = response.data;
-                    logger.trace(`获取哔哩哔哩房间 ${rid} 的推流信息 ${JSON.stringify(html, null, 2)}`)
+                    getExtendedLogger("bilibili").trace(`获取哔哩哔哩房间 ${rid} 的推流信息 ${JSON.stringify(html, null, 2)}`)
                     const links: any = html["data"]["durl"];
                     let m3u8_url = links[0]["url"];
                     resolve(m3u8_url);

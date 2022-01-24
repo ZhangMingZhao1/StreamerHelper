@@ -1,14 +1,15 @@
-import axios, { AxiosInstance } from 'axios'
+import axios, { AxiosInstance ,AxiosResponse} from 'axios'
 import * as rax from 'retry-axios';
-import { log4js } from "@/log";
-import { AxiosResponse } from 'axios';
+
+import { getExtendedLogger } from "@/log";
+
 const headers = {
     'Connection': 'keep-alive',
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'User-Agent': '',
     'Accept-Encoding': 'gzip,deflate',
 }
-const logger = log4js.getLogger(`HTTP`)
+const logger = getExtendedLogger(`HTTP`)
 
 const $axios: AxiosInstance & {
     [key: string]: any
@@ -22,7 +23,7 @@ $axios.defaults.raxConfig = {
     noResponseRetries: 5,
     onRetryAttempt: err => {
         const cfg = rax.getConfig(err);
-        logger.error(`Retry attempt #${cfg && cfg.currentRetryAttempt}`);
+        logger.warn(`Retry attempt #${cfg && cfg.currentRetryAttempt}`);
     }
 }
 

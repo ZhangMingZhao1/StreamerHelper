@@ -1,4 +1,4 @@
-import { StreamerInfo } from "./config";
+import { StreamerInfo } from "@/type/config";
 
 export interface RecorderTask {
     streamerInfo: StreamerInfo,

@@ -19,7 +19,6 @@ export function main(url: string) {
                     //const urlInfo2 = streamInfoList[1];
 
                     //可以得到六种链接，m3u8链接最稳定
-                    //console.log("阿里的CDN");
                     const aliFLV =
                         urlInfo1["sFlvUrl"] +
                         "/" +
@@ -28,8 +27,6 @@ export function main(url: string) {
                         urlInfo1["sFlvAntiCode"];
                     //const aliHLS:string = urlInfo1["sHlsUrl"] + "/" + urlInfo1["sStreamName"] + ".m3u8?" + urlInfo1["sHlsAntiCode"];
                     //const aliP2P = urlInfo1["sP2pUrl"] + "/" + urlInfo1["sStreamName"] + ".slice?" + urlInfo1["newCFlvAntiCode"];
-
-                    //console.log("腾讯的CDN");
                     //const txFLV = urlInfo2["sFlvUrl"] + "/" + urlInfo2["sStreamName"] + ".flv?" + urlInfo2["sFlvAntiCode"];
                     //const txHLS = urlInfo2["sHlsUrl"] + "/" + urlInfo2["sStreamName"] + ".m3u8?" + urlInfo2["sHlsAntiCode"];
                     //const txP2P = urlInfo2["sP2pUrl"] + "/" + urlInfo2["sStreamName"] + ".slice?" + urlInfo2["newCFlvAntiCode"];

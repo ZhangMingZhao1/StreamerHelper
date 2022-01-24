@@ -3,17 +3,16 @@ import * as chalk from 'chalk'
 
 import { getStreamUrl } from "@/engine/getStreamUrl";
 import { RoomStatus } from "@/engine/roomStatus";
-import { log4js } from "@/log";
+import { getExtendedLogger } from "@/log";
 import { Scheduler } from "@/type/scheduler";
 import { Recorder } from "@/engine/message";
 import { RecorderTask } from "@/type/recorderTask";
 
 const roomCheckTime = global.config.StreamerHelper.roomCheckTime
-const checkTime = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
+const interval = roomCheckTime ? roomCheckTime * 1000 : 10 * 60 * 1000
 const rooms = global.config.streamerInfo;
-const logger = log4js.getLogger(`checkRoom`)
-const loggerCheck = log4js.getLogger(`check`)
-const interval = checkTime
+const logger = getExtendedLogger(`checkRoom`)
+const loggerCheck = getExtendedLogger(`check`)
 
 export default new Scheduler(interval, async function () {
 

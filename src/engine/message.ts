@@ -5,10 +5,9 @@ import { spawn, ChildProcess } from "child_process";
 import * as dayjs from "dayjs";
 import * as chalk from "chalk";
 import { Logger } from "log4js";
-const FileHound = require("filehound")
 
-import { emitter } from "@/util/utils";
-import { log4js } from "../log";
+import { emitter, FileHound } from "@/util/utils";
+import { getExtendedLogger } from "@/log";
 import { FileStatus } from "@/type/fileStatus";
 import { roomPathStatus } from "@/engine/roomPathStatus";
 import { uploadStatus } from "@/uploader/uploadStatus";
@@ -41,7 +40,7 @@ export class Recorder {
     this.isPost = false
     this._recorderTask.timeV = `${dayjs().format("YYYY-MM-DD")} ${this.getTitlePostfix()}`;
 
-    this.logger = log4js.getLogger(`Recorder ${this._recorderTask.recorderName}`)
+    this.logger = getExtendedLogger(`Recorder ${this._recorderTask.recorderName}`)
   }
 
   startRecord(_streamUrl: string | undefined = undefined) {
@@ -120,10 +119,10 @@ export class Recorder {
 
     roomPathStatus.set(this.savePath, 1)
 
-    this.App.stdout.on("data", (data: any) => {
+    this.App.stdout?.on("data", (data: any) => {
       this.logger.info(`FFmpeg error: ${data.toString("utf8")}`);
     });
-    this.App.stderr.on("data", () => {
+    this.App.stderr?.on("data", () => {
 
       // ffmpeg by default the program logs to stderr ,正常流日志不记录
       // logger.error(data.toString("utf8"));
@@ -147,7 +146,7 @@ export class Recorder {
   stopRecord() {
     this.ffmpegProcessEndByUser = true
     if (!this.ffmpegProcessEnd) {
-      this.App.stdin.end('q')
+      this.App.stdin?.end('q')
 
       this.logger.info(`停止录制 ${chalk.red(this._recorderTask.recorderName)}`)
       this.logger.info(`记录退出时间 ${chalk.red(this._recorderTask.recorderName)}`)

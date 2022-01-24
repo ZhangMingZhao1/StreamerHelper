@@ -1,47 +1,68 @@
-import * as log4js from "log4js";
-const logStatus :string = require('../../templates/info.json').StreamerHelper.debug ? "debug" : "info"
+import { log4js } from "@/log/config";
+import { pushMsg } from "@/push";
+import { LogLevel } from "@/type/config";
 
-log4js.configure({
-    appenders: {
-        cheese: {
-            type: "file",
-            filename: process.cwd() + "/logs/artanis.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        memory: {
-            type: "file",
-            filename: process.cwd() + "/logs/memory.log",
-            maxLogSize: 20971520,
-            backups: 10,
-            encoding: "utf-8",
-        },
-        console: {
-            type: "console"
+// log4js/lib/levels.js
+const ALL_VALUE = Number.MIN_VALUE,
+    TRACE = 5000,
+    DEBUG = 10000,
+    INFO = 20000,
+    WARN = 30000,
+    ERROR = 40000,
+    FATAL = 50000,
+    MARK = 9007199254740992,
+    OFF = Number.MAX_VALUE
+
+
+const levels: { [key in LogLevel]: any } = {
+    ALL: { value: ALL_VALUE, colour: 'grey' },
+    TRACE: { value: TRACE, colour: 'blue' },
+    DEBUG: { value: DEBUG, colour: 'cyan' },
+    INFO: { value: INFO, colour: 'green' },
+    WARN: { value: WARN, colour: 'yellow' },
+    ERROR: { value: ERROR, colour: 'red' },
+    FATAL: { value: FATAL, colour: 'magenta' },
+    MARK: { value: MARK, colour: 'grey' }, // 2^53
+    OFF: { value: OFF, colour: 'grey' }
+}
+
+const levelStrs = Object.keys(levels)
+const levelStr = global.config.StreamerHelper.logLevel.toUpperCase() as LogLevel
+const levelVal = levels[levelStr].value
+
+export function getExtendedLogger(category?: string | undefined): log4js.Logger {
+    return extend(log4js.getLogger(category), extendHandler)
+}
+
+export function getLogger(category?: string): log4js.Logger {
+    return log4js.getLogger(category)
+}
+
+const extendHandler: ProxyHandler<log4js.Logger> = {
+    get: function (obj: any, prop) {
+        const propStr = prop.toString().toUpperCase()
+
+        // Methods other than logger.<level>
+        if (levelStrs.indexOf(propStr) == -1) {
+            return obj[prop]
         }
-    },
-    categories: {
-        cheese: {
-            appenders: ["cheese", "console"], level: logStatus
-        },
-        memory: {
-            appenders: ["memory"], level: "info"
-        },
-        check: {
-            appenders: ["console"], level: "debug"
-        },
-        default: {
-            appenders: ["cheese", "console"], level: logStatus
-        },
-    },
-});
 
-const logger = log4js.getLogger("cheese");
-const memoryLogger = log4js.getLogger("memory");
+        const level = levels[propStr as LogLevel]
+        const ori = obj[prop]
 
-export {
-    logger,
-    memoryLogger,
-    log4js
+        return (...args: string[]) => {
+
+            if (level && level.value >= levelVal) {
+                process.nextTick(() => pushMsg(propStr as LogLevel, ...args))
+            }
+
+            return ori.apply(obj, args)
+
+        }
+
+    }
+}
+
+function extend<T extends object>(logger: T, extendHandler: ProxyHandler<T>) {
+    return new Proxy<T>(logger, extendHandler)
 }
