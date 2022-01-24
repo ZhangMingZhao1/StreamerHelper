@@ -6,7 +6,7 @@
     "videoPartLimitSize": 100,
     "logLevel": "error",
     "push": {
-      "email": {
+      "mail": {
         "enable": true,
         "host": "",
         "port": 465,
