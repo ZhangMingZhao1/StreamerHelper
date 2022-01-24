@@ -116,7 +116,7 @@ export class uploader {
 
                 this.logger.info(`Start to upload videoParts ...`)
                 let remoteVideos: remoteVideoPart[] = await this.uploadVideoParts(localVideos) || []
-                this.logger.info(`Upload videoParts END, remoteVideos: ${remoteVideos}`)
+                this.logger.info(`Upload videoParts END, remoteVideos: ${JSON.stringify(remoteVideos, null, 2)}`)
 
                 if (this.succeedUploaded) {
                     this.logger.info(`Found succeed uploaded videos ... Concat ...`)
@@ -127,7 +127,7 @@ export class uploader {
                     video.title = `P${index + 1}`
                     return video
                 })
-                this.logger.info(`videos ${JSON.stringify(remoteVideos, null, 2)}`)
+                this.logger.info(`Will Post Videos: ${JSON.stringify(remoteVideos, null, 2)}`)
                 this.logger.info(`Try to post videos ...`)
                 await this.postVideo(remoteVideos)
                 uploadStatus.delete(this.dirName)

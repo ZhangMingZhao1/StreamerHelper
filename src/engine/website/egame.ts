@@ -15,7 +15,6 @@ export function main(url: string) {
         axios(config)
             .then(function (response: any) {
                 const jsons: any = response.data;
-                console.log(jsons);
                 if (jsons["ecode"] == 0) {
                     resolve(
                         jsons["data"]["0"]["retBody"]["data"]["video_info"][

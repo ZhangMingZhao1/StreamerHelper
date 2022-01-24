@@ -33,7 +33,6 @@ function getChannelInfo(bid: string) {
             let r = await axios(config)
             resolve(r.data.CHANNEL)
         } catch (err) {
-            console.log(err)
             reject(err)
         }
     })

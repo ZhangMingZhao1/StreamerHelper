@@ -27,11 +27,16 @@ const levels: { [key in LogLevel]: any } = {
 }
 
 const levelStrs = Object.keys(levels)
+const levelStr = global.config.StreamerHelper.logLevel.toUpperCase() as LogLevel
+const levelVal = levels[levelStr].value
 
 export function getExtendedLogger(category?: string | undefined): log4js.Logger {
     return extend(log4js.getLogger(category), extendHandler)
 }
 
+export function getLogger(category?: string): log4js.Logger {
+    return log4js.getLogger(category)
+}
 
 const extendHandler: ProxyHandler<log4js.Logger> = {
     get: function (obj: any, prop) {
@@ -45,10 +50,9 @@ const extendHandler: ProxyHandler<log4js.Logger> = {
         const level = levels[propStr as LogLevel]
         const ori = obj[prop]
 
-        return async (...args: string[]) => {
-            const levelStr = global.config.StreamerHelper.logLevel.toUpperCase() as LogLevel
+        return (...args: string[]) => {
 
-            if (level && level.value >= levels[levelStr].value) {
+            if (level && level.value >= levelVal) {
                 process.nextTick(() => pushMsg(propStr as LogLevel, ...args))
             }
 

@@ -111,7 +111,7 @@ export class User {
                 })
 
                 this.logger.debug('Get user info response: ')
-                this.logger.debug(data)
+                this.logger.debug(JSON.stringify(data, null, 2))
 
                 if (code !== 0) {
                     this.logger.error(`An error occurred when try to auth by access_token: ${message}`)
