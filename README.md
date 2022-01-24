@@ -81,7 +81,25 @@ npm run serve
 |recycleCheckTime|检测本地文件上传以及删除的间隔||否|300(s)|
 |roomCheckTime|检测直播间的间隔||否|600(s)|
 |videoPartLimitSize|小于此大小的文件不上传||否|100(mb)|
+|logLevel|此级别之上(包括)的日志将被推送，无视大小写|"TRACE"\|"DEBUG"\|"INFO"\|"WARN"\|"ERROR"|否|"error"|
 
+### push
+日志推送配置，WeChat 推送使用 [Server 酱](https://sct.ftqq.com/)
+#### mail
+| 字段            | 说明                         |是否必填|默认值|
+| --------------- | ------------------ |---|--|
+|enable|是否开启|是|true|
+|host|STMP 服务主机|否||
+|port|STMP 服务端口|否|465|
+|from|STMP 服务邮箱，作为发送邮件的邮箱|否||
+|pwd|STMP 服务密码|否||
+|to|接受邮件的邮箱|否||
+|secure|是否开启安全服务|否|true|
+#### wechat
+| 字段            | 说明                         |是否必填|默认值|
+| --------------- | ------------------ |---|--|
+|enable|是否开启|是|false|
+|sendKey|Server酱sendkey|否||
 ### personInfo
 以下各字段的值会在登录后自动填写，如果选择`access_token`登录，需要手动填写`personInfo`中`access_token`的值。
 | 字段            | 说明                         |是否必填|
@@ -118,6 +136,22 @@ npm run serve
     "roomCheckTime": 600,
     "recycleCheckTime": 1800,
     "videoPartLimitSize": 100
+    "logLevel": "error",
+    "push": {
+      "mail": {
+        "enable": true,
+        "host": "smtp.qq.com",
+        "port": 465,
+        "from": "***@qq.com",
+        "pwd": ""***",
+        "to": ""***@gmail.com",
+        "secure": true
+      },
+      "wechat": {
+        "enable": true,
+        "sendKey": ""***"
+      }
+    }
   },
   "personInfo": {
     "nickname": "",
@@ -147,7 +181,7 @@ npm run serve
       ]
     },
     {
-      "name": "主播1",
+      "name": "主播2",
       "uploadLocalFile": true,
       "deleteLocalFile": false,
       "templateTitle": "{{name}}{{time}} 直播",
