@@ -1,4 +1,10 @@
 # Changelog
+## [1.0.1] - 2022-01-24
+### Added
+- 支持`log`可定义级别的推送，目前支持邮箱&&微信(Server酱)
+
+### Changed
+- 优化日志，删除`package-lock.json`
 
 ## [1.0.0] - 2022-01-16
 ### Added
