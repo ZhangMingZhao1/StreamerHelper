@@ -18,7 +18,6 @@ const saveRootPath = join(rootPath, "/download")
 const partDuration = "3000"
 
 export class Recorder {
-  private savePath!: string;
   private App!: ChildProcess;
   private ffmpegProcessEnd: boolean = false;
   private ffmpegProcessEndByUser: boolean = false
@@ -57,7 +56,7 @@ export class Recorder {
     }
 
     const pathWithTimeV = join(pathWithRecorderName, this._recorderTask.timeV)
-    this.savePath = pathWithTimeV
+    this._recorderTask.dirName = pathWithTimeV
 
     this.syncFileStatus(pathWithTimeV)
 
@@ -67,24 +66,24 @@ export class Recorder {
       // 正在上传或者已经投稿
       const curTime = dayjs().format("HH-mm")
       const newPath = `${pathWithTimeV} ${curTime}`
-      roomPathStatus.delete(this.savePath)
-      this.savePath = newPath
+      roomPathStatus.delete(this._recorderTask.dirName)
+      this._recorderTask.dirName = newPath
       this._recorderTask.timeV = `${this._recorderTask.timeV} ${curTime}`
       fs.mkdirSync(newPath)
     } else {
       const ps = FileHound
         .create()
         .ext(this.videoExt)
-        .path(join(this.savePath))
+        .path(join(this._recorderTask.dirName))
         .findSync()
         .length;
       startNumber = ps - 1
     }
 
-    this.logger.info(`记录相关信息到文件 ${chalk.red(this._recorderTask.recorderName)}，目录：${this.savePath}`)
-    this.writeInfoToFileStatus(this.savePath, this._recorderTask)
+    this.logger.info(`记录相关信息到文件 ${chalk.red(this._recorderTask.recorderName)}，目录：${this._recorderTask.dirName}`)
+    this.writeInfoToFileStatus(this._recorderTask.dirName, this._recorderTask)
 
-    const fileName: string = join(this.savePath, `${this._recorderTask.recorderName}-${this._recorderTask.timeV}-part-%03d.${this.videoExt}`);
+    const fileName: string = join(this._recorderTask.dirName, `${this._recorderTask.recorderName}-${this._recorderTask.timeV}-part-%03d.${this.videoExt}`);
     const fakeX: any = {
       'Accept': '*/*',
       'Accept-Encoding': 'gzip, deflate, br',
@@ -117,7 +116,7 @@ export class Recorder {
       fileName,
     ]);
 
-    roomPathStatus.set(this.savePath, 1)
+    roomPathStatus.set(this._recorderTask.dirName, 1)
 
     this.App.stdout?.on("data", (data: any) => {
       this.logger.info(`FFmpeg error: ${data.toString("utf8")}`);
@@ -130,16 +129,16 @@ export class Recorder {
     this.App.on("exit", (code: number) => {
       this.ffmpegProcessEnd = true
 
-      this.logger.info(`下载流 ${chalk.red(this._recorderTask.recorderName)} 退出，退出码: ${code}，目录：${this.savePath}`);
+      this.logger.info(`下载流 ${chalk.red(this._recorderTask.recorderName)} 退出，退出码: ${code}，目录：${this._recorderTask.dirName}`);
       this.logger.info(`记录退出时间 ${chalk.red(this._recorderTask.recorderName)}`)
 
-      this.writeInfoToFileStatus(this.savePath, this._recorderTask)
+      this.writeInfoToFileStatus(this._recorderTask.dirName, this._recorderTask)
 
       if (!this.ffmpegProcessEndByUser) {
         emitter.emit('streamDisconnect', this)
       }
 
-      roomPathStatus.delete(this.savePath)
+      roomPathStatus.delete(this._recorderTask.dirName)
     });
   };
 
@@ -151,9 +150,9 @@ export class Recorder {
       this.logger.info(`停止录制 ${chalk.red(this._recorderTask.recorderName)}`)
       this.logger.info(`记录退出时间 ${chalk.red(this._recorderTask.recorderName)}`)
 
-      this.writeInfoToFileStatus(this.savePath, this._recorderTask)
+      this.writeInfoToFileStatus(this._recorderTask.dirName, this._recorderTask)
 
-      roomPathStatus.delete(this.savePath)
+      roomPathStatus.delete(this._recorderTask.dirName)
     }
   }
 
@@ -172,7 +171,7 @@ export class Recorder {
     if (!fs.existsSync(fileStatusPath)) {
       // new File
       const obj: FileStatus = {
-        path: this.savePath,
+        path: this._recorderTask.dirName,
         recorderName: this._recorderTask.recorderName,
         recorderLink: this._recorderTask.streamerInfo.roomUrl,
         tags: this._recorderTask.streamerInfo.tags,
