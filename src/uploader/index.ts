@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import * as querystring from 'querystring'
 import * as formData from 'form-data'
 import { Logger } from "log4js";
+import { FileHound } from "@/util/utils"
 
 import * as crypt from '@/util/crypt'
 import { getExtendedLogger } from "@/log";
@@ -149,37 +150,42 @@ export class uploader {
         const localVideoParts: localVideoPart[] = []
         let videoIndex = 0
 
-        fs.readdirSync(path).forEach((shortPath: string) => {
-            const fullPath = join(path, shortPath)
-            const fileSize = fs.statSync(fullPath).size
-            this.logger.debug(`fileSize ${fileSize}`)
+        FileHound
+            .create()
+            .path(path)
+            .ext('.mp4')
+            .size(`>${videoPartLimitSize}`)
+            .findSync()
+            .forEach((fullPath: string) => {
+                const fileSize = fs.statSync(fullPath).size
+                this.logger.debug(`File: ${fullPath}, FileSize: ${fileSize}`)
 
-            if (fileSize < videoPartLimitSize) {
-                this.logger.info(`${chalk.red('放弃该分P上传')} ${fullPath}, 文件大小 ${Math.round(fileSize / 1024 / 1024)}M, 限制${this.videoPartLimitSizeInput}M`)
-            } else if (this.succeedUploaded && this.succeedUploaded.find(item => item.localFilePath === fullPath)) {
-                this.logger.info(`该分P已经上传成功，跳过 ${fullPath}`)
-            } else {
-                if (this.isUploadFail && this.failUpload?.path === fullPath && (this?.failUpload?.deadline ?? 0) > ((this?.failUpload?.uploadStartTime ?? 0) + 7200)) {
-                    this.logger.info(`Push upload error video to videoParts`)
-                    localVideoParts.push({
-                        isFailed: true,
-                        localFilePath: this.failUpload?.path,
-                        title: `P${videoIndex + 1}`,
-                        desc: ``,
-                        fileSize
-                    })
+                if (fileSize < videoPartLimitSize) {
+                    this.logger.info(`${chalk.red('放弃该分P上传')} ${fullPath}, 文件大小 ${Math.round(fileSize / 1024 / 1024)}M, 限制${this.videoPartLimitSizeInput}M`)
+                } else if (this.succeedUploaded && this.succeedUploaded.find(item => item.localFilePath === fullPath)) {
+                    this.logger.info(`该分P已经上传成功, 跳过 ${fullPath}`)
                 } else {
-                    localVideoParts.push({
-                        localFilePath: fullPath,
-                        title: `P${videoIndex + 1}`,
-                        desc: ``,
-                        fileSize,
-                        isFailed: false
-                    })
-                    videoIndex++
+                    if (this.isUploadFail && this.failUpload?.path === fullPath && (this?.failUpload?.deadline ?? 0) > ((this?.failUpload?.uploadStartTime ?? 0) + 7200)) {
+                        this.logger.info(`Push upload error video to videoParts`)
+                        localVideoParts.push({
+                            isFailed: true,
+                            localFilePath: this.failUpload?.path,
+                            title: `P${videoIndex + 1}`,
+                            desc: ``,
+                            fileSize
+                        })
+                    } else {
+                        localVideoParts.push({
+                            localFilePath: fullPath,
+                            title: `P${videoIndex + 1}`,
+                            desc: ``,
+                            fileSize,
+                            isFailed: false
+                        })
+                        videoIndex++
+                    }
                 }
-            }
-        })
+            })
 
         this.logger.info(`Final videoParts ${JSON.stringify(localVideoParts, null, 2)}`)
         return localVideoParts
@@ -302,7 +308,7 @@ export class uploader {
         return new Promise<remoteVideoPart>(async (resolve, reject) => {
 
             const fileHash = crypto.createHash('md5')
-            const chunkSize = 1024 * 1024 * 5 //每 chunk 5M
+            const chunkSize = 1024 * 1024 * 4 //每 chunk 4M
             const chunkNum = Math.ceil(fileSize / chunkSize)
             const successUploadedChunks = isResume ? this.succeedUploadChunk : -1
             const fileStream = fs.createReadStream(path)
@@ -310,7 +316,7 @@ export class uploader {
             let readLength = 0
             let totalReadLength = 0
             let nowChunk = 0
-            this.logger.info(`开始上传 ${path}，文件大小：${fileSize}，分块数量：${chunkNum}， succeedUploa：${successUploadedChunks}`)
+            this.logger.info(`开始上传 ${path}, 文件大小: ${fileSize}, 分块数量, ${chunkNum}, uploadUrl: ${uploadUrl}, serverFileName: ${serverFileName}, succeedUpload, ${successUploadedChunks}`)
 
             fileStream.on('data', async (chunk: any) => {
 
@@ -323,11 +329,11 @@ export class uploader {
                     nowChunk++
 
                     if (nowChunk >= successUploadedChunks) {
-                        this.logger.info(`正在上传 第 ${nowChunk}/${chunkNum} 分块 ${path}`)
+                        this.logger.info(`正在上传 第 ${nowChunk}/${chunkNum} 分块`)
                         fileStream.pause()
 
                         try {
-                            this.logger.debug(` nowChunk ${nowChunk} succeedUpload ${successUploadedChunks} uploadUrl ${uploadUrl}, serverFileName ${serverFileName}, path ${path}, chunk.length ${chunk.length}, nowChunk + 1 ${nowChunk + 1}, chunkNum ${chunkNum}`)
+                            this.logger.debug(`nowChunk: ${nowChunk}, chunkLength: ${chunk.length}, totalChunkNum ${chunkNum}`)
                             await this.uploadChunk(uploadUrl, serverFileName, path, readBuffers, readBuffers.length, nowChunk, chunkNum)
                         } catch (err) {
                             fileStream.destroy()
@@ -383,7 +389,6 @@ export class uploader {
                     this.logger.info(`video part ${path} ${title} upload end, returns OK ${OK} info ${info}`)
 
                     if (parseInt(OK) !== 1 || info.match('error')) {
-                        this.logger.error(`FileSize error`)
                         const fileStatusPath = join(this.dirName, 'fileStatus.json')
                         if (fs.existsSync(fileStatusPath)) {
                             const text = fs.readFileSync(fileStatusPath)
@@ -396,7 +401,7 @@ export class uploader {
                             }
                         }
                         uploadStatus.delete(this.dirName)
-                        return reject(info)
+                        return reject(`${this.dirName} upload failed, info: ${info}`)
                     }
 
                     resolve({
