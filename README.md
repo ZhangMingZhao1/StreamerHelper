@@ -25,7 +25,7 @@ StreamerHelper 是一个主播录制工具，可以实时录制各平台直播�
 # 本文以 /home/StreamerHelper/ 文件夹为例，作为应用的根目录。
 
 # 拉取 Docker 镜像
-docker pull umuoy/streamerhelper
+docker pull umuoy1/streamerhelper
 # 创建挂载目录
 mkdir /home/StreamerHelper && cd /home/StreamerHelper && mkdir download/
 # 下载配置文件保存到本地
