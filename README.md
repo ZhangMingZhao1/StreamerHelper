@@ -49,7 +49,7 @@ docker run --name sh -itd \
 docker logs sh
 ```
 
-如果控制台无法正常显示二维码，可以通过文件打开，二维码位置在`/home/StreamerHelper/qrcode.png/`。<br />登陆成功后，录制任务自动开始。
+如果控制台无法正常显示二维码。<br />登陆成功后，录制任务自动开始。
 
 ### 直接部署
 
