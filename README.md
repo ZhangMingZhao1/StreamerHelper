@@ -38,7 +38,6 @@ curl https://raw.githubusercontent.com/umuoy1/StreamerHelper/master/templates/in
 docker run --name sh -itd \
 -v /home/StreamerHelper/info.json:/app/templates/info.json \
 -v /home/StreamerHelper/download:/app/download \
--v /home/StreamerHelper/qrcode.png:/app/qrcode.png \
 --dns 114.114.114.114 \
 --restart always umuoy1/streamerhelper
 ```
