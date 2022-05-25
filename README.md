@@ -129,6 +129,7 @@ npm i -g pm2 --registry=https://registry.npmmirror.com
 ```shell
 git clone https://github.com/ZhangMingZhao1/StreamerHelper.git && cd StreamerHelper
 npm i
+copy templates/info-example.json templates/info.json
 npm run serve
 ```
 
