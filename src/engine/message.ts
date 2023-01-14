@@ -114,8 +114,12 @@ export class Recorder {
       partDuration,
       "-segment_start_number",
       startNumber.toString(),
+      "-reset_timestamps", 
+      "1",
       fileName,
-    ]);
+    ], {
+      windowsHide: true
+    });
 
     roomPathStatus.set(this.savePath, 1)
 
