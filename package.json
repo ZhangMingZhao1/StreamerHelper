@@ -21,7 +21,7 @@
   "homepage": "https://github.com/ZhangMingZhao1/StreamerHelper#readme",
   "dependencies": {
     "@types/nodemailer": "^6.4.4",
-    "axios": "0.19.2",
+    "axios": "1.6.0",
     "chalk": "^4.1.0",
     "crypto-js": "^4.0.0",
     "dayjs": "^1.8.17",
