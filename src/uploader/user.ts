@@ -104,10 +104,17 @@ export class User {
                 this.logger.error(`Access Token not define`)
                 return reject()
             }
-            const url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
+            const params: any = {
+                access_key: this._access_token,
+                appkey: '4409e2ce8ffd12b8',
+                ts: parseInt(String(new Date().valueOf() / 1000))
+            }
+            params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
             try {
                 const { data: { data, code, message } } = await $axios.request<BiliAPIResponse<GetUserInfoResponse>>({
-                    url
+                    url: 'https://app.bilibili.com/x/v2/account/myinfo',
+                    method: "get",
+                    params
                 })
 
                 this.logger.debug('Get user info response: ')
