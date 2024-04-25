@@ -13,7 +13,8 @@ export type GetQRCodeResponse = {
 
 export type LoginResponse = {
     is_new: boolean,
-    token_info: TokenInfo
+    token_info: TokenInfo,
+    cookie_info: CookieInfo
 }
 
 export type GetUserInfoResponse = {
@@ -26,4 +27,17 @@ export type TokenInfo = {
     access_token: string,
     refresh_token: string,
     expires_in: number
+}
+
+export type CookieInfo = {
+    cookies: Cookie[],
+    domains: string[]
+}
+
+export type Cookie = {
+    name: string,
+    value: string,
+    http_only: number,
+    expires: number,
+    secure: number
 }

@@ -27,7 +27,8 @@
     "refresh_token": "",
     "expires_in": 0,
     "tokenSignDate": 0,
-    "mid": 0
+    "mid": 0,
+    "cookies": ""
   },
   "streamerInfo": [
     {

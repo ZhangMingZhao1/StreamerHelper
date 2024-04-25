@@ -32,7 +32,8 @@ export interface PersonInfo {
     refresh_token: string,
     expires_in: number,
     tokenSignDate: number,
-    mid: number
+    mid: number,
+    cookies: string
 }
 
 export interface StreamerInfo {

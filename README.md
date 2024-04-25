@@ -164,6 +164,7 @@ npm run serve
   - expires_in
   - tokenSignDate
   - mid
+  - cookies
 - **streamerInfo**: 一个数组，描述录制信息。
   - **name**: 主播名。
   - uploadLocalFile(true): 是否投稿。
@@ -210,7 +211,8 @@ npm run serve
     "refresh_token": "",
     "expires_in": 0,
     "tokenSignDate": 0,
-    "mid": 0
+    "mid": 0,
+    "cookies": ""
   },
   "streamerInfo": [
     {
