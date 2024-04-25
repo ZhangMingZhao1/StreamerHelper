@@ -1,7 +1,7 @@
 const regs: any = [
     [/www\.huya\.com/, require("./website/huya")],
     [/fanxing\.kugou\.com/, require("./website/kugou")],
-    [/v\.douyin\.com/, require("./website/douyin")],
+    [/live\.douyin\.com/, require("./website/douyin")],
     [/live\.bilibili\.com/, require("./website/bilibili")],
     [/live\.ixigua\.com/, require("./website/ixigua")],
     [/now\.qq\.com/, require("./website/now")],

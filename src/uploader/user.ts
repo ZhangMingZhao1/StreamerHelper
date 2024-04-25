@@ -9,7 +9,7 @@ const qr2image = require('qr-image')
 import { $axios } from "@/http";
 import { getExtendedLogger } from "@/log";
 import * as crypt from '@/util/crypt'
-import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse } from "@/type/biliAPIResponse";
+import { BiliAPIResponse, LoginResponse, GetQRCodeResponse, GetUserInfoResponse, Cookie, CookieInfo } from "@/type/biliAPIResponse";
 import { PersonInfo } from "@/type/config";
 
 export class User {
@@ -23,6 +23,7 @@ export class User {
     private _expires_in: number;
     private _nickname: string | undefined;
     private _tokenSignDate: number;
+    private _cookies: string;
 
 
     constructor(personInfo: PersonInfo) {
@@ -33,6 +34,7 @@ export class User {
         this._tokenSignDate = personInfo.tokenSignDate;
         this.logger = getExtendedLogger('User')
         this._mid = personInfo.mid || 0;
+        this._cookies = personInfo.cookies;
     }
 
     get access_token(): string {
@@ -41,6 +43,10 @@ export class User {
 
     set access_token(value: string) {
         this._access_token = value;
+    }
+
+    get cookies(): string {
+        return this._cookies
     }
 
     /**
@@ -58,7 +64,8 @@ export class User {
                 refresh_token: this._refresh_token,
                 expires_in: this._expires_in,
                 tokenSignDate: this._tokenSignDate,
-                mid: this._mid
+                mid: this._mid,
+                cookies: this._cookies
             }
             const stringified = JSON.stringify(infoObj, null, '  ')
             fs.promises.writeFile('./templates/info.json', stringified)
@@ -104,10 +111,17 @@ export class User {
                 this.logger.error(`Access Token not define`)
                 return reject()
             }
-            const url = `https://api.snm0516.aisee.tv/x/tv/account/myinfo?access_key=${this._access_token}`
+            const params: any = {
+                access_key: this._access_token,
+                appkey: '4409e2ce8ffd12b8',
+                ts: parseInt(String(new Date().valueOf() / 1000))
+            }
+            params.sign = md5(crypt.make_sign(params, "59b43e04ad6965f34319062b478f83dd"))
             try {
                 const { data: { data, code, message } } = await $axios.request<BiliAPIResponse<GetUserInfoResponse>>({
-                    url
+                    url: 'https://app.bilibili.com/x/v2/account/myinfo',
+                    method: "get",
+                    params
                 })
 
                 this.logger.debug('Get user info response: ')
@@ -161,7 +175,8 @@ export class User {
             try {
                 const { data: {
                     data: {
-                        token_info
+                        token_info,
+                        cookie_info
                     }, code, message
                 } } = await $axios.request<BiliAPIResponse<LoginResponse>>({ url, data: querystring.stringify(params), headers, method: "post" })
                 if (code === 0) {
@@ -170,7 +185,7 @@ export class User {
                     this._refresh_token = token_info.refresh_token
                     this._expires_in = token_info.expires_in
                     this._tokenSignDate = Date.now()
-
+                    this._buildCookies(cookie_info)
                     this.logger.info(`Token refresh succeed !!`)
                     resolve()
                 } else {
@@ -216,6 +231,7 @@ export class User {
                     this._refresh_token = data.token_info.refresh_token
                     this._mid = data.token_info.mid
                     this._expires_in = data.token_info.expires_in
+                    this._buildCookies(data.cookie_info)
                     return resolve()
                 } else {
                     this.logger.debug(message)
@@ -246,5 +262,14 @@ export class User {
             }
             resolve(data)
         })
+    }
+
+    private _buildCookies = (cookieInfo: CookieInfo) => {
+        const neededCookieName = ['SESSDATA', 'bili_jct', 'DedeUserID', 'DedeUserID__ckMd5']
+        const cookies = cookieInfo.cookies
+            .filter((cookie: Cookie) => neededCookieName.includes(cookie.name))
+            .map((cookie: Cookie) => `${cookie.name}=${cookie.value}`)
+            .join('; ')
+        this._cookies = cookies
     }
 }

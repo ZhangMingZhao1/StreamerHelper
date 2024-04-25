@@ -85,11 +85,10 @@ export class Recorder {
 
     const fileName: string = join(this._recorderTask.dirName, `${this._recorderTask.recorderName}-${this._recorderTask.timeV}-part-%03d.${this.videoExt}`);
     const fakeX: any = {
-      'Accept': '*/*',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Accept-Language': 'zh,zh-TW;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6,ru;q=0.5',
-      'Origin': 'https://www.huya.com',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36'
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+      'User-Agent': `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${Math.floor(Math.random() * (120 - 100 + 1)) + 100}.0.0.0 Safari/537.36`
     }
     let fakeHeaders = ""
 
@@ -113,8 +112,12 @@ export class Recorder {
       partDuration,
       "-segment_start_number",
       startNumber.toString(),
+      "-reset_timestamps", 
+      "1",
       fileName,
-    ]);
+    ], {
+      windowsHide: true
+    });
 
     roomPathStatus.set(this._recorderTask.dirName, 1)
 
