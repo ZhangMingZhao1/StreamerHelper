@@ -77,7 +77,7 @@ export class Recorder {
         .path(join(this._recorderTask.dirName))
         .findSync()
         .length;
-      startNumber = ps - 1
+      startNumber = ps - 1 > 0 ? ps - 1 : 0
     }
 
     this.logger.info(`记录相关信息到文件 ${chalk.red(this._recorderTask.recorderName)}，目录：${this._recorderTask.dirName}`)
